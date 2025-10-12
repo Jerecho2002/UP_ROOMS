@@ -1,0 +1,29 @@
+<template>
+  <aside v-show="sidebarOpen" id="sidebar" class="w-64 bg-white text-black h-screen p-4 transition-all">
+    <div class="text-center mb-6">
+      <img src="/image/jordan.jpg" alt="Profile"
+        class="h-20 w-20 mx-auto rounded-full border-4 border-white">
+      <p class="mt-3 font-semibold">RUSSELL EVAN</p>
+    </div>
+    <nav class="space-y-2 text-sm">
+      <a href="/building_dashboard" class="block px-4 py-2 hover:bg-[#9c1b33] rounded">🏢 Building</a>
+      <a href="/college_dashboard" class="block px-4 py-2 hover:bg-[#9c1b33] rounded">🎓 Colleges</a>
+      <a href="/Department" class="block px-4 py-2 hover:bg-[#9c1b33] rounded">🏬 Department</a>
+      <a href="/equipment" class="block px-4 py-2 hover:bg-[#9c1b33] rounded">⚙️ Equipment</a>
+      <a href="/roomtypes" class="block px-4 py-2 hover:bg-[#9c1b33] rounded">📂 Room Types</a>
+      <a href="/room" class="block px-4 py-2 hover:bg-[#9c1b33] rounded">🚪 Rooms</a>
+      <a href="/schedule" class="block px-4 py-2 hover:bg-[#9c1b33] rounded">📅 Schedules</a>
+      <a href="#" class="block px-4 py-2 hover:bg-[#9c1b33] rounded">📝 Terms</a>
+    </nav>
+  </aside>
+</template>
+
+<script setup>
+// Define props to receive the state of the sidebar from the parent
+defineProps({
+  sidebarOpen: {
+    type: Boolean,
+    required: true
+  }
+});
+</script>
