@@ -19,8 +19,13 @@ Route::get('/MainAccount', function () {
 
 
 
+
 Route::get('/building_dashboard', function () {
     return Inertia::render('building_dashboard');
+});
+
+Route::get('/Terms',  function(){
+    return Inertia::render('Terms');
 });
 
 
@@ -55,7 +60,7 @@ Route::get('/schedule', function () {
     return Inertia::render('schedule');
 });
 /*
-|--------------------------------------------------------------------------
+|------------------------------------------------------QA--------------------
 | Authentication + Profile routes
 |--------------------------------------------------------------------------
 */
@@ -68,5 +73,6 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
+
 
 require __DIR__.'/auth.php';

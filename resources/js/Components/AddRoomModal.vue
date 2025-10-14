@@ -112,6 +112,7 @@ const handleClose = () => {
                                 <option value="Science Lab">Science Lab</option>
                                 <option value="Conference Room">Conference Room</option>
                                 <option value="Study Area">Study Area</option>
+                                <option value="Study Area">Study Area</option>
                             </select>
                         </div>
                     </div>
