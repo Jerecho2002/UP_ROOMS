@@ -1,7 +1,15 @@
-<script set up >
- 
-
+<script setup>
+// Define props to receive the state of the sidebar from the parent
+defineProps({
+  sidebarOpen: {
+    type: Boolean,
+    required: true
+  }
+});
 </script>
+    
+
+
 <template>
 
         <div class="flex items-center bg-gray-100 rounded-full w-[12rem] oveflow-hidden"></div>
@@ -13,3 +21,4 @@
         </button>
 
 </template>
+
