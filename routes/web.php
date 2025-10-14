@@ -19,6 +19,7 @@ Route::get('/MainAccount', function () {
 
 
 
+
 Route::get('/building_dashboard', function () {
     return Inertia::render('building_dashboard');
 });
@@ -55,7 +56,7 @@ Route::get('/schedule', function () {
     return Inertia::render('schedule');
 });
 /*
-|--------------------------------------------------------------------------
+|------------------------------------------------------QA--------------------
 | Authentication + Profile routes
 |--------------------------------------------------------------------------
 */
