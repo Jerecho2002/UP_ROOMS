@@ -13,7 +13,7 @@
       <a href="/roomtypes" class="block px-4 py-2 hover:bg-[#9c1b33] rounded">📂 Room Types</a>
       <a href="/room" class="block px-4 py-2 hover:bg-[#9c1b33] rounded">🚪 Rooms</a>
       <a href="/schedule" class="block px-4 py-2 hover:bg-[#9c1b33] rounded">📅 Schedules</a>
-      <a href="#" class="block px-4 py-2 hover:bg-[#9c1b33] rounded">📝 Terms</a>
+      <a href="/Terms" class="block px-4 py-2 hover:bg-[#9c1b33] rounded">📝 Terms</a>
     </nav>
   </aside>
 </template>
