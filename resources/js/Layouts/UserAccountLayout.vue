@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 import Navbar from '@/Components/Navbar.vue'
-import Sidebarcollege from '@/Components/Sidebarcollege.vue'   // ✅ Correct name, no dash
+import Sidebar from '@/Components/Sidebar.vue'   // ✅ Correct name, no dash
 
 // Props from Laravel controller
 const sidebarVisible = ref(true)
@@ -20,7 +20,7 @@ const toggleSidebar = () => {
     <div class="flex pt-14 min-h-screen transition-all duration-300">
      
       <!-- Sidebar -->
-      <Sidebarcollege @toggleSidebar="toggleSidebar" v-show="sidebarVisible" />
+      <Sidebar v-show="sidebarVisible" />
 
       <!-- Main Content -->
       <main id="main" class="flex-1 p-6 transition-all">
