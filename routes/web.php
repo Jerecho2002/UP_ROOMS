@@ -13,15 +13,15 @@ use Inertia\Inertia;
 
 
 
-Route::get('/MainAccount', function () {
-    return Inertia::render('MainAccount');
+Route::get('/MainDashboard', function () {
+    return Inertia::render('MainDashboard');
 });
 
 
 
 
-Route::get('/building_dashboard', function () {
-    return Inertia::render('building_dashboard');
+Route::get('/BuildingDashboard', function () {
+    return Inertia::render('BuildingDashboard');
 });
 
 Route::get('/Terms',  function(){
@@ -29,8 +29,8 @@ Route::get('/Terms',  function(){
 });
 
 
-Route::get('/college_dashboard', function () {
-    return Inertia::render('college_dashboard');
+Route::get('/CollegeDashboard', function () {
+    return Inertia::render('CollegeDashboard');
 });
 
 
@@ -47,8 +47,8 @@ Route::get('/equipment', function () {
     return Inertia::render('equipment');
 });
 
-Route::get('/roomtypes', function () {
-    return Inertia::render('roomtypes');
+Route::get('/RoomTypes', function () {
+    return Inertia::render('RoomTypes');
 });
 
 Route::get('/room', function () {
@@ -56,8 +56,8 @@ Route::get('/room', function () {
 });
 
 
-Route::get('/schedule', function () {
-    return Inertia::render('schedule');
+Route::get('/Schedule', function () {
+    return Inertia::render('Schedule');
 });
 /*
 |------------------------------------------------------QA--------------------

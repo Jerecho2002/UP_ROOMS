@@ -1,6 +1,6 @@
 <script setup>
 
-import Layout from '@/Layouts/buildingaccountLayout.vue';
+import Layout from '@/Layouts/CollegeDashboardLayout.vue';
 
 </script>
 

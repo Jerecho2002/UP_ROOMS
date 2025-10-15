@@ -1,5 +1,5 @@
 <script setup>
-    import Termslayout from '@/Layouts/Termslayout.vue';
+    import Termslayout from '@/Layouts/TermsLayout.vue';
 </script>
 
 <template>

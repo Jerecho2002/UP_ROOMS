@@ -8,7 +8,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
-        <Link href="/MainAccount">
+        <Link href="/MainDashboard">
           <img src="/image/uplogo.png" alt="logo" class="h-9 w-9" />
         </Link>
         <span class="text-lg font-semibold">UPCEBU</span>
