@@ -1,5 +1,5 @@
 <script setup>
-import Sidebarcollege from '@/Components/Sidebarcollege.vue'
+import Sidebar from '@/Components/Sidebar.vue'
 import Navbar from '@/Components/Navbar.vue'
 import { ref } from 'vue'
 
@@ -22,7 +22,7 @@ const toggleSidebar = () => {
     
     <!-- SIDEBAR COMPONENT -->
     <!-- Conditionally shown based on `sidebarVisible` -->
-    <Sidebarcollege v-show="sidebarVisible" />
+     <Sidebar v-show="sidebarVisible" />
 
     <!-- MAIN CONTENT AREA -->
     <div class="flex-1 flex flex-col">

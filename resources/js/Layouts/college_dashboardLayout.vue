@@ -1,14 +1,14 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import Navbar from '@/Components/Navbar.vue'
-import Sidebarcollege from '@/Components/Sidebarcollege.vue'
+import Sidebar from '@/Components/Sidebar.vue'
 import { Link as InertiaLink } from '@inertiajs/vue3'
 import $ from 'jquery'   // ✅ Import jQuery for calendar DOM manipulation
 
 // ----------------------------------------------
 // Sidebar toggle state and method
 // ----------------------------------------------
-const sidebarVisible = ref(true)  // Controls sidebar visibility
+const sidebarVisible = ref(true) // Controls sidebar visibility
 
 // Toggle sidebar visibility on toggle event
 const toggleSidebar = () => {
@@ -107,7 +107,7 @@ onMounted(() => {
       
       <!-- SIDEBAR -->
       <!-- Sidebar visibility controlled reactively -->
-      <Sidebarcollege v-show="sidebarVisible" @toggleSidebar="toggleSidebar" />
+        <Sidebar v-show="sidebarVisible" />
 
       <!-- MAIN CONTENT AREA -->
       <main id="mainContent" class="flex-1 p-6 bg-gray-50 transition-all duration-300">
