@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed, watchEffect } from "vue";
 import Navbar from "@/Components/Navbar.vue"; // Navbar component import
+import Sidebar from "@/Components/Sidebar.vue"; // Sidebar component import
 
 // ===== LAYOUT LOGIC =====
 
@@ -78,7 +79,7 @@ onUnmounted(() => {
   window.removeEventListener('resize', updateWindowWidth);
 });
 
-// ===== PAGE DATA (DASHBOARD CONTENT) =====
+// ===== PAGE DATA (MOCK DATA FOR DEFAULT SLOT CONTENT) =====
 
 // Define props for data counts and table data with default mock data
 defineProps({
@@ -100,42 +101,18 @@ defineProps({
 </script>
 
 <template>
-  <div class="flex h-screen overflow-hidden bg-gray-100">
+ <div class="flex pt-14 min-h-screen transition-all duration-300">
+  
 
+  
     <Navbar 
       @toggleSidebar="toggleSidebar" 
       :is-mobile-open="sidebarOpen"
       :is-desktop-open="sidebarForcedOpen"
       :is-desktop="isDesktop" 
     />
-
-    <aside
-      id="sidebar"
-      :class="[
-        'h-full bg-white border-r border-gray-200 z-40 transition-all duration-300 ease-in-out flex-shrink-0',
-        ...sidebarClasses, // Dynamically computed classes for responsiveness
-      ]"
-      :style="isDesktop ? { width: sidebarForcedOpen ? '16rem' : '0' } : {}"
-    >
-      <div v-show="sidebarForcedOpen" class="hidden md:flex h-14 bg-white border-b border-gray-200 items-center justify-center">
-        <a href="/MainAccount" class="text-[#800020] text-lg font-bold">DASHBOARD</a>
-      </div>
-
-      
-
-      <nav v-show="!isDesktop || sidebarForcedOpen" class="px-3 py-2 space-y-1 text-sm font-medium text-gray-700">
-        <a href="/MainAccount" class="flex items-center px-10 py-8 rounded text-[#00b3ff]">DASHBOARD</a>
-        <a href="/UserAccountPage" class="flex items-center px-4 py-2 rounded hover:bg-[#800020] hover:text-white transition">👤 User Account</a>
-        <a href="/building_dashboard" class="flex items-center px-4 py-2 rounded hover:bg-[#800020] hover:text-white transition">🏢 Building</a>
-        <a href="/college_dashboard" class="flex items-center px-4 py-2 rounded hover:bg-[#800020] hover:text-white transition">🎓 Colleges</a>
-        <a href="/Department" class="flex items-center px-4 py-2 rounded hover:bg-[#800020] hover:text-white transition">🏬 Department</a>
-        <a href="/equipment" class="flex items-center px-4 py-2 rounded hover:bg-[#800020] hover:text-white transition">⚙️ Equipment</a>
-        <a href="/roomtypes" class="flex items-center px-4 py-2 rounded hover:bg-[#800020] hover:text-white transition">📂 Room Types</a>
-        <a href="/room" class="flex items-center px-4 py-2 rounded hover:bg-[#800020] hover:text-white transition">🚪 Rooms</a>
-        <a href="/schedule" class="flex items-center px-4 py-2 rounded hover:bg-[#800020] hover:text-white transition">📅 Schedules</a>
-        <a href="#" class="flex items-center px-4 py-2 rounded hover:bg-[#800020] hover:text-white transition">📝 Terms</a>
-      </nav>
-    </aside>
+    
+    <Sidebar :class="sidebarClasses" :sidebar-open="sidebarForcedOpen" />
 
     <transition name="fade">
       <div
@@ -146,13 +123,15 @@ defineProps({
     </transition>
 
     <div class="flex-1 flex flex-col min-w-0">
-      <main class="flex-1 p-4 md:p-8 pt-16 md:pt-20 overflow-y-auto">
-        <div class="text-xs text-gray-500 mb-4 flex justify-between items-center">
-          <span class="hidden md:block">Dashboard</span>
-          <span>UPCEBU &gt; Dashboard</span>
-        </div>
+      
+      <main id="mainContent" class="flex-1 px-6 py-6 bg-gray-50 transition-all duration-300">
         
         <slot>
+          <div class="text-xs text-gray-500 mb-4 flex justify-between items-center">
+            <span class="hidden md:block">Dashboard</span>
+            <span>UPCEBU &gt; Dashboard</span>
+          </div>
+
           <div class="grid grid-cols-1 gap-6 mb-8 md:grid-cols-2 lg:grid-cols-4">
             <div class="rounded-xl text-center shadow-lg overflow-hidden">
               <div class="bg-cyan-500 text-white p-3 font-semibold">Total Accounts</div>
@@ -237,4 +216,9 @@ defineProps({
 .fade-enter-from, .fade-leave-to {
   opacity: 0;
 }
+
+/* Transition for the desktop sidebar width change. 
+  The Sidebar component itself must apply the transition to the width property 
+  to get a smooth collapse/expand effect.
+*/
 </style>

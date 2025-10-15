@@ -5,9 +5,9 @@ import { ref } from 'vue';
 /* Component imports */
 import Navbar from '@/Components/Navbar.vue';
 import Sidebar from '@/Components/Sidebar.vue';
-import Sidebarsearch from '@/Components/Sidebarsearch.vue';
-import EditRoomModal from '@/Components/EditRoomModal.vue';
-import AddRoomModal from '@/Components/AddRoomModal.vue';
+import Sidebarsearch from '@/Components/Modals/Sidebarsearch.vue';
+import EditRoomModal from '@/Components/Modals/EditRoomModal.vue';
+import AddRoomModal from '@/Components/Modals/AddRoomModal.vue';
 
 /* --- Sidebar (Left) --- */
 const sidebarVisible = ref(true);
@@ -179,7 +179,7 @@ const handleRoomUpdate = (updatedRoom) => {
 
           <!-- HEADER & BREADCRUMB -->
           <div class="flex items-baseline justify-between">
-            <h1 class="text-3xl font-bold text-gray-800">Search Bar</h1>
+            <h1 class="text-xl font-bold text-gray-800">Rooms Dashboard</h1>
             <div class="text-sm text-gray-500">
               <span>UPCEBU &gt;</span>
               <a href="#" @click.prevent="toggleSearchSidebar"

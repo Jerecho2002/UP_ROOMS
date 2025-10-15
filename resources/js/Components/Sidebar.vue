@@ -1,9 +1,8 @@
 <template>
   <aside v-show="sidebarOpen" id="sidebar" class="w-64 bg-white text-black h-screen p-4 transition-all">
     <div class="text-center mb-6">
-      <img src="/image/jordan.jpg" alt="Profile"
-        class="h-20 w-20 mx-auto rounded-full border-4 border-white">
-      <p class="mt-3 font-semibold">RUSSELL EVAN</p>
+      
+      <p class="mt-3 font-semibold text-xl text-[#00b3ff]">Dashboard</p>
     </div>
     <nav class="space-y-2 text-sm">
       <a href="/building_dashboard" class="block px-4 py-2 hover:bg-[#9c1b33] rounded">🏢 Building</a>
