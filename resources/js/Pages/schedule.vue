@@ -1,5 +1,5 @@
 <script setup>
-import Layout from '@/Layouts/ScheduleLayout.vue'; 
+import Layout from '@/Layouts/schedulelayout.vue'; 
 </script>
 
 <template>
