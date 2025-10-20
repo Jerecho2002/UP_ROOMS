@@ -47,8 +47,8 @@ Route::get('/equipment', function () {
     return Inertia::render('equipment');
 });
 
-Route::get('/RoomTypes', function () {
-    return Inertia::render('RoomTypes');
+Route::get('/roomtypes', function () {
+    return Inertia::render('roomtypes');
 });
 
 Route::get('/room', function () {
@@ -56,8 +56,8 @@ Route::get('/room', function () {
 });
 
 
-Route::get('/Schedule', function () {
-    return Inertia::render('Schedule');
+Route::get('/schedule', function () {
+    return Inertia::render('schedule');
 });
 /*
 |------------------------------------------------------QA--------------------
