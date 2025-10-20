@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import Navbar from '@/Components/Navbar.vue'
 import Sidebar from '@/Components/Sidebar.vue'
-import CalendarComponent from '@/Components/CalendarComponent.vue'; // <-- New Component Import
+import CalendarComponent from '@/Components/ScheduleModal/CalendarComponent.vue'; // <-- New Component Import
 
 // State for sidebar visibility
 const sidebarOpen = ref(true)
