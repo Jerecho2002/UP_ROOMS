@@ -1,5 +1,9 @@
 <template>
-  <aside v-show="sidebarOpen" id="sidebar" class="w-64 bg-white text-black h-screen p-4 flex flex-col transition-all duration-300 z-10">
+  <aside 
+    v-show="sidebarOpen" 
+    id="sidebar" 
+    class="w-64 bg-white text-black h-screen p-4 flex flex-col transition-all duration-300 z-10"
+  >
     <div class="text-center mb-6">
       <p class="mt-3 font-semibold text-xl text-[#00b3ff]">Dashboard</p>
     </div>
@@ -83,7 +87,10 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 
-// --- Props ---
+// --- PROPS ---
+/**
+ * Defines a prop to receive the visibility state of the sidebar from the parent component.
+ */
 defineProps({
   sidebarOpen: {
     type: Boolean,
@@ -91,15 +98,24 @@ defineProps({
   }
 });
 
-// --- Reactive State for Dropdowns ---
-// Start all menus closed initially. The 'setInitialMenuState' hook will open the correct one.
+// --- REACTIVE STATE ---
+/**
+ * Reactive variables (refs) controlling the open/closed state of each accordion menu.
+ * They are initialized to 'false' (closed) to ensure no menu is automatically open on page load.
+ */
 const isBuildingOpen = ref(false); 
 const isCollegeOpen = ref(false); 
 const isRoomsOpen = ref(false);   
 
-// --- Toggle Function (Accordion Logic) ---
+// --- FUNCTIONS ---
 
+/**
+ * Toggles the state of the clicked menu, implementing **Accordion Logic**.
+ * It ensures that only one menu is open at any time by closing the others.
+ * * @param {string} menuName - The identifier for the menu to toggle ('Building', 'College', or 'Rooms').
+ */
 const toggleMenu = (menuName) => {
+  // Map the string name to the corresponding ref variable
   const menuState = {
     Building: isBuildingOpen,
     College: isCollegeOpen,
@@ -108,33 +124,37 @@ const toggleMenu = (menuName) => {
 
   const currentState = menuState[menuName].value;
   
-  // 1. If open, close it.
+  // 1. If the current menu is already open, click-to-close it.
   if (currentState) {
     menuState[menuName].value = false;
   } else {
-    // 2. If closed, open it and close all others (Accordion)
+    // 2. Close all menus (enforcing the accordion rule).
     isBuildingOpen.value = false;
     isCollegeOpen.value = false;
     isRoomsOpen.value = false;
     
-    // Open the clicked menu
+    // 3. Open the newly clicked menu.
     menuState[menuName].value = true;
   }
 };
 
-// --- Menu Persistence Logic (The New Fix) ---
-
+/**
+ * Implements **URL Persistence Logic** by checking the browser's current path
+ * and automatically opening the relevant parent menu on component mount. 
+ * This keeps the menu "standing by" after navigation/page reload.
+ */
 const setInitialMenuState = () => {
-  // Define which paths belong to which menu
+  // Defines the sub-routes belonging to each parent menu
   const pathMap = {
     Building: ['/BuildingDashboard', '/equipment'],
     College: ['/CollegeDashboard', '/Department'],
     Rooms: ['/room', '/roomtypes'],
   };
 
+  // Get the current URL path
   const currentPath = window.location.pathname;
 
-  // Check if the current URL matches any sub-link
+  // Check the current path against the defined map and set the corresponding state to true
   if (pathMap.Building.includes(currentPath)) {
     isBuildingOpen.value = true;
   } else if (pathMap.College.includes(currentPath)) {
@@ -142,10 +162,12 @@ const setInitialMenuState = () => {
   } else if (pathMap.Rooms.includes(currentPath)) {
     isRoomsOpen.value = true;
   }
-  // All others remain closed (isBuildingOpen, isCollegeOpen, isRoomsOpen are already false)
 };
 
-// Run the persistence logic when the component mounts
+// --- LIFECYCLE HOOKS ---
+/**
+ * `onMounted` hook: Executes the persistence logic immediately after the component is added to the DOM.
+ */
 onMounted(() => {
   setInitialMenuState();
 });

@@ -68,59 +68,7 @@ onUnmounted(() => {
         :class="sidebarOpen ? 'ml-64' : 'ml-20'"
       >
         <div class="p-6 md:p-10">
-          <div class="mb-8 border-b pb-4">
-            <h1 class="text-4xl font-extrabold text-gray-800 mb-2">Room Type Dashboard</h1>
-            <p class="text-lg text-gray-600">Manage and view all available room types in your system. 🏨</p>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-            
-            <div class="bg-white rounded-xl p-6 shadow-md flex justify-between items-center hover:shadow-lg transition duration-200">
-              <div>
-                <p class="text-sm font-medium text-gray-500">Total Rooms</p>
-                <p class="text-4xl font-bold text-gray-900 mt-1">24</p>
-              </div>
-              <div class="bg-blue-100 p-3 rounded-full">
-                <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                </svg>
-              </div>
-            </div>
-
-            <div class="bg-white rounded-xl p-6 shadow-md flex justify-between items-center hover:shadow-lg transition duration-200">
-              <div>
-                <p class="text-sm font-medium text-gray-500">Available</p>
-                <p class="text-4xl font-bold text-green-600 mt-1">18</p>
-              </div>
-              <div class="bg-green-100 p-3 rounded-full relative">
-                <div class="w-4 h-4 bg-green-500 rounded-full availability-dot"></div>
-              </div>
-            </div>
-
-            <div class="bg-white rounded-xl p-6 shadow-md flex justify-between items-center hover:shadow-lg transition duration-200">
-              <div>
-                <p class="text-sm font-medium text-gray-500">Occupied</p>
-                <p class="text-4xl font-bold text-red-600 mt-1">6</p>
-              </div>
-              <div class="bg-red-100 p-3 rounded-full">
-                <div class="w-4 h-4 bg-red-500 rounded-full"></div>
-              </div>
-            </div>
-
-            <div class="bg-white rounded-xl p-6 shadow-md flex justify-between items-center hover:shadow-lg transition duration-200">
-              <div>
-                <p class="text-sm font-medium text-gray-500">Revenue Today</p>
-                <p class="text-4xl font-bold text-purple-600 mt-1">$2,840</p>
-              </div>
-              <div class="bg-purple-100 p-3 rounded-full">
-                <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                </svg>
-              </div>
-            </div>
-          </div>
+       
 
           <h2 class="text-2xl font-bold text-gray-800 mb-6">Room Types Overview</h2>
           <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
