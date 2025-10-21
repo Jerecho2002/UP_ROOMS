@@ -327,7 +327,7 @@ const singleDay = computed(() => {
                 </div>
                 <button 
                     @click="goToToday" 
-                    :class="['p-2 border rounded-md text-sm transition', isToday(currentConfig.date) && currentConfig.mode === 'day' ? 'bg-red-600 text-white' : 'text-gray-700 hover:bg-gray-100']"
+                    :class="['p-2 border rounded-md text-sm transition', isToday(currentConfig.date) && currentConfig.mode === 'day' ? 'bg-[#7A0C23] text-white' : 'text-gray-700 hover:bg-gray-100']"
                 >
                     Today
                 </button>
@@ -346,10 +346,10 @@ const singleDay = computed(() => {
             </h3>
             
             <div class="flex space-x-1 border rounded-md p-0.5 bg-gray-100">
-                <button @click="setMode('list')" :class="['py-1 px-3 text-sm rounded-md transition', currentConfig.mode === 'list' ? 'bg-red-700 shadow text-white' : 'text-gray-700 hover:bg-gray-200']">List</button>
-                <button @click="setMode('month')" :class="['py-1 px-3 text-sm rounded-md transition', currentConfig.mode === 'month' ? 'bg-red-700 shadow text-white' : 'text-gray-700 hover:bg-gray-200']">Month Grid</button>
-                <button @click="setMode('week')" :class="['py-1 px-3 text-sm rounded-md transition', currentConfig.mode === 'week' ? 'bg-red-700 shadow text-white' : 'text-gray-700 hover:bg-gray-200']">Week</button>
-                <button @click="setMode('day')" :class="['py-1 px-3 text-sm rounded-md transition', currentConfig.mode === 'day' ? 'bg-red-700 shadow text-white' : 'text-gray-700 hover:bg-gray-200']">Day</button>
+                <button @click="setMode('list')" :class="['py-1 px-3 text-sm rounded-md transition', currentConfig.mode === 'list' ? 'bg-[#7A0C23] shadow text-white' : 'text-gray-700 hover:bg-gray-200']">List</button>
+                <button @click="setMode('month')" :class="['py-1 px-3 text-sm rounded-md transition', currentConfig.mode === 'month' ? 'bg-[#7A0C23] shadow text-white' : 'text-gray-700 hover:bg-gray-200']">Month Grid</button>
+                <button @click="setMode('week')" :class="['py-1 px-3 text-sm rounded-md transition', currentConfig.mode === 'week' ? 'bg-[#7A0C23] shadow text-white' : 'text-gray-700 hover:bg-gray-200']">Week</button>
+                <button @click="setMode('day')" :class="['py-1 px-3 text-sm rounded-md transition', currentConfig.mode === 'day' ? 'bg-[#7A0C23] shadow text-white' : 'text-gray-700 hover:bg-gray-200']">Day</button>
             </div>
         </div>
         

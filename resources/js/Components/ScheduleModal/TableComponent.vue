@@ -65,7 +65,7 @@ defineExpose({
     <div class="overflow-x-auto bg-white border border-gray-200 rounded-lg shadow-md">
         <table class="min-w-full divide-y divide-gray-200">
             <thead>
-                <tr class="bg-red-700 text-white uppercase text-sm leading-normal">
+                <tr class="bg-[#7A0C23] text-white uppercase text-sm leading-normal">
                     <th class="py-3 px-6 text-left">List</th>
                     <th class="py-3 px-6 text-left">Appointment Day</th>
                     <th class="py-3 px-6 text-left">Time</th>
