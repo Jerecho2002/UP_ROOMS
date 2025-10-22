@@ -17,10 +17,7 @@ Route::get('/MainDashboard', function () {
     return Inertia::render('MainDashboard');
 });
 
-// **********************************************
-// UPDATED: Route for Building Dashboard
-// This now uses the BuildingController to fetch data and render the BuildingsPage
-// **********************************************
+
 Route::get('/BuildingDashboard', function(){
     return Inertia::render('BuildingDashboard');
 });
@@ -59,6 +56,3 @@ Route::get('/room', function () {
 Route::get('/schedule', function () {
     return Inertia::render('schedule');
 });
-// <script setup>... rest of content is frontend and irrelevant in this PHP file
-
-// (Assuming your authentication routes are defined elsewhere)

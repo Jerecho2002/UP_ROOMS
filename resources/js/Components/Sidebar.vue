@@ -11,10 +11,12 @@
     <nav class="space-y-1 text-sm overflow-y-auto">
 
       <div 
+      
         @click="toggleMenu('Building')" 
         class="flex justify-between items-center cursor-pointer px-4 py-2 rounded transition duration-150"
         :class="isBuildingOpen ? 'bg-gray-100 font-semibold text-gray-800' : 'hover:bg-gray-200 text-gray-700'"
       >
+      
         <span>🏢 Building Management</span>
         <svg 
           :class="{'rotate-90': isBuildingOpen}" 
@@ -24,7 +26,7 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
         </svg>
       </div>
-
+       
       <div v-show="isBuildingOpen" class="pl-4 space-y-1 transition-all duration-300 overflow-hidden">
         <a href="/BuildingDashboard" class="block px-4 py-2 text-gray-700 hover:bg-gray-200 rounded transition duration-150">🏢 Building</a>
         <a href="/equipment" class="block px-4 py-2 text-gray-700 hover:bg-gray-200 rounded transition duration-150">⚙️ Equipment</a>
@@ -47,6 +49,7 @@
         </svg>
       </div>
 
+      
       <div v-show="isCollegeOpen" class="pl-4 space-y-1 transition-all duration-300 overflow-hidden">
         <a href="/CollegeDashboard" class="block px-4 py-2 text-gray-700 hover:bg-gray-200 rounded transition duration-150">🏛️ College Dashboard</a>
         <a href="/Department" class="block px-4 py-2 text-gray-700 hover:bg-gray-200 rounded transition duration-150">👥 Department</a>
@@ -75,7 +78,7 @@
       </div>
       
       <hr class="border-gray-200 my-2">
-
+       <a href="/UserAccountPage" class="block px-4 py-2 hover:bg-[#9c1b33] hover:text-white rounded transition duration-150">🤵 User Account</a>
       <a href="/schedule" class="block px-4 py-2 hover:bg-[#9c1b33] hover:text-white rounded transition duration-150">📅 Schedules</a>
       <hr class="border-gray-100 my-1">
       <a href="/Terms" class="block px-4 py-2 hover:bg-[#9c1b33] hover:text-white rounded transition duration-150">📝 Terms</a>

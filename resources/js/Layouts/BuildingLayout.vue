@@ -1,152 +1,142 @@
 <script setup>
 import { ref } from 'vue'
-// NOTE: Assuming '@/Components/Navbar.vue' and '@/Components/Sidebar.vue' are defined.
-import Navbar from '@/Components/Navbar.vue'
+// Assuming you have Navbar and Sidebar components similar to the user account system
+import Navbar from '@/Components/Navbar.vue' 
 import Sidebar from '@/Components/Sidebar.vue'
+import BuildingTable from '@/Components/BuildingModals/BuildingTable.vue'
+import BuildingModal from '@/Components/BuildingModals/BuildingModal.vue' // <-- PATH FIXED
 
-// ----------------------------------------------
-// Sidebar toggle state and method
-// ----------------------------------------------
+// --- Data State (Master Array) ---
+const nextId = ref(6);
+const buildings = ref([
+    {
+        id: 1,
+        name: 'Main Campus Admin',
+        address: '123 University Ave, City Center',
+        total_space: '5,000 sq ft',
+        lift: 'Yes (2)',
+        parking: true,
+    },
+    {
+        id: 2,
+        name: 'Science & Tech Annex',
+        address: '456 Innovation Rd, North Side',
+        total_space: '8,200 sq ft',
+        lift: 'Yes (4)',
+        parking: true,
+    },
+    {
+        id: 3,
+        name: 'Dormitory Delta',
+        address: '789 Residential St, East Wing',
+        total_space: '12,000 sq ft',
+        lift: 'No',
+        parking: false,
+    },
+    {
+        id: 4,
+        name: 'Library Hub',
+        address: '202 Central Plaza, Downtown',
+        total_space: '3,500 sq ft',
+        lift: 'Yes (1)',
+        parking: true,
+    },
+    {
+        id: 5,
+        name: 'Art Studio Block',
+        address: '301 Creative Lane, West End',
+        total_space: '4,100 sq ft',
+        lift: 'No',
+        parking: false,
+    },
+]);
 
-// Controls visibility of the Sidebar component
+
+// --- Layout State (Optional, based on your UI needs) ---
 const sidebarVisible = ref(true)
-
-// Toggles sidebar visibility when called
 const toggleSidebar = () => {
-  sidebarVisible.value = !sidebarVisible.value
+    sidebarVisible.value = !sidebarVisible.value
 }
 
-// ----------------------------------------------
-// Props definition to receive data from Laravel backend
-// ----------------------------------------------
+// --- Modal State ---
+const isModalVisible = ref(false)
+const modalType = ref(null) // 'add', 'view', 'edit', 'delete'
+const modalData = ref(null) // The building object to be viewed/edited/deleted
 
-// Define expected prop 'buildings' which is an array of building objects
-const props = defineProps({
-  buildings: {
-    type: Array,
-    required: true,
-    default: () => []
-  }
-})
+const handleOpenModal = (type, data = null) => {
+    modalType.value = type
+    modalData.value = data
+    isModalVisible.value = true
+}
 
-// Extract 'buildings' from props for easier use in template
-const buildings = props.buildings
+const handleCloseModal = () => {
+    isModalVisible.value = false
+    modalData.value = null
+    modalType.value = null
+}
+
+// --- CRUD Operations ---
+
+const handleDataUpdated = (data, type) => {
+    switch (type) {
+        case 'add':
+            addBuilding(data);
+            break;
+        case 'edit':
+            updateBuilding(data);
+            break;
+        case 'delete':
+            deleteBuilding(data.id);
+            break;
+    }
+    handleCloseModal();
+}
+
+const addBuilding = (newBuilding) => {
+    // Assign a new ID and ensure parking is a boolean
+    newBuilding.id = nextId.value++;
+    newBuilding.parking = newBuilding.parking === 'true'; 
+    buildings.value.push(newBuilding);
+    console.log('Building added:', newBuilding.name);
+};
+
+const updateBuilding = (updatedBuilding) => {
+    const index = buildings.value.findIndex(b => b.id === updatedBuilding.id);
+    if (index !== -1) {
+        // Ensure parking is converted to a boolean if coming from form
+        updatedBuilding.parking = updatedBuilding.parking === 'true' || updatedBuilding.parking === true;
+        buildings.value[index] = updatedBuilding;
+        console.log('Building updated:', updatedBuilding.name);
+    }
+};
+
+const deleteBuilding = (buildingId) => {
+    buildings.value = buildings.value.filter(b => b.id !== buildingId);
+    console.log(`Building with ID ${buildingId} deleted.`);
+};
+
 </script>
 
 <template>
-  <div class="bg-gray-100 font-sans antialiased">
-    <!-- NAVBAR -->
-    <!-- Navbar emits an event 'toggleSidebar' when the toggle button is clicked -->
-    <Navbar @toggleSidebar="toggleSidebar" />
-
-    <!-- MAIN LAYOUT Container -->
-    <div class="flex w-full min-h-screen transition-all duration-300">
-      
-      <!-- SIDEBAR -->
-      <!-- Sidebar visibility controlled by 'sidebarVisible' reactive state -->
-      <!-- NOTE: We assume Sidebar has a fixed position and a width (e.g., w-64) -->
-      <Sidebar v-show="sidebarVisible" class="fixed top-14 left-0 h-full z-20 w-64" />
-
-      <!-- PAGE CONTENT -->
-      <!-- The main content dynamically changes its margin (ml-64) to shift when the sidebar is visible, 
-           and uses the transition class for a smooth effect. -->
-      <main
-        id="mainContent"
-        :class="{'lg:ml-64': sidebarVisible}"
-        class="flex-1 mt-14 px-6 py-6 bg-gray-50 transition-all duration-300 ease-in-out"
-      >
+    <div class="bg-gray-100 font-sans min-h-screen">
+        <Navbar @toggleSidebar="toggleSidebar" />
         
-        <!-- Page Title & Search Section -->
-        <div class="flex items-center justify-between mb-6">
-          
-          <!-- Title and Breadcrumb -->
-          <div>
-            <h1 class="text-xl font-bold text-gray-800">Building</h1>
-            <div class="text-xs text-gray-500">UPCEBU › Buildings</div>
-          </div>
+        <div class="flex pt-14 min-h-screen transition-all duration-300">
+            <Sidebar v-show="sidebarVisible" class="fixed top-14 left-0 h-full z-20 w-64 lg:relative" />
 
-          <!-- Search Input and Add Button -->
-          <div class="flex items-center space-x-2">
-            
-            <!-- Search input (functionality to be added) -->
-            <input
-              type="text"
-              placeholder="SEARCH"
-              class="border border-gray-300 rounded-full px-4 py-2 w-72 focus:outline-none focus:ring-2 focus:ring-sky-400"
-            />
-
-            <!-- Add button (action to be added, e.g., open form modal) -->
-            <button
-              class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-md shadow transition duration-150"
-            >
-              Add
-            </button>
-          </div>
+            <main id="main" class="flex-1 transition-all p-6">
+                <!-- Pass the buildings data and handle modal opening -->
+                <h2 class="text-3xl font-bold mb-6 text-gray-800">Building Management Dashboard</h2>
+                <BuildingTable :buildings="buildings" @openModal="handleOpenModal" />
+            </main>
         </div>
 
-        <!-- Building Table -->
-        <div class="bg-white rounded-lg shadow overflow-hidden">
-          
-          <!-- Make table horizontally scrollable on small screens -->
-          <div class="overflow-x-auto">
-            
-            <table class="min-w-full text-sm text-gray-800">
-              <thead class="bg-[#7A0C23] text-white">
-                <tr>
-                  <!-- Table Headers -->
-                  <th class="px-6 py-3 text-left font-semibold">Name</th>
-                  <th class="px-6 py-3 text-left font-semibold">Address</th>
-                  <th class="px-6 py-3 text-center font-semibold">Total Space</th>
-                  <th class="px-6 py-3 text-center font-semibold">Lift</th>
-                  <th class="px-6 py-3 text-center font-semibold">Parking</th>
-                  <th class="px-6 py-3 text-center font-semibold">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                <!-- Loop over buildings array to display each building -->
-                <tr
-                  v-for="b in buildings"
-                  :key="b.id"
-                  class="odd:bg-white even:bg-gray-50 hover:bg-gray-100 border-b border-gray-200"
-                >
-                  <td class="px-6 py-3 font-medium">{{ b.name }}</td>
-                  <td class="px-6 py-3 text-gray-600">{{ b.address }}</td>
-                  <td class="px-6 py-3 text-center">{{ b.total_space }}</td>
-                  <td class="px-6 py-3 text-center">{{ b.lift }}</td>
-                  <td class="px-6 py-3 text-center">
-                    <!-- Display 'Yes' or 'No' based on boolean parking value -->
-                    <span :class="b.parking ? 'text-green-600 font-semibold' : 'text-red-500'">
-                      {{ b.parking ? 'Yes' : 'No' }}
-                    </span>
-                  </td>
-                  <td class="px-6 py-3 text-center">
-                    <!-- Placeholder for future action buttons (edit/delete) -->
-                    <div class="flex justify-center space-x-2">
-                        <button class="text-blue-500 hover:text-blue-700 text-lg">
-                            <!-- Edit Icon (using a simple SVG as a placeholder) -->
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zm-7.586 11l-2 2h4l9.293-9.293-2.828-2.828L5 14.004v-2.004H3v4h4l-2 2H3v-2z" />
-                            </svg>
-                        </button>
-                        <button class="text-red-500 hover:text-red-700 text-lg">
-                            <!-- Delete Icon (using a simple SVG as a placeholder) -->
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 11a1 1 0 10-2 0v5a1 1 0 102 0v-5zm6-1a1 1 0 00-1 1v5a1 1 0 102 0v-5a1 1 0 00-1-1z" clip-rule="evenodd" />
-                            </svg>
-                        </button>
-                    </div>
-                  </td>
-                </tr>
-                <!-- Fallback for no data -->
-                <tr v-if="buildings.length === 0">
-                    <td colspan="6" class="text-center py-6 text-gray-500">No building data available.</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-        </div>
-      </main>
+        <BuildingModal
+            :isVisible="isModalVisible"
+            :type="modalType"
+            :building="modalData"
+            @close="handleCloseModal"
+            @dataUpdated="handleDataUpdated"
+        />
     </div>
-  </div>
 </template>

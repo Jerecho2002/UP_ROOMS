@@ -3,114 +3,147 @@ import Sidebar from '@/Components/Sidebar.vue'
 import Navbar from '@/Components/Navbar.vue'
 import { ref } from 'vue'
 
-// Sidebar toggle
+// Import the new components
+import DepartmentTable from '@/Components/DepartmentModals/DepartmentTable.vue'
+import DepartmentModals from '@/Components/DepartmentModals/DepartmentModals.vue'
+
+// Sidebar toggle state and method
 const sidebarVisible = ref(true)
 const toggleSidebar = () => {
-  sidebarVisible.value = !sidebarVisible.value
+    sidebarVisible.value = !sidebarVisible.value
 }
+
+// === DATA MOCKUP (Moved from DepartmentTable.vue to the parent) ===
+const users = ref(
+    Array.from({ length: 25 }, (_, i) => ({
+        id: i + 1,
+        name: `User ${i + 1}`,
+        email: `user${i + 1}@example.com`,
+        phone: `09123456${(i + 1).toString().padStart(2, '0')}`,
+        profession: (i + 1) % 2 === 0 ? 'Instructor' : 'Student',
+    }))
+);
+
+const lastMonthUsers = ref(
+    Array.from({ length: 25 }, (_, i) => ({
+        email: `user${i + 1}@example.com`,
+        userId: `UID${1000 + i + 1}`,
+        month: 'October',
+        yearStart: 2020 + ((i + 1) % 5),
+        yearEnd: 2025 + ((i + 1) % 3),
+    }))
+);
+
+// === MODAL COORDINATION LOGIC ===
+
+// 1. Template ref for DepartmentModals component
+const modalsRef = ref(null);
+
+// 2. Function passed to DepartmentTable.vue to open the modal
+const openDepartmentModal = (type, data, table) => {
+    if (modalsRef.value && modalsRef.value.openModal) {
+        modalsRef.value.openModal(type, data, table);
+    }
+};
+
+// 3. Handlers for modal events (Emitted from DepartmentModals.vue)
+const handleUpdateData = (payload) => {
+    const { table, data } = payload;
+    const source = table === 'users' ? users.value : lastMonthUsers.value;
+    
+    let index;
+    if (table === 'users') {
+        index = source.findIndex(item => item.id === data.id);
+    } else { // lastMonthUsers
+        index = source.findIndex(item => item.userId === data.userId);
+    }
+
+    if (index !== -1) {
+        // Perform the update
+        Object.assign(source[index], data);
+        console.log(`[Layout Update Success] Data updated for ${table}.`);
+    } else {
+        console.error(`Item not found for update in ${table}.`);
+    }
+};
+
+const handleDeleteData = (payload) => {
+    const { table, data } = payload;
+    const sourceRef = table === 'users' ? users : lastMonthUsers;
+
+    // Filter the data source to remove the item
+    if (table === 'users') {
+        sourceRef.value = sourceRef.value.filter(item => item.id !== data.id);
+    } else { // lastMonthUsers
+        sourceRef.value = sourceRef.value.filter(item => item.userId !== data.userId);
+    }
+    
+    console.log(`[Layout Delete Success] Item deleted from ${table}.`);
+};
+
 </script>
 
 <template>
-  <div class="flex pt-14 min-h-screen transition-all duration-300">
-    <Sidebar v-show="sidebarVisible" />
+    <div class="flex-1 flex flex-col h-full overflow-hidden">
+        <Navbar @toggleSidebar="toggleSidebar" />
+        
+        <div class="flex pt-14 transition-all duration-300">
+            <Sidebar v-show="sidebarVisible" class="fixed top-14 left-0 h-full z-20 w-64 lg:relative" />
 
-    <div class="flex-1 flex flex-col">
-      <Navbar @toggleSidebar="toggleSidebar" />
+            <main class="flex-1 p-6 overflow-y-auto">
+                <h1 class="text-3xl font-extrabold text-[#7A0C23] mb-8">Department Dashboard</h1>
 
-      <main class="p-6 overflow-y-auto">
-        <!-- STATISTIC CARDS -->
-        <div class="flex flex-wrap gap-6 mb-10">
-          <div class="flex-1 min-w-[200px] rounded-xl text-center shadow-lg overflow-hidden">
-            <div class="bg-cyan-500 text-white p-3">
-              <h3 class="text-lg font-semibold">Total Accounts</h3>
-            </div>
-            <div class="bg-white p-3">
-              <p class="text-3xl font-bold text-gray-800">20</p>
-            </div>
-          </div>
-          <div class="flex-1 min-w-[200px] rounded-xl text-center shadow-lg overflow-hidden">
-            <div class="bg-purple-600 text-white p-3">
-              <h3 class="text-lg font-semibold">Total Departments</h3>
-            </div>
-            <div class="bg-white p-3">
-              <p class="text-3xl font-bold text-gray-800">5</p>
-            </div>
-          </div>
-          <div class="flex-1 min-w-[200px] rounded-xl text-center shadow-lg overflow-hidden">
-            <div class="bg-orange-500 text-white p-3">
-              <h3 class="text-lg font-semibold">Total Colleges</h3>
-            </div>
-            <div class="bg-white p-3">
-              <p class="text-3xl font-bold text-gray-800">3</p>
-            </div>
-          </div>
-          <div class="flex-1 min-w-[200px] rounded-xl text-center shadow-lg overflow-hidden">
-            <div class="bg-red-500 text-white p-3">
-              <h3 class="text-lg font-semibold">Total Rooms</h3>
-            </div>
-            <div class="bg-white p-3">
-              <p class="text-3xl font-bold text-gray-800">10</p>
-            </div>
-          </div>
+                <div class="flex flex-wrap gap-6 mb-10">
+                    <div class="flex-1 min-w-[200px] rounded-xl text-center shadow-lg overflow-hidden transition-transform duration-200 hover:scale-[1.02]">
+                        <div class="bg-cyan-600 text-white p-3">
+                            <h3 class="text-lg font-semibold">Total Accounts</h3>
+                        </div>
+                        <div class="bg-white p-3">
+                            <p class="text-3xl font-bold text-gray-800">20</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex-1 min-w-[200px] rounded-xl text-center shadow-lg overflow-hidden transition-transform duration-200 hover:scale-[1.02]">
+                        <div class="bg-purple-700 text-white p-3">
+                            <h3 class="text-lg font-semibold">Total Departments</h3>
+                        </div>
+                        <div class="bg-white p-3">
+                            <p class="text-3xl font-bold text-gray-800">5</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex-1 min-w-[200px] rounded-xl text-center shadow-lg overflow-hidden transition-transform duration-200 hover:scale-[1.02]">
+                        <div class="bg-orange-600 text-white p-3">
+                            <h3 class="text-lg font-semibold">Total Colleges</h3>
+                        </div>
+                        <div class="bg-white p-3">
+                            <p class="text-3xl font-bold text-gray-800">3</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex-1 min-w-[200px] rounded-xl text-center shadow-lg overflow-hidden transition-transform duration-200 hover:scale-[1.02]">
+                        <div class="bg-red-600 text-white p-3">
+                            <h3 class="text-lg font-semibold">Total Rooms</h3>
+                        </div>
+                        <div class="bg-white p-3">
+                            <p class="text-3xl font-bold text-gray-800">10</p>
+                        </div>
+                    </div>
+                </div>
+
+                <DepartmentTable 
+                    :users="users"
+                    :lastMonthUsers="lastMonthUsers"
+                    :openModal="openDepartmentModal"
+                />
+                
+                <DepartmentModals 
+                    ref="modalsRef" 
+                    @updateData="handleUpdateData"
+                    @deleteData="handleDeleteData"
+                />
+
+            </main>
         </div>
-
-        <!-- USER DETAILS TABLE -->
-        <div class="bg-white shadow rounded-lg p-6 mb-6">
-          <h2 class="font-bold text-lg mb-4">User Details</h2>
-
-          <!-- Scrollable container -->
-          <div class="overflow-y-auto max-h-64 border rounded">
-            <table class="w-full text-sm border-collapse">
-              <thead class="bg-[#9c1b33] text-white">
-                <tr>
-                  <th class="p-2">User</th>
-                  <th class="p-2">Email-ID</th>
-                  <th class="p-2">Phone</th>
-                  <th class="p-2">Profession</th>
-                </tr>
-              </thead>
-              <tbody class="text-center">
-                <tr v-for="i in 25" :key="i">
-                  <td class="p-2">User {{ i }}</td>
-                  <td class="p-2">user{{ i }}@example.com</td>
-                  <td class="p-2">09123456{{ i.toString().padStart(2, '0') }}</td>
-                  <td class="p-2">{{ i % 2 === 0 ? 'Instructor' : 'Student' }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- LAST MONTH CREATED USER IDs -->
-        <div class="bg-white shadow rounded-lg p-6">
-          <h2 class="font-bold text-lg mb-4">Last Month Created User IDs</h2>
-
-          <!-- Scrollable container -->
-          <div class="overflow-y-auto max-h-64 border rounded">
-            <table class="w-full text-sm border-collapse">
-              <thead class="bg-[#9c1b33] text-white">
-                <tr>
-                  <th class="p-2">Email</th>
-                  <th class="p-2">User-ID</th>
-                  <th class="p-2">Month</th>
-                  <th class="p-2">Year-of-start</th>
-                  <th class="p-2">Year-of-end</th>
-                </tr>
-              </thead>
-              <tbody class="text-center">
-                <tr v-for="i in 25" :key="i">
-                  <td class="p-2">user{{ i }}@example.com</td>
-                  <td class="p-2">UID{{ 1000 + i }}</td>
-                  <td class="p-2">October</td>
-                  <td class="p-2">{{ 2020 + (i % 5) }}</td>
-                  <td class="p-2">{{ 2025 + (i % 3) }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-      </main>
     </div>
-  </div>
 </template>
