@@ -3,9 +3,9 @@ import { ref, computed } from 'vue'
 
 // --- Mock Data: Simulates the records fetched from an API ---
 const mockRecordsData = [
-    { id: 1, name: 'MID TERM', status: 'expired', startDate: '2024-09-15', endDate: '2026-09-15' },
+    { id: 1, name: 'MID TERM', status: 'NotActive', startDate: '2024-09-15', endDate: '2026-09-15' },
     { id: 2, name: 'FINALS', status: 'active', startDate: '2025-01-15', endDate: '2027-01-15' },
-    { id: 3, name: 'SUMMER SEMESTER', status: 'not_registered', startDate: '2025-06-01', endDate: '2025-07-31' },
+    { id: 3, name: 'SUMMER SEMESTER', status: 'NotActive', startDate: '2025-06-01', endDate: '2025-07-31' },
     { id: 4, name: 'ACADEMIC YEAR 2026', status: 'active', startDate: '2026-09-01', endDate: '2027-05-30' },
 ];
 // --------------------------------------------------------
@@ -22,9 +22,9 @@ const recordToDelete = ref(null);
 
 // --- Status Options Mapping (for the modal) ---
 const statusOptions = [
-    { value: 'active', label: 'Registered' },
-    { value: 'expired', label: 'Expired' },
-    { value: 'not_registered', label: 'Unregistered' },
+    { value: 'active', label: 'Active' },
+    { value: 'NotActive', label: 'Not Active' },
+    
 ];
 
 // Function to determine the display class and text for the status
@@ -32,22 +32,17 @@ const getStatusDisplay = (status) => {
     switch (status) {
         case 'active':
             return {
-                text: 'Registered',
+                text: 'Active',
                 // Uses a light green background and darker text/border
                 class: 'bg-green-100 text-green-800 border border-green-400 hover:bg-green-200'
             };
-        case 'expired':
+        case 'NotActive':
             return {
-                text: 'Expired',
+                text: 'Not Active',
                 // Uses a light red background and darker text/border
                 class: 'bg-red-100 text-red-800 border border-red-400 hover:bg-red-200'
             };
-        case 'not_registered':
-            return {
-                text: 'Unregistered',
-                // Uses a light yellow/orange for the new status
-                class: 'bg-yellow-100 text-yellow-800 border border-yellow-400 hover:bg-yellow-200'
-            };
+       
         default:
             return {
                 text: 'Unknown',

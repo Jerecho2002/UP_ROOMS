@@ -1,3 +1,4 @@
+// TableComponent.vue
 <script setup>
 import { ref } from 'vue';
 
@@ -5,7 +6,6 @@ import { ref } from 'vue';
 const emit = defineEmits(['view-details']);
 
 // Schedule data stored in a reactive reference.
-// The structure is kept as-is, as the parent will be responsible for transformation.
 const scheduleItems = ref([
     {
         id: 1,
@@ -53,9 +53,12 @@ const viewDetails = (item) => {
 const deleteItem = (itemId) => {
     // Filter out the item with the matching ID
     scheduleItems.value = scheduleItems.value.filter(item => item.id !== itemId);
+    // Note: Deleting an item here won't immediately update the calendar view
+    // until the parent's computed property re-runs, which happens automatically
+    // when scheduleItems.value changes.
 };
 
-// Expose the scheduleItems so the parent can access the data for the CalendarView.
+// Expose the scheduleItems so the parent can access the data for transformation.
 defineExpose({
     scheduleItems
 });
@@ -125,7 +128,3 @@ defineExpose({
         </table>
     </div>
 </template>
-
-<style scoped>
-/* Scoped styles for the table */
-</style>
