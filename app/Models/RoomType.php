@@ -6,15 +6,18 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Building extends Model
+class RoomType extends Model
 {
     use HasFactory;
 
     // Custom table name
-    protected $table = 'buildings';
+    protected $table = 'room_types';
 
     // Custom primary key
-    protected $primaryKey = 'building_id';
+    protected $primaryKey = 'room_type_id';
+
+    // Disable default timestamps since they are not in the migration for this table
+    public $timestamps = false;
 
     /**
      * The attributes that aren't mass assignable.
@@ -22,18 +25,18 @@ class Building extends Model
     protected $guarded = [];
 
     /**
-     * Get the Rooms belonging to the Building.
+     * Get the Rooms that are of this type.
      */
     public function rooms(): HasMany
     {
-        return $this->hasMany(Room::class, 'building_id', 'building_id');
+        return $this->hasMany(Room::class, 'room_type_id', 'room_type_id');
     }
 
     /**
-     * Get the Equipment located in this Building.
+     * Get the Equipment associated with this Room Type.
      */
     public function equipment(): HasMany
     {
-        return $this->hasMany(Equipment::class, 'building_id', 'building_id');
+        return $this->hasMany(Equipment::class, 'room_type_id', 'room_type_id');
     }
 }

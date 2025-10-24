@@ -6,30 +6,33 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /**
+     * Run the migrations.
+     */
     public function up(): void
     {
        Schema::create('equipment', function (Blueprint $table) {
             $table->id('equipment_id');
-            $table->unsignedBigInteger('facility_id')->nullable();
+    
             $table->string('equipment_name', 100);
             $table->text('description')->nullable();
             $table->integer('quantity')->nullable();
-            $table->unsignedBigInteger('building_id')->nullable();
-            $table->unsignedBigInteger('college_id')->nullable();
+            
+            // ✅ Data type should be unsignedBigInteger to match the referenced table's primary key (ID)
             $table->unsignedBigInteger('room_type_id')->nullable();
-            $table->integer('property_id')->nullable(); // ✅ new column
+            
+            $table->unsignedBigInteger('property_id')->nullable(); 
 
-            // ✅ removed connection to user_account
-            // $table->unsignedBigInteger('created_by')->nullable();
-            // $table->foreign('created_by')->references('user_id')->on('user_account')->onDelete('set null');
-
-            $table->foreign('facility_id')->references('facility_id')->on('facilities')->onDelete('set null');
-            $table->foreign('building_id')->references('building_id')->on('buildings')->onDelete('set null');
-            $table->foreign('college_id')->references('college_id')->on('colleges')->onDelete('set null');
+            // Foreign key for room_type_id - looks correct assuming room_types exists
             $table->foreign('room_type_id')->references('room_type_id')->on('room_types')->onDelete('set null');
+            
+        
         });
     }
 
+    /**
+     * Reverse the migrations.
+     */
     public function down(): void
     {
         Schema::dropIfExists('equipment');
