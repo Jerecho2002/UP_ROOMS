@@ -1,58 +1,40 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\Room;
-use App\Models\Building;
-use App\Models\College;
-use App\Models\RoomType;
+use App\Models\Room; // Assuming you have a Room model
+use Inertia\Inertia;
 
-class roomcontroller extends Controller
+class RoomController extends Controller
 {
-    public function index(Request $request)
+    /**
+     * Store a newly created room resource in storage.
+     * Corresponds to the 'save' event from AddRoomModal.vue
+     */
+    public function store(Request $request)
     {
-        $search = $request->input('search');
+        // 1. Validation
+        $validated = $request->validate([
+            'room' => 'required|string|max:255',
+            'capacity' => 'required|integer|min:1',
+            'building' => 'nullable|string|max:255',
+            'college' => 'nullable|string|max:255',
+            'location' => 'nullable|string|max:255',
+            'roomType' => 'nullable|string|max:255',
+        ]);
 
-        $rooms = Room::with(['building', 'college', 'roomType'])
-            ->when($search, function ($query, $search) {
-                $query->where('room_name', 'like', "%$search%");
-            })
-            ->get();
+        // 2. Database Creation
+        Room::create([
+            'name' => $validated['room'],
+            'capacity' => $validated['capacity'],
+            'building_name' => $validated['building'],
+            'college_name' => $validated['college'],
+            'location_details' => $validated['location'],
+            'room_type' => $validated['roomType'],
+        ]);
 
-        return view('rooms.index', compact('rooms'));
-    }
-
-    public function show($id)
-    {
-        $room = Room::with(['building', 'college', 'roomType'])->findOrFail($id);
-        return view('rooms.show', compact('room'));
-    }
-
-    public function edit($id)
-    {
-        $room = Room::findOrFail($id);
-        $buildings = Building::all();
-        $colleges = College::all();
-        $roomTypes = RoomType::all();
-
-        return view('rooms.edit', compact('room', 'buildings', 'colleges', 'roomTypes'));
-    }
-
-    public function update(Request $request, $id)
-    {
-        $room = Room::findOrFail($id);
-
-        $room->update($request->all());
-
-        return redirect()->route('rooms.index')->with('success', 'Room updated successfully.');
-    }
-
-    public function destroy($id)
-    {
-        $room = Room::findOrFail($id);
-        $room->delete();
-
-        return redirect()->route('rooms.index')->with('success', 'Room deleted successfully.');
+        // 3. Redirection (Inertia refresh)
+        return back()->with('success', 'Room added successfully.');
     }
 }

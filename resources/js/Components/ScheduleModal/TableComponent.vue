@@ -1,4 +1,3 @@
-// TableComponent.vue
 <script setup>
 import { ref } from 'vue';
 
@@ -11,21 +10,21 @@ const scheduleItems = ref([
         id: 1,
         list: 'Training',
         title: 'Training Session', 
-        appointmentDay: '2025-10-21', // Example current date
-        time: '10:00 AM-12:00 PM',
+        appointmentDay: '2025-10-21', // YYYY-MM-DD format
+        time: '10:00 AM-12:00 PM', // HH:MM AM/PM-HH:MM AM/PM format
     },
     {
         id: 2,
         list: 'Meeting Webinar',
         title: 'Project Kickoff Webinar', 
-        appointmentDay: '2025-10-21', // Example current date
+        appointmentDay: '2025-10-21', 
         time: '02:30 PM-03:30 PM',
     },
     {
         id: 3,
         list: 'External Review',
         title: 'Q4 Budget Review', 
-        appointmentDay: '2025-10-25', // Another date
+        appointmentDay: '2025-10-25', 
         time: '09:00 AM-11:00 AM',
     },
     {
@@ -53,12 +52,10 @@ const viewDetails = (item) => {
 const deleteItem = (itemId) => {
     // Filter out the item with the matching ID
     scheduleItems.value = scheduleItems.value.filter(item => item.id !== itemId);
-    // Note: Deleting an item here won't immediately update the calendar view
-    // until the parent's computed property re-runs, which happens automatically
-    // when scheduleItems.value changes.
 };
 
-// Expose the scheduleItems so the parent can access the data for transformation.
+// **CRITICAL STEP:** Expose the scheduleItems so the parent component (ScheduleLayout.vue) 
+// can access the data for conversion into calendar events.
 defineExpose({
     scheduleItems
 });

@@ -1,8 +1,9 @@
 <?php
-
+use App\Http\Controllers\Controller;
+use App\Http\Controllers\RoomController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserAccountController;
-use App\Http\Controllers\RoomController;
+use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\BuildingController; // <-- Ensure this is used
 use App\Http\Controllers\MainDashboardController;
 use App\Http\Controllers\CollegeDashboardController;
@@ -56,3 +57,8 @@ Route::get('/room', function () {
 Route::get('/schedule', function () {
     return Inertia::render('schedule');
 });
+
+
+
+
+
