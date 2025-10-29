@@ -1,5 +1,7 @@
 <?php
 
+// create_rooms_table.php (No changes needed, looks correct)
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -16,12 +18,14 @@ return new class extends Migration
             $table->integer('capacity')->nullable();
             $table->string('location', 100)->nullable();
             $table->unsignedBigInteger('room_type_id')->nullable();
-            $table->unsignedBigInteger('created_by')->nullable();
+            $table->unsignedBigInteger('user_account_id')->nullable();
 
-            $table->foreign('building_id')->references('id')->on('buildings')->onDelete('set null');
-            $table->foreign('college_id')->references('id')->on('colleges')->onDelete('set null');
-            $table->foreign('room_type_id')->references('id')->on('room_types')->onDelete('set null');
-            $table->foreign('created_by')->references('id')->on('user_accounts')->onDelete('set null');
+            $table->foreign('building_id')->references('id')->on('buildings')->onDelete('cascade');
+            $table->foreign('college_id')->references('id')->on('colleges')->onDelete('cascade');
+            $table->foreign('room_type_id')->references('id')->on('room_types')->onDelete('cascade');
+            $table->foreign('user_account_id')->references('id')->on('user_accounts')->onDelete('cascade');
+
+            $table->timestamps();
         });
     }
 

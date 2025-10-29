@@ -1,33 +1,28 @@
 <?php
-
+use App\Http\Controllers\Controller;
+use App\Http\Controllers\RoomController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserAccountController;
-use App\Http\Controllers\RoomController;
-use App\Http\Controllers\BuildingController;
+use App\Http\Controllers\ScheduleController;
+use App\Http\Controllers\BuildingController; // <-- Ensure this is used
 use App\Http\Controllers\MainDashboardController;
 use App\Http\Controllers\CollegeDashboardController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
- use App\Models\Building;
+use App\Models\Building;
 
 
+// Existing Routes
+Route::get('/MainDashboard', [MainDashboardController::class, 'index'])->name('main.index');
 
-Route::get('/MainDashboard', function () {
-    return Inertia::render('MainDashboard');
-});
-
-
-
-
-Route::get('/BuildingDashboard', function () {
+Route::get('/BuildingDashboard', function(){
     return Inertia::render('BuildingDashboard');
 });
 
-Route::get('/Terms',  function(){
+Route::get('/Terms', function(){
     return Inertia::render('Terms');
 });
-
 
 Route::get('/CollegeDashboard', function () {
     return Inertia::render('CollegeDashboard');
@@ -59,20 +54,8 @@ Route::get('/room', function () {
 Route::get('/schedule', function () {
     return Inertia::render('schedule');
 });
-/*
-|------------------------------------------------------QA--------------------
-| Authentication + Profile routes
-|--------------------------------------------------------------------------
-*/
-Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
-
-Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-});
 
 
-require __DIR__.'/auth.php';
+
+
+

@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed, watchEffect } from "vue";
+import { usePage } from '@inertiajs/vue3';
 import Navbar from "@/Components/Navbar.vue"; // Navbar component import
 import Sidebar from "@/Components/Sidebar.vue"; // Sidebar component import
 
@@ -98,12 +99,20 @@ defineProps({
     ],
   },
 });
+
+const page = usePage();
+const rooms = computed(() => page.props.rooms)
 </script>
 
 <template>
- <div class="flex pt-14 min-h-screen transition-all duration-300">
-  
+  <div v-for="room in rooms.data">
+    <p>{{ room.room_name }}</p>
+    <div v-for="sched in room.schedules">
+        <p>{{ sched.start_time }}</p>
+    </div>
+  </div>
 
+ <div class="flex pt-14 min-h-screen transition-all duration-300">
   
     <Navbar 
       @toggleSidebar="toggleSidebar" 
@@ -161,7 +170,6 @@ defineProps({
               </div>
             </div>
           </div>
-
           <div class="overflow-x-auto bg-white rounded-lg shadow-xl mb-6">
             <table class="min-w-full text-sm text-center border-collapse">
               <thead class="bg-[#800020] text-white">
@@ -178,22 +186,21 @@ defineProps({
               </thead>
 
               <tbody class="divide-y divide-gray-200">
-                <tr v-if="tableData.length === 0">
+                <tr v-if="rooms.length === 0">
                   <td colspan="8" class="px-4 py-6 text-gray-500 italic">No records found.</td>
                 </tr>
-
                 <tr
-                  v-for="item in tableData"
-                  :key="item.id"
+                  v-for="room in rooms.data"
+                  :key="room.id"
                   class="odd:bg-white even:bg-gray-50 hover:bg-gray-100"
                 >
-                  <td class="px-4 py-3 text-left">{{ item.name }}</td>
-                  <td class="px-4 py-3 text-left hidden sm:table-cell">{{ item.school }}</td>
-                  <td class="px-4 py-3 hidden md:table-cell">{{ item.age }}</td>
-                  <td class="px-4 py-3 hidden md:table-cell">{{ item.address }}</td>
-                  <td class="px-4 py-3 hidden md:table-cell">{{ item.room }}</td>
-                  <td class="px-4 py-3 hidden lg:table-cell">{{ item.start }}</td>
-                  <td class="px-4 py-3 hidden lg:table-cell">{{ item.end }}</td>
+                  <td class="px-4 py-3 text-left">{{ room.user_account.username }}</td>
+                  <td class="px-4 py-3 text-left hidden sm:table-cell">{{ room.college.college_name }}</td>
+                  <td class="px-4 py-3 hidden md:table-cell">N/A</td>
+                  <td class="px-4 py-3 hidden md:table-cell">N/A</td>
+                  <td class="px-4 py-3 hidden md:table-cell">{{ room.room_name }}</td>
+                  <td class="px-4 py-3 hidden lg:table-cell"> {{ room.schedules[0]?.start_time ?? 'N/A' }}</td>
+                  <td class="px-4 py-3 hidden lg:table-cell"> {{ room.schedules[0]?.end_time ?? 'N/A' }}</td>
                   <td class="px-4 py-3 space-x-2">
                     <a href="#" class="text-green-500 hover:text-green-700" title="Edit">✏️</a>
                     <a href="#" class="text-red-500 hover:text-red-700" title="Delete">🗑️</a>

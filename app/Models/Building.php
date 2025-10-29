@@ -9,11 +9,17 @@ class Building extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'name',
-        'address',
-        'total_space',
-        'lift',
-        'parking',
-    ];
+    protected $table = 'buildings';
+    protected $fillable = ['building_name', 'address', 'description'];
+
+    // 🔗 Relations
+    public function rooms()
+    {
+        return $this->hasMany(Room::class);
+    }
+
+    public function equipment()
+    {
+        return $this->hasMany(Equipment::class);
+    }
 }

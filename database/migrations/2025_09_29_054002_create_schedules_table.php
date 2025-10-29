@@ -16,9 +16,10 @@ return new class extends Migration
             $table->time('start_time');
             $table->time('end_time');
             $table->string('cfic_id', 100)->nullable();
-            // ✅ cannot be NULL
 
             $table->foreign('room_id')->references('id')->on('rooms')->onDelete('cascade');
+
+            $table->timestamps();
         });
     }
 

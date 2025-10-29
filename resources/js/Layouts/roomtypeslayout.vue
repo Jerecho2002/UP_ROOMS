@@ -1,52 +1,145 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref } from 'vue';
 
-// --- Component Imports ---
-// Assuming these components are correctly defined and imported
-import Navbar from "@/Components/Navbar.vue";
-import Sidebar from "@/Components/Sidebar.vue";
+// Assuming these components are available in your project structure
+import Navbar from '@/Components/Navbar.vue';
+import Sidebar from '@/Components/Sidebar.vue';
 
-// ===========================================
-// === 1. State Management & Core Functions ===
-// ===========================================
-
-// State for sidebar visibility
 const sidebarOpen = ref(true);
-let intervalId = null;
 
-/** Toggles the visibility state of the sidebar. */
 function toggleSidebar() {
   sidebarOpen.value = !sidebarOpen.value;
 }
 
-// --- Dummy Action Functions ---
-// These functions simulate opening different management panels
-const manageRoom = (roomType) => alert(`Opening management panel for ${roomType}`);
-const addNewRoomType = () => alert('Opening new room type creation form');
-const viewAnalytics = () => alert('Opening room analytics dashboard');
-const bulkSettings = () => alert('Opening bulk settings panel');
+const activeTable = ref('residents');
 
-// --- Availability Pulse Effect ---
-/** Starts the animation interval for the availability dot. */
-const startAvailabilityPulse = () => {
-  // Uses a manual class toggle to simulate a pulse effect (alternative to CSS animation)
-  // Note: The @keyframes pulse CSS animation is generally cleaner, but the JS toggle
-  // was kept to show how intervals can be used.
-  intervalId = setInterval(() => {
-    const dots = document.querySelectorAll('.availability-dot-js');
-    dots.forEach(dot => dot.classList.toggle('opacity-75'));
-  }, 2000);
+function setActiveTable(tableKey) {
+  activeTable.value = tableKey;
+}
+
+const manageRoom = (roomType) => console.log(`Opening management panel for ${roomType}`);
+const addNewRoomType = () => console.log('Opening new room type creation form');
+const viewAnalytics = () => console.log('Opening room analytics dashboard');
+const bulkSettings = () => console.log('Opening bulk settings panel');
+const editResident = (name) => console.log(`Editing resident: ${name}`);
+const deleteResident = (name) => console.log(`Deleting resident: ${name}`);
+
+
+const colorMap = {
+  blue: {
+    text: 'text-blue-600',
+    price: 'text-blue-600',
+    amenityBg: 'bg-blue-50',
+    amenityText: 'text-blue-700',
+    button: 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500',
+  },
+  purple: {
+    text: 'text-purple-600',
+    price: 'text-purple-600',
+    amenityBg: 'bg-purple-50',
+    amenityText: 'text-purple-700',
+    button: 'bg-purple-600 hover:bg-purple-700 focus:ring-purple-500',
+  },
+  amber: {
+    text: 'text-amber-600',
+    price: 'text-amber-600',
+    amenityBg: 'bg-amber-50',
+    amenityText: 'text-amber-700',
+    button: 'bg-amber-600 hover:bg-amber-700 focus:ring-amber-500',
+  },
+  green: {
+    text: 'text-green-600',
+    price: 'text-green-600',
+    amenityBg: 'bg-green-50',
+    amenityText: 'text-green-700',
+    button: 'bg-green-600 hover:bg-green-700 focus:ring-green-500',
+  },
+  rose: {
+    text: 'text-rose-600',
+    price: 'text-rose-600',
+    amenityBg: 'bg-rose-50',
+    amenityText: 'text-rose-700',
+    button: 'bg-rose-600 hover:bg-rose-700 focus:ring-rose-500',
+  },
+  gray: {
+    text: 'text-gray-600',
+    price: 'text-gray-600',
+    amenityBg: 'bg-gray-50',
+    amenityText: 'text-gray-700',
+    button: 'bg-gray-400 cursor-not-allowed',
+  },
 };
 
-// --- Lifecycle Hooks ---
-onMounted(() => {
-  startAvailabilityPulse();
-});
+const roomTypes = ref([
+  {
+    name: 'Standard Room',
+    description: 'Comfortable single or double occupancy with essential amenities.',
+    price: '$89/night',
+    maxGuests: 2,
+    amenities: ['WiFi', 'AC', 'TV'],
+    available: 8,
+    isBooked: false,
+    colorKey: 'blue',
+  },
+  {
+    name: 'Deluxe Room',
+    description: 'Spacious room with premium amenities and city view.',
+    price: '$149/night',
+    maxGuests: 3,
+    amenities: ['WiFi', 'Minibar', 'Balcony'],
+    available: 5,
+    isBooked: false,
+    colorKey: 'purple',
+  },
+  {
+    name: 'Executive Suite',
+    description: 'Luxury suite with separate living area and premium services.',
+    price: '$299/night',
+    maxGuests: 4,
+    amenities: ['Concierge', 'Jacuzzi', 'Butler'],
+    available: 3,
+    isBooked: false,
+    colorKey: 'amber',
+  },
+  {
+    name: 'Family Room',
+    description: 'Perfect for families with connecting rooms and kid-friendly amenities.',
+    price: '$199/night',
+    maxGuests: 6,
+    amenities: ['Bunk Beds', 'Game Area', 'Kitchenette'],
+    available: 2,
+    isBooked: false,
+    colorKey: 'green',
+  },
+  {
+    name: 'Business Room',
+    description: 'Designed for business travelers with work desk and meeting space.',
+    price: '$129/night',
+    maxGuests: 2,
+    amenities: ['Work Desk', 'Printer', 'Coffee'],
+    available: 0,
+    isBooked: true,
+    colorKey: 'gray',
+  },
+  {
+    name: 'Penthouse Suite',
+    description: 'Ultimate luxury with panoramic views and exclusive amenities.',
+    price: '$599/night',
+    maxGuests: 8,
+    amenities: ['Rooftop', 'Chef', 'Spa'],
+    available: 1,
+    isBooked: false,
+    colorKey: 'rose',
+  },
+]);
 
-onUnmounted(() => {
-  // Clean up the interval when the component is destroyed to prevent memory leaks
-  clearInterval(intervalId);
-});
+const residents = ref([
+  { name: 'REY JANOSALEM', school: 'CEBU EASTERN COLLEGE', age: 29, address: 'CEBU CITY', room: 'ROOM 101', start: 'AUGUST 08, 2025', end: 'MARCH 25, 2026' },
+  { name: 'MARIA SANTOS', school: 'UNIVERSITY OF CEBU', age: 22, address: 'LAPU-LAPU CITY', room: 'ROOM 203', start: 'SEPTEMBER 01, 2025', end: 'JUNE 30, 2026' },
+  { name: 'KEN TANG', school: 'USC', age: 34, address: 'TALISAY CITY', room: 'ROOM 310', start: 'AUGUST 15, 2025', end: 'APRIL 10, 2026' },
+  { name: 'LEE CHEEN', school: 'CEBU TECH', age: 25, address: 'MANDAUE CITY', room: 'ROOM 112', start: 'JULY 20, 2025', end: 'MAY 15, 2026' },
+  { name: 'RUSSELL EVAN', school: 'Velez College', age: 31, address: 'CEBU CITY', room: 'ROOM 201', start: 'AUGUST 08, 2025', end: 'MARCH 25, 2026' },
+]);
 </script>
 
 <template>
@@ -54,7 +147,7 @@ onUnmounted(() => {
     <Navbar @toggle-sidebar="toggleSidebar" />
 
     <div class="flex flex-1 pt-14 overflow-hidden">
-      
+
       <div
         class="fixed top-14 left-0 h-[calc(100vh-3.5rem)] bg-white shadow-xl z-30 transition-all duration-300"
         :class="sidebarOpen ? 'w-64' : 'w-20'"
@@ -67,223 +160,146 @@ onUnmounted(() => {
         class="flex-1 bg-gray-50 transition-all duration-300 overflow-y-auto"
         :class="sidebarOpen ? 'ml-64' : 'ml-20'"
       >
+
         <div class="p-6 md:p-10">
-          <div class="mb-8 border-b pb-4">
-            <h1 class="text-4xl font-extrabold text-gray-800 mb-2">Room Type Dashboard</h1>
-            <p class="text-lg text-gray-600">Manage and view all available room types in your system. 🏨</p>
-          </div>
+          <h2 class="text-2xl font-bold text-gray-800 mb-6">User and Room Management</h2>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-            
-            <div class="bg-white rounded-xl p-6 shadow-md flex justify-between items-center hover:shadow-lg transition duration-200">
-              <div>
-                <p class="text-sm font-medium text-gray-500">Total Rooms</p>
-                <p class="text-4xl font-bold text-gray-900 mt-1">24</p>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+            <div class="rounded-xl text-center shadow-lg overflow-hidden flex-1 min-w-[150px]">
+              <div class="bg-cyan-500 text-white p-3">
+                <h3 class="text-lg font-semibold">Total Accounts</h3>
               </div>
-              <div class="bg-blue-100 p-3 rounded-full">
-                <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                </svg>
+              <div class="bg-white p-3">
+                <p class="text-4xl font-extrabold text-gray-800">120</p>
               </div>
             </div>
-
-            <div class="bg-white rounded-xl p-6 shadow-md flex justify-between items-center hover:shadow-lg transition duration-200">
-              <div>
-                <p class="text-sm font-medium text-gray-500">Available</p>
-                <p class="text-4xl font-bold text-green-600 mt-1">18</p>
+            <div class="rounded-xl text-center shadow-lg overflow-hidden flex-1 min-w-[150px]">
+              <div class="bg-purple-600 text-white p-3">
+                <h3 class="text-lg font-semibold">Total Department</h3>
               </div>
-              <div class="bg-green-100 p-3 rounded-full relative">
-                <div class="w-4 h-4 bg-green-500 rounded-full availability-dot"></div>
+              <div class="bg-white p-3">
+                <p class="text-4xl font-extrabold text-gray-800">15</p>
               </div>
             </div>
-
-            <div class="bg-white rounded-xl p-6 shadow-md flex justify-between items-center hover:shadow-lg transition duration-200">
-              <div>
-                <p class="text-sm font-medium text-gray-500">Occupied</p>
-                <p class="text-4xl font-bold text-red-600 mt-1">6</p>
+            <div class="rounded-xl text-center shadow-lg overflow-hidden flex-1 min-w-[150px]">
+              <div class="bg-orange-500 text-white p-3">
+                <h3 class="text-lg font-semibold">Total Colleges</h3>
               </div>
-              <div class="bg-red-100 p-3 rounded-full">
-                <div class="w-4 h-4 bg-red-500 rounded-full"></div>
+              <div class="bg-white p-3">
+                <p class="text-4xl font-extrabold text-gray-800">5</p>
               </div>
             </div>
-
-            <div class="bg-white rounded-xl p-6 shadow-md flex justify-between items-center hover:shadow-lg transition duration-200">
-              <div>
-                <p class="text-sm font-medium text-gray-500">Revenue Today</p>
-                <p class="text-4xl font-bold text-purple-600 mt-1">$2,840</p>
+            <div class="rounded-xl text-center shadow-lg overflow-hidden flex-1 min-w-[150px]">
+              <div class="bg-red-600 text-white p-3">
+                <h3 class="text-lg font-semibold">Total Rooms</h3>
               </div>
-              <div class="bg-purple-100 p-3 rounded-full">
-                <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                </svg>
+              <div class="bg-white p-3">
+                <p class="text-4xl font-extrabold text-gray-800">250</p>
               </div>
             </div>
           </div>
 
-          <h2 class="text-2xl font-bold text-gray-800 mb-6">Room Types Overview</h2>
-          <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-            
-            <div class="room-card bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
-              <div class="relative">
-                <div class="h-48 bg-gradient-to-r from-blue-400 to-blue-600 flex items-center justify-center">
-                  <svg class="w-16 h-16 text-white opacity-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 21l4-4 4 4"></path>
-                  </svg>
-                </div>
-                <div class="absolute top-4 right-4 bg-green-600 text-white px-3 py-1 rounded-full text-sm font-semibold shadow-md"> 8 Available </div>
-              </div>
-              <div class="p-6">
-                <h3 class="text-2xl font-bold text-gray-800 mb-2">Standard Room</h3>
-                <p class="text-gray-600 mb-4 text-sm">Comfortable single or double occupancy with essential amenities.</p>
-                <div class="flex items-center justify-between border-t border-b py-3 mb-4">
-                  <span class="text-2xl font-extrabold text-blue-600">$89<span class="text-base font-normal text-gray-500">/night</span></span>
-                  <span class="text-sm text-gray-500 font-medium">Max 2 guests</span>
-                </div>
-                <div class="flex flex-wrap gap-2 mb-6">
-                  <span class="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-medium">WiFi</span>
-                  <span class="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-medium">AC</span>
-                  <span class="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-medium">TV</span>
-                </div>
-                <button @click="manageRoom('Standard Room')" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors shadow-md"> Manage Room Type </button>
-              </div>
+          <div class="flex justify-between items-center mb-6">
+            <div class="text-xl font-bold text-gray-800">
+              {{ activeTable === 'residents' ? 'Current Residents' : 'Room Types Management' }}
             </div>
-
-            <div class="room-card bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
-              <div class="relative">
-                <div class="h-48 bg-gradient-to-r from-purple-400 to-purple-600 flex items-center justify-center">
-                  <svg class="w-16 h-16 text-white opacity-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-                  </svg>
-                </div>
-                <div class="absolute top-4 right-4 bg-green-600 text-white px-3 py-1 rounded-full text-sm font-semibold shadow-md"> 5 Available </div>
-              </div>
-              <div class="p-6">
-                <h3 class="text-2xl font-bold text-gray-800 mb-2">Deluxe Room</h3>
-                <p class="text-gray-600 mb-4 text-sm">Spacious room with premium amenities and city view.</p>
-                <div class="flex items-center justify-between border-t border-b py-3 mb-4">
-                  <span class="text-2xl font-extrabold text-purple-600">$149<span class="text-base font-normal text-gray-500">/night</span></span>
-                  <span class="text-sm text-gray-500 font-medium">Max 3 guests</span>
-                </div>
-                <div class="flex flex-wrap gap-2 mb-6">
-                  <span class="bg-purple-50 text-purple-700 px-3 py-1 rounded-full text-xs font-medium">WiFi</span>
-                  <span class="bg-purple-50 text-purple-700 px-3 py-1 rounded-full text-xs font-medium">Minibar</span>
-                  <span class="bg-purple-50 text-purple-700 px-3 py-1 rounded-full text-xs font-medium">Balcony</span>
-                </div>
-                <button @click="manageRoom('Deluxe Room')" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors shadow-md"> Manage Room Type </button>
-              </div>
+            <div class="inline-flex rounded-full shadow-lg p-1 bg-white border border-gray-200" role="group">
+              <button
+                @click="setActiveTable('room_types')"
+                :class="[
+                  activeTable === 'room_types'
+                    ? 'bg-gray-200 text-gray-800 font-semibold'
+                    : 'text-gray-600 hover:bg-gray-100',
+                  'py-2 px-6 rounded-full text-base transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300'
+                ]"
+                aria-pressed="activeTable === 'room_types'"
+              >
+                Room Types
+              </button>
+              <button
+                @click="setActiveTable('residents')"
+                :class="[
+                  activeTable === 'residents'
+                    ? 'bg-red-700 text-white font-semibold shadow-inner'
+                    : 'text-gray-600 hover:bg-gray-100',
+                  'py-2 px-6 rounded-full text-base transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-700'
+                ]"
+                aria-pressed="activeTable === 'residents'"
+              >
+                Current Residents
+              </button>
             </div>
-
-            <div class="room-card bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
-              <div class="relative">
-                <div class="h-48 bg-gradient-to-r from-amber-400 to-amber-600 flex items-center justify-center">
-                  <svg class="w-16 h-16 text-white opacity-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
-                  </svg>
-                </div>
-                <div class="absolute top-4 right-4 bg-green-600 text-white px-3 py-1 rounded-full text-sm font-semibold shadow-md"> 3 Available </div>
-              </div>
-              <div class="p-6">
-                <h3 class="text-2xl font-bold text-gray-800 mb-2">Executive Suite</h3>
-                <p class="text-gray-600 mb-4 text-sm">Luxury suite with separate living area and premium services.</p>
-                <div class="flex items-center justify-between border-t border-b py-3 mb-4">
-                  <span class="text-2xl font-extrabold text-amber-600">$299<span class="text-base font-normal text-gray-500">/night</span></span>
-                  <span class="text-sm text-gray-500 font-medium">Max 4 guests</span>
-                </div>
-                <div class="flex flex-wrap gap-2 mb-6">
-                  <span class="bg-amber-50 text-amber-700 px-3 py-1 rounded-full text-xs font-medium">Concierge</span>
-                  <span class="bg-amber-50 text-amber-700 px-3 py-1 rounded-full text-xs font-medium">Jacuzzi</span>
-                  <span class="bg-amber-50 text-amber-700 px-3 py-1 rounded-full text-xs font-medium">Butler</span>
-                </div>
-                <button @click="manageRoom('Executive Suite')" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors shadow-md"> Manage Room Type </button>
-              </div>
-            </div>
-
-            <div class="room-card bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
-              <div class="relative">
-                <div class="h-48 bg-gradient-to-r from-green-400 to-green-600 flex items-center justify-center">
-                  <svg class="w-16 h-16 text-white opacity-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                  </svg>
-                </div>
-                <div class="absolute top-4 right-4 bg-yellow-600 text-gray-900 px-3 py-1 rounded-full text-sm font-semibold shadow-md"> 2 Available </div>
-              </div>
-              <div class="p-6">
-                <h3 class="text-2xl font-bold text-gray-800 mb-2">Family Room</h3>
-                <p class="text-gray-600 mb-4 text-sm">Perfect for families with connecting rooms and kid-friendly amenities.</p>
-                <div class="flex items-center justify-between border-t border-b py-3 mb-4">
-                  <span class="text-2xl font-extrabold text-green-600">$199<span class="text-base font-normal text-gray-500">/night</span></span>
-                  <span class="text-sm text-gray-500 font-medium">Max 6 guests</span>
-                </div>
-                <div class="flex flex-wrap gap-2 mb-6">
-                  <span class="bg-green-50 text-green-700 px-3 py-1 rounded-full text-xs font-medium">Bunk Beds</span>
-                  <span class="bg-green-50 text-green-700 px-3 py-1 rounded-full text-xs font-medium">Game Area</span>
-                  <span class="bg-green-50 text-green-700 px-3 py-1 rounded-full text-xs font-medium">Kitchenette</span>
-                </div>
-                <button @click="manageRoom('Family Room')" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors shadow-md"> Manage Room Type </button>
-              </div>
-            </div>
-            
-            <div class="room-card bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
-              <div class="relative">
-                <div class="h-48 bg-gradient-to-r from-gray-400 to-gray-600 flex items-center justify-center">
-                  <svg class="w-16 h-16 text-white opacity-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m8 0H8m8 0v2a2 2 0 002 2v8a2 2 0 01-2 2H6a2 2 0 01-2-2v-8a2 2 0 012-2V8"></path>
-                  </svg>
-                </div>
-                <div class="absolute top-4 right-4 bg-red-600 text-white px-3 py-1 rounded-full text-sm font-semibold shadow-md"> Fully Booked </div>
-              </div>
-              <div class="p-6">
-                <h3 class="text-2xl font-bold text-gray-800 mb-2">Business Room</h3>
-                <p class="text-gray-600 mb-4 text-sm">Designed for business travelers with work desk and meeting space.</p>
-                <div class="flex items-center justify-between border-t border-b py-3 mb-4">
-                  <span class="text-2xl font-extrabold text-gray-600">$129<span class="text-base font-normal text-gray-500">/night</span></span>
-                  <span class="text-sm text-gray-500 font-medium">Max 2 guests</span>
-                </div>
-                <div class="flex flex-wrap gap-2 mb-6">
-                  <span class="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs font-medium">Work Desk</span>
-                  <span class="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs font-medium">Printer</span>
-                  <span class="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs font-medium">Coffee</span>
-                </div>
-                <button class="w-full bg-gray-400 text-white font-semibold py-3 px-4 rounded-lg cursor-not-allowed shadow-md" disabled> Fully Booked </button>
-              </div>
-            </div>
-
-            <div class="room-card bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
-              <div class="relative">
-                <div class="h-48 bg-gradient-to-r from-rose-400 to-rose-600 flex items-center justify-center">
-                  <svg class="w-16 h-16 text-white opacity-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10v11M20 10v11"></path>
-                  </svg>
-                </div>
-                <div class="absolute top-4 right-4 bg-green-600 text-white px-3 py-1 rounded-full text-sm font-semibold shadow-md"> 1 Available </div>
-              </div>
-              <div class="p-6">
-                <h3 class="text-2xl font-bold text-gray-800 mb-2">Penthouse Suite</h3>
-                <p class="text-gray-600 mb-4 text-sm">Ultimate luxury with panoramic views and exclusive amenities.</p>
-                <div class="flex items-center justify-between border-t border-b py-3 mb-4">
-                  <span class="text-2xl font-extrabold text-rose-600">$599<span class="text-base font-normal text-gray-500">/night</span></span>
-                  <span class="text-sm text-gray-500 font-medium">Max 8 guests</span>
-                </div>
-                <div class="flex flex-wrap gap-2 mb-6">
-                  <span class="bg-rose-50 text-rose-700 px-3 py-1 rounded-full text-xs font-medium">Rooftop</span>
-                  <span class="bg-rose-50 text-rose-700 px-3 py-1 rounded-full text-xs font-medium">Chef</span>
-                  <span class="bg-rose-50 text-rose-700 px-3 py-1 rounded-full text-xs font-medium">Spa</span>
-                </div>
-                <button @click="manageRoom('Penthouse Suite')" class="w-full bg-rose-600 hover:bg-rose-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors shadow-md"> Manage Room Type </button>
-              </div>
-            </div>
-
           </div>
-          <div class="mt-12 bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-            <h2 class="text-2xl font-bold text-gray-800 mb-5">Quick Actions</h2>
+
+          <div v-if="activeTable === 'room_types'" class="bg-white rounded-2xl shadow-xl border border-gray-100 mb-10">
+            <table class="min-w-full divide-y divide-gray-200 table-fixed">
+              <caption class="sr-only">List of all available room types and their details.</caption>
+              <thead class="bg-gray-50">
+                <tr>
+                  <th scope="col" class="w-1/6 px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"> Room Type </th>
+                  <th scope="col" class="w-2/6 px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"> Description </th>
+                  <th scope="col" class="w-1/12 px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"> Rate </th>
+                  <th scope="col" class="w-[10%] px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"> Guests </th>
+                  <th scope="col" class="w-1/6 px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"> Amenities </th>
+                  <th scope="col" class="w-[10%] px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"> Avail. </th>
+                  <th scope="col" class="w-[10%] px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"> Action </th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <tr v-for="room in roomTypes" :key="room.name" class="hover:bg-gray-50 transition-colors">
+                  <td class="px-2 py-4 text-sm font-semibold text-gray-900">
+                    {{ room.name }}
+                  </td>
+                  <td class="px-2 py-4 text-sm text-gray-500 text-wrap">
+                    {{ room.description }}
+                  </td>
+                  <td :class="[colorMap[room.colorKey].price, 'px-2 py-4 text-lg font-extrabold text-center']">
+                    {{ room.price }}
+                  </td>
+                  <td class="px-2 py-4 text-sm text-gray-500 text-center">
+                    Max {{ room.maxGuests }}
+                  </td>
+                  <td class="px-2 py-4">
+                    <div class="flex flex-wrap gap-1">
+                      <span v-for="amenity in room.amenities" :key="amenity"
+                        :class="[colorMap[room.colorKey].amenityBg, colorMap[room.colorKey].amenityText, 'px-2 py-0.5 rounded-full text-xs font-medium']">
+                        {{ amenity }}
+                      </span>
+                    </div>
+                  </td>
+                  <td class="px-2 py-4 text-center">
+                    <span v-if="room.isBooked" class="bg-red-100 text-red-800 px-1 py-0.5 rounded-full text-xs font-semibold inline-flex items-center justify-center space-x-1">
+                      <span class="w-2 h-2 bg-red-600 rounded-full inline-block"></span>
+                      <span>Fully Booked</span>
+                    </span>
+                    <span v-else class="bg-green-100 text-green-800 px-1 py-0.5 rounded-full text-xs font-semibold inline-flex items-center justify-center space-x-1">
+                      <span class="w-2 h-2 bg-green-600 rounded-full inline-block animate-pulse-custom"></span>
+                      <span>{{ room.available }} Avail.</span>
+                    </span>
+                  </td>
+                  <td class="px-2 py-4 text-center text-sm font-medium">
+                    <button @click="manageRoom(room.name)"
+                      :class="[
+                        room.isBooked ? colorMap.gray.button : colorMap[room.colorKey].button,
+                        'text-white font-medium py-2 px-3 rounded-lg transition-colors text-xs whitespace-nowrap focus:outline-none focus:ring-4 focus:ring-opacity-50'
+                      ]"
+                      :disabled="room.isBooked">
+                      {{ room.isBooked ? 'View' : 'Manage' }}
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div v-if="activeTable === 'room_types'" class="mt-12 bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+            <h2 class="text-2xl font-bold text-gray-800 mb-5">Quick Actions for Room Types</h2>
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-              
+
               <button @click="addNewRoomType"
-                class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-lg flex items-center justify-center gap-3 transition-colors transform hover:scale-[1.02] shadow-md">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-lg flex items-center justify-center gap-3 transition-colors transform hover:scale-[1.02] shadow-md focus:outline-none focus:ring-4 focus:ring-blue-500 focus:ring-opacity-50">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                 </svg>
@@ -291,8 +307,8 @@ onUnmounted(() => {
               </button>
 
               <button @click="viewAnalytics"
-                class="bg-green-600 hover:bg-green-700 text-white font-semibold py-4 px-6 rounded-lg flex items-center justify-center gap-3 transition-colors transform hover:scale-[1.02] shadow-md">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                class="bg-green-600 hover:bg-green-700 text-white font-semibold py-4 px-6 rounded-lg flex items-center justify-center gap-3 transition-colors transform hover:scale-[1.02] shadow-md focus:outline-none focus:ring-4 focus:ring-green-500 focus:ring-opacity-50">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
@@ -300,8 +316,8 @@ onUnmounted(() => {
               </button>
 
               <button @click="bulkSettings"
-                class="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-4 px-6 rounded-lg flex items-center justify-center gap-3 transition-colors transform hover:scale-[1.02] shadow-md">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                class="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-4 px-6 rounded-lg flex items-center justify-center gap-3 transition-colors transform hover:scale-[1.02] shadow-md focus:outline-none focus:ring-4 focus:ring-purple-500 focus:ring-opacity-50">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -311,47 +327,46 @@ onUnmounted(() => {
               </button>
             </div>
           </div>
+
+
+          <div v-if="activeTable === 'residents'" class="bg-white rounded-2xl shadow-xl border border-gray-100 mb-10">
+            <table class="min-w-full divide-y divide-gray-200 table-fixed">
+              <caption class="sr-only">List of all current residents and their details.</caption>
+              <thead class="bg-gray-50">
+                <tr>
+                  <th scope="col" class="w-1/6 px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"> NAME </th>
+                  <th scope="col" class="w-1/6 px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"> SCHOOL </th>
+                  <th scope="col" class="w-[5%] px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"> AGE </th>
+                  <th scope="col" class="w-1/6 px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"> ADDRESS </th>
+                  <th scope="col" class="w-[8%] px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"> ROOM </th>
+                  <th scope="col" class="w-1/6 px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"> START </th>
+                  <th scope="col" class="w-1/6 px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"> END </th>
+                  <th scope="col" class="w-[5%] px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"> ACT. </th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <tr v-for="resident in residents" :key="resident.name" class="hover:bg-gray-50 transition-colors">
+                  <td class="px-2 py-4 text-sm font-medium text-gray-900"> {{ resident.name }} </td>
+                  <td class="px-2 py-4 text-sm text-gray-500"> {{ resident.school }} </td>
+                  <td class="px-2 py-4 text-sm text-gray-500 text-center"> {{ resident.age }} </td>
+                  <td class="px-2 py-4 text-sm text-gray-500"> {{ resident.address }} </td>
+                  <td class="px-2 py-4 text-sm text-gray-500"> {{ resident.room }} </td>
+                  <td class="px-2 py-4 text-sm text-gray-500"> {{ resident.start }} </td>
+                  <td class="px-2 py-4 text-sm text-gray-500"> {{ resident.end }} </td>
+                  <td class="px-2 py-4 text-sm font-medium flex justify-center space-x-1">
+                    <button @click="editResident(resident.name)" class="text-indigo-600 hover:text-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 rounded-md" title="Edit">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                    </button>
+                    <button @click="deleteResident(resident.name)" class="text-red-600 hover:text-red-900 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 rounded-md" title="Delete">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </main>
     </div>
   </div>
 </template>
-
-<style>
-/* Basic CSS Reset/Setup */
-body {
-  box-sizing: border-box;
-  /* Use a nice dashboard-friendly font if not already imported */
-  font-family: 'Inter', sans-serif;
-}
-
-/* Hover effect for the room cards */
-.room-card {
-  /* Ensure the hover effect applies to the entire card */
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.room-card:hover {
-  /* Subtle lift and stronger shadow on hover */
-  transform: translateY(-5px);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
-              0 4px 6px -2px rgba(0, 0, 0, 0.05);
-}
-
-/* Availability dot pulse animation */
-.availability-dot {
-  /* Keyframes defined below */
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-/* The actual pulse animation for the Available count dot */
-@keyframes pulse {
-  0%, 100% { 
-    opacity: 1; 
-    transform: scale(1);
-  }
-  50% { 
-    opacity: 0.5; 
-    transform: scale(1.1); /* Slight size change for a better effect */
-  }
-}
-</style>

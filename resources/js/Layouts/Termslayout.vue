@@ -4,8 +4,7 @@ import Navbar from '@/Components/Navbar.vue'
 import Sidebar from '@/Components/Sidebar.vue'
 
 // Import the table components from the new structure
-import EmployeeTable from '@/Components/TermsTable/EmployeeTable.vue';
-import StudentTable from '@/Components/TermsTable/StudentTable.vue';
+import StudentTable from '@/Components/TermsTable/TermsTable.vue';
 
 // State for sidebar visibility
 const sidebarOpen = ref(true)
@@ -42,15 +41,7 @@ const setActiveTab = (tab) => {
             </div>
 
             <div class="flex items-center bg-gray-100 rounded-full w-full md:w-fit p-1 mb-6">
-              <button 
-                @click="setActiveTab('employee')"
-                :class="[
-                  'flex-1 font-medium py-2 px-6 rounded-full transition text-sm md:text-base',
-                  activeTab === 'employee' ? 'bg-[#850038] text-white' : 'text-black hover:bg-gray-200'
-                ]"
-              >
-                Employee
-              </button>
+             
               <button 
                 @click="setActiveTab('student')"
                 :class="[
@@ -58,7 +49,7 @@ const setActiveTab = (tab) => {
                   activeTab === 'student' ? 'bg-[#850038] text-white' : 'text-black hover:bg-gray-200'
                 ]"
               >
-                Students
+                  List of Records
               </button>
             </div>
 

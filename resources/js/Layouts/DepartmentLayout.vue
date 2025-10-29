@@ -3,163 +3,147 @@ import Sidebar from '@/Components/Sidebar.vue'
 import Navbar from '@/Components/Navbar.vue'
 import { ref } from 'vue'
 
-// -------------------------------------------
-// Sidebar visibility state and toggle method
-// -------------------------------------------
+// Import the new components
+import DepartmentTable from '@/Components/DepartmentModals/DepartmentTable.vue'
+import DepartmentModals from '@/Components/DepartmentModals/DepartmentModals.vue'
 
-// Reactive boolean to control whether the sidebar is shown or hidden
+// Sidebar toggle state and method
 const sidebarVisible = ref(true)
-
-// Toggles the sidebar visibility state
 const toggleSidebar = () => {
-  sidebarVisible.value = !sidebarVisible.value
+    sidebarVisible.value = !sidebarVisible.value
 }
+
+// === DATA MOCKUP (Moved from DepartmentTable.vue to the parent) ===
+const users = ref(
+    Array.from({ length: 25 }, (_, i) => ({
+        id: i + 1,
+        name: `User ${i + 1}`,
+        email: `user${i + 1}@example.com`,
+        phone: `09123456${(i + 1).toString().padStart(2, '0')}`,
+        profession: (i + 1) % 2 === 0 ? 'Instructor' : 'Student',
+    }))
+);
+
+const lastMonthUsers = ref(
+    Array.from({ length: 25 }, (_, i) => ({
+        email: `user${i + 1}@example.com`,
+        userId: `UID${1000 + i + 1}`,
+        month: 'October',
+        yearStart: 2020 + ((i + 1) % 5),
+        yearEnd: 2025 + ((i + 1) % 3),
+    }))
+);
+
+// === MODAL COORDINATION LOGIC ===
+
+// 1. Template ref for DepartmentModals component
+const modalsRef = ref(null);
+
+// 2. Function passed to DepartmentTable.vue to open the modal
+const openDepartmentModal = (type, data, table) => {
+    if (modalsRef.value && modalsRef.value.openModal) {
+        modalsRef.value.openModal(type, data, table);
+    }
+};
+
+// 3. Handlers for modal events (Emitted from DepartmentModals.vue)
+const handleUpdateData = (payload) => {
+    const { table, data } = payload;
+    const source = table === 'users' ? users.value : lastMonthUsers.value;
+    
+    let index;
+    if (table === 'users') {
+        index = source.findIndex(item => item.id === data.id);
+    } else { // lastMonthUsers
+        index = source.findIndex(item => item.userId === data.userId);
+    }
+
+    if (index !== -1) {
+        // Perform the update
+        Object.assign(source[index], data);
+        console.log(`[Layout Update Success] Data updated for ${table}.`);
+    } else {
+        console.error(`Item not found for update in ${table}.`);
+    }
+};
+
+const handleDeleteData = (payload) => {
+    const { table, data } = payload;
+    const sourceRef = table === 'users' ? users : lastMonthUsers;
+
+    // Filter the data source to remove the item
+    if (table === 'users') {
+        sourceRef.value = sourceRef.value.filter(item => item.id !== data.id);
+    } else { // lastMonthUsers
+        sourceRef.value = sourceRef.value.filter(item => item.userId !== data.userId);
+    }
+    
+    console.log(`[Layout Delete Success] Item deleted from ${table}.`);
+};
+
 </script>
 
 <template>
-  <!-- MAIN LAYOUT CONTAINER -->
-  <div class="flex pt-14 min-h-screen transition-all duration-300">
-    
-    <!-- SIDEBAR COMPONENT -->
-    <!-- Conditionally shown based on `sidebarVisible` -->
-     <Sidebar v-show="sidebarVisible" />
+    <div class="flex-1 flex flex-col h-full overflow-hidden">
+        <Navbar @toggleSidebar="toggleSidebar" />
+        
+        <div class="flex pt-14 transition-all duration-300">
+            <Sidebar v-show="sidebarVisible" class="fixed top-14 left-0 h-full z-20 w-64 lg:relative" />
 
-    <!-- MAIN CONTENT AREA -->
-    <div class="flex-1 flex flex-col">
+            <main class="flex-1 p-6 overflow-y-auto">
+                <h1 class="text-3xl font-extrabold text-[#7A0C23] mb-8">Department Dashboard</h1>
 
-      <!-- TOP NAVBAR -->
-      <!-- Emits event handled here to toggle sidebar visibility -->
-      <Navbar @toggleSidebar="toggleSidebar" />
+                <div class="flex flex-wrap gap-6 mb-10">
+                    <div class="flex-1 min-w-[200px] rounded-xl text-center shadow-lg overflow-hidden transition-transform duration-200 hover:scale-[1.02]">
+                        <div class="bg-cyan-600 text-white p-3">
+                            <h3 class="text-lg font-semibold">Total Accounts</h3>
+                        </div>
+                        <div class="bg-white p-3">
+                            <p class="text-3xl font-bold text-gray-800">20</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex-1 min-w-[200px] rounded-xl text-center shadow-lg overflow-hidden transition-transform duration-200 hover:scale-[1.02]">
+                        <div class="bg-purple-700 text-white p-3">
+                            <h3 class="text-lg font-semibold">Total Departments</h3>
+                        </div>
+                        <div class="bg-white p-3">
+                            <p class="text-3xl font-bold text-gray-800">5</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex-1 min-w-[200px] rounded-xl text-center shadow-lg overflow-hidden transition-transform duration-200 hover:scale-[1.02]">
+                        <div class="bg-orange-600 text-white p-3">
+                            <h3 class="text-lg font-semibold">Total Colleges</h3>
+                        </div>
+                        <div class="bg-white p-3">
+                            <p class="text-3xl font-bold text-gray-800">3</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex-1 min-w-[200px] rounded-xl text-center shadow-lg overflow-hidden transition-transform duration-200 hover:scale-[1.02]">
+                        <div class="bg-red-600 text-white p-3">
+                            <h3 class="text-lg font-semibold">Total Rooms</h3>
+                        </div>
+                        <div class="bg-white p-3">
+                            <p class="text-3xl font-bold text-gray-800">10</p>
+                        </div>
+                    </div>
+                </div>
 
-      <!-- PAGE CONTENT -->
-      <main class="p-6 overflow-y-auto">
+                <DepartmentTable 
+                    :users="users"
+                    :lastMonthUsers="lastMonthUsers"
+                    :openModal="openDepartmentModal"
+                />
+                
+                <DepartmentModals 
+                    ref="modalsRef" 
+                    @updateData="handleUpdateData"
+                    @deleteData="handleDeleteData"
+                />
 
-        <!-- --------------------------------- -->
-        <!-- STATISTIC CARDS SECTION -->
-        <!-- --------------------------------- -->
-        <!-- Flex container with responsive wrapping and gaps -->
-        <div class="flex flex-wrap gap-6 mb-10">
-
-          <!-- Each card shows a category with count (currently 0) -->
-          <div class="flex-1 min-w-[200px] rounded-xl text-center shadow-lg overflow-hidden">
-            <div class="bg-cyan-500 text-white p-3">
-              <h3 class="text-lg font-semibold">Total Accounts</h3>
-            </div>
-            <div class="bg-white p-3">
-              <p class="text-3xl font-bold text-gray-800">0</p>
-            </div>
-          </div>
-
-          <div class="flex-1 min-w-[200px] rounded-xl text-center shadow-lg overflow-hidden">
-            <div class="bg-purple-600 text-white p-3">
-              <h3 class="text-lg font-semibold">Total Departments</h3>
-            </div>
-            <div class="bg-white p-3">
-              <p class="text-3xl font-bold text-gray-800">0</p>
-            </div>
-          </div>
-
-          <div class="flex-1 min-w-[200px] rounded-xl text-center shadow-lg overflow-hidden">
-            <div class="bg-orange-500 text-white p-3">
-              <h3 class="text-lg font-semibold">Total Colleges</h3>
-            </div>
-            <div class="bg-white p-3">
-              <p class="text-3xl font-bold text-gray-800">0</p>
-            </div>
-          </div>
-
-          <div class="flex-1 min-w-[200px] rounded-xl text-center shadow-lg overflow-hidden">
-            <div class="bg-red-500 text-white p-3">
-              <h3 class="text-lg font-semibold">Total Rooms</h3>
-            </div>
-            <div class="bg-white p-3">
-              <p class="text-3xl font-bold text-gray-800">0</p>
-            </div>
-          </div>
-
-        </div> <!-- End Stats Cards -->
-
-        <!-- --------------------------------- -->
-        <!-- USER DETAILS TABLE -->
-        <!-- --------------------------------- -->
-        <div class="bg-white shadow rounded-lg p-6 mb-6">
-          <h2 class="font-bold text-lg mb-4">User Details</h2>
-
-          <!-- Table showing a simple list of users -->
-          <table class="w-full text-sm border-collapse">
-            <thead>
-              <tr class="bg-[#9c1b33] text-white">
-                <th class="p-2">User</th>
-                <th class="p-2">Email-ID</th>
-                <th class="p-2">Phone</th>
-                <th class="p-2">Profession</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              <!-- Static user rows -->
-              <tr class="text-center">
-                <td class="p-2">SystemAdmin</td>
-                <td class="p-2">russell@gmail.com</td>
-                <td class="p-2">09982077429</td>
-                <td class="p-2">Instructor</td>
-              </tr>
-              <tr class="text-center">
-                <td class="p-2">Russell Evan</td>
-                <td class="p-2">loquinario@gmail.com</td>
-                <td class="p-2">09982077429</td>
-                <td class="p-2">User</td>
-              </tr>
-            </tbody>
-          </table>
-        </div> <!-- End User Details -->
-
-        <!-- --------------------------------- -->
-        <!-- LAST MONTH CREATED USER IDs TABLE -->
-        <!-- --------------------------------- -->
-        <div class="bg-white shadow rounded-lg p-6">
-          <h2 class="font-bold text-lg mb-4">Last Month Created User IDs</h2>
-
-          <!-- Table showing last month created user records -->
-          <table class="w-full text-sm border-collapse">
-            <thead>
-              <tr class="bg-[#9c1b33] text-white">
-                <th class="p-2">Email</th>
-                <th class="p-2">User-ID</th>
-                <th class="p-2">Month</th>
-                <th class="p-2">Year-of-start</th>
-                <th class="p-2">Year-of-end</th>
-              </tr>
-            </thead>
-
-            <tbody class="text-center">
-              <!-- Static rows for demo -->
-              <tr>
-                <td class="p-2">russellevanloquinario@gmail.com</td>
-                <td class="p-2">1234567</td>
-                <td class="p-2">September 09</td>
-                <td class="p-2">2025</td>
-                <td class="p-2">2028</td>
-              </tr>
-              <tr>
-                <td class="p-2">panfilo@gmail.com</td>
-                <td class="p-2">1234567</td>
-                <td class="p-2">August 08</td>
-                <td class="p-2">2024</td>
-                <td class="p-2">2026</td>
-              </tr>
-              <tr>
-                <td class="p-2">joriesolatos@gmail.com</td>
-                <td class="p-2">1234567</td>
-                <td class="p-2">October 25</td>
-                <td class="p-2">2022</td>
-                <td class="p-2">2025</td>
-              </tr>
-            </tbody>
-          </table>
-        </div> <!-- End Last Month User IDs -->
-
-      </main>
-    </div> <!-- End Main Content Area -->
-  </div> <!-- End Main Layout Container -->
+            </main>
+        </div>
+    </div>
 </template>

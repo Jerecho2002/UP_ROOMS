@@ -1,3 +1,4 @@
+// The existing code for EditRoomModal.vue is sufficient and is provided below for completeness.
 <script setup>
 import { defineProps, defineEmits, ref, watch } from 'vue'; // Ensure 'watch' is imported
 
