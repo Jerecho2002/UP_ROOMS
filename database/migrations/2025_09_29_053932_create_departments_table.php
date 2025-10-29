@@ -9,13 +9,13 @@ return new class extends Migration
     public function up(): void
     {
  Schema::create('departments', function (Blueprint $table) {
-            $table->id('department_id');
+            $table->id('id');
             $table->string('department_name', 150);
             $table->unsignedBigInteger('college_id')->nullable();
             $table->text('description')->nullable();
 
             $table->foreign('college_id')
-                ->references('college_id')->on('colleges')
+                ->references('id')->on('colleges')
                 ->onDelete('set null');
         });
     }

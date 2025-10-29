@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
       Schema::create('room_types', function (Blueprint $table) {
-            $table->id('room_type_id');
+            $table->id('id');
             $table->string('room_type_name', 100);
             $table->text('description')->nullable();
         });

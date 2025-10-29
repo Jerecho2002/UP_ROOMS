@@ -8,8 +8,8 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('user_account', function (Blueprint $table) {
-            $table->id('user_id');
+        Schema::create('user_accounts', function (Blueprint $table) {
+            $table->id('id');
             $table->string('username', 50)->unique();
             $table->string('password', 255);
             $table->string('email', 100)->unique()->nullable();
@@ -23,6 +23,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('user_account');
+        Schema::dropIfExists('user_accounts');
     }
 };

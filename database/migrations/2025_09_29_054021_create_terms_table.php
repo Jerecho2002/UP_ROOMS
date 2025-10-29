@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
        Schema::create('terms', function (Blueprint $table) {
-            $table->id('term_id');
+            $table->id('id');
             $table->string('term_name', 50);
             $table->date('start_date');
             $table->date('end_date');

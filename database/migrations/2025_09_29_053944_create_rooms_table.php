@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
      Schema::create('rooms', function (Blueprint $table) {
-            $table->id('room_id');
+            $table->id('id');
             $table->string('room_name', 50);
             $table->unsignedBigInteger('building_id')->nullable();
             $table->unsignedBigInteger('college_id')->nullable();
@@ -18,10 +18,10 @@ return new class extends Migration
             $table->unsignedBigInteger('room_type_id')->nullable();
             $table->unsignedBigInteger('created_by')->nullable();
 
-            $table->foreign('building_id')->references('building_id')->on('buildings')->onDelete('set null');
-            $table->foreign('college_id')->references('college_id')->on('colleges')->onDelete('set null');
-            $table->foreign('room_type_id')->references('room_type_id')->on('room_types')->onDelete('set null');
-            $table->foreign('created_by')->references('user_id')->on('user_account')->onDelete('set null');
+            $table->foreign('building_id')->references('id')->on('buildings')->onDelete('set null');
+            $table->foreign('college_id')->references('id')->on('colleges')->onDelete('set null');
+            $table->foreign('room_type_id')->references('id')->on('room_types')->onDelete('set null');
+            $table->foreign('created_by')->references('id')->on('user_accounts')->onDelete('set null');
         });
     }
 

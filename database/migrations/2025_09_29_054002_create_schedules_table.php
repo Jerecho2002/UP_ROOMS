@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
           Schema::create('schedules', function (Blueprint $table) {
-            $table->id('schedule_id');
+            $table->id('id');
             $table->unsignedBigInteger('room_id')->nullable();
             $table->string('course_name', 100);
             $table->string('day', 20);
@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('cfic_id', 100)->nullable();
             // ✅ cannot be NULL
 
-            $table->foreign('room_id')->references('room_id')->on('rooms')->onDelete('cascade');
+            $table->foreign('room_id')->references('id')->on('rooms')->onDelete('cascade');
         });
     }
 
