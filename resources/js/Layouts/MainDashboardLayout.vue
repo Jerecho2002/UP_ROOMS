@@ -105,12 +105,12 @@ const rooms = computed(() => page.props.rooms)
 </script>
 
 <template>
-  <div v-for="room in rooms.data">
+  <!-- <div v-for="room in rooms.data">
     <p>{{ room.room_name }}</p>
     <div v-for="sched in room.schedules">
         <p>{{ sched.start_time }}</p>
     </div>
-  </div>
+  </div> -->
 
  <div class="flex pt-14 min-h-screen transition-all duration-300">
   
@@ -176,11 +176,8 @@ const rooms = computed(() => page.props.rooms)
                 <tr>
                   <th class="px-4 py-3 font-semibold text-left">NAME</th>
                   <th class="px-4 py-3 font-semibold text-left hidden sm:table-cell">SCHOOL</th>
-                  <th class="px-4 py-3 font-semibold hidden md:table-cell">AGE</th>
-                  <th class="px-4 py-3 font-semibold hidden md:table-cell">ADDRESS</th>
+                  <th class="px-4 py-3 font-semibold hidden md:table-cell">LOCATION</th>
                   <th class="px-4 py-3 font-semibold hidden md:table-cell">ROOM</th>
-                  <th class="px-4 py-3 font-semibold hidden lg:table-cell">START</th>
-                  <th class="px-4 py-3 font-semibold hidden lg:table-cell">END</th>
                   <th class="px-4 py-3 font-semibold">ACTION</th>
                 </tr>
               </thead>
@@ -196,11 +193,8 @@ const rooms = computed(() => page.props.rooms)
                 >
                   <td class="px-4 py-3 text-left">{{ room.user_account.username }}</td>
                   <td class="px-4 py-3 text-left hidden sm:table-cell">{{ room.college.college_name }}</td>
-                  <td class="px-4 py-3 hidden md:table-cell">N/A</td>
-                  <td class="px-4 py-3 hidden md:table-cell">N/A</td>
+                  <td class="px-4 py-3 hidden md:table-cell">{{ room.location ?? "N/A" }}</td>
                   <td class="px-4 py-3 hidden md:table-cell">{{ room.room_name }}</td>
-                  <td class="px-4 py-3 hidden lg:table-cell"> {{ room.schedules[0]?.start_time ?? 'N/A' }}</td>
-                  <td class="px-4 py-3 hidden lg:table-cell"> {{ room.schedules[0]?.end_time ?? 'N/A' }}</td>
                   <td class="px-4 py-3 space-x-2">
                     <a href="#" class="text-green-500 hover:text-green-700" title="Edit">✏️</a>
                     <a href="#" class="text-red-500 hover:text-red-700" title="Delete">🗑️</a>
