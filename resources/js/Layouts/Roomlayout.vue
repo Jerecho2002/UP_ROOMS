@@ -173,7 +173,7 @@ const revenueToday = ref('$24,000'); // Placeholder from image
                     </div>
                 </div>
                 
-                <div class="space-y-6 mt-16">
+                <div class="space-y-4 mt-8">
 
 
              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
@@ -182,7 +182,7 @@ const revenueToday = ref('$24,000'); // Placeholder from image
                         <h3 class="text-lg font-normal uppercase">Total Rooms</h3>
                     </div>
                     <div class="bg-white p-3">
-                        <p class="text-4xl font-bold mt-1 text-gray-500">{{ totalRoomsDisplay }}</p>
+                        <p class="text-2xl font-bold mt-1 text-gray-500">{{ totalRoomsDisplay }}</p>
                     </div>
                 </div>
                 <div class="rounded-xl text-center shadow-lg overflow-hidden flex-1 min-w-[150px]">
@@ -190,7 +190,7 @@ const revenueToday = ref('$24,000'); // Placeholder from image
                         <h3 class="text-lg font-normal uppercase">Available</h3>
                     </div>
                     <div class="bg-white p-3">
-                        <p class="text-4xl font-bold mt-1 text-gray-500">{{ availableRooms }}</p>
+                        <p class="text-2xl font-bold mt-1 text-gray-500">{{ availableRooms }}</p>
                     </div>
                 </div>
                 <div class="rounded-xl text-center shadow-lg overflow-hidden flex-1 min-w-[150px]">
@@ -198,7 +198,7 @@ const revenueToday = ref('$24,000'); // Placeholder from image
                             <h3 class="text-lg font-normal uppercase">Occupied</h3>
                     </div>
                     <div class="bg-white p-3">
-                        <p class="text-4xl font-bold mt-1 text-gray-500">{{ occupiedRooms }}</p>
+                        <p class="text-2xl font-bold mt-1 text-gray-500">{{ occupiedRooms }}</p>
                     </div>
                 </div>
                 <div class="rounded-xl text-center shadow-lg overflow-hidden flex-1 min-w-[150px]">
@@ -206,7 +206,7 @@ const revenueToday = ref('$24,000'); // Placeholder from image
                         <h3 class="text-lg font-normal uppercase ">Revenue Today</h3>
                     </div>
                     <div class="bg-white p-3">
-                        <p class="text-4xl font-bold mt-1 text-gray-500">{{ revenueToday }}</p>
+                        <p class="text-2xl font-bold mt-1 text-gray-500">{{ revenueToday }}</p>
                     </div>
                 </div>
             </div>

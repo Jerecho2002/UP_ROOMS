@@ -1,14 +1,14 @@
 <script setup>
-import { 
-    ref, 
-    computed, 
-    onMounted, 
-    nextTick 
+import {
+    ref,
+    computed,
+    onMounted,
+    nextTick
 } from 'vue';
 
 // Component Imports
 import Navbar from '@/Components/Navbar.vue';
-import Sidebar from '@/Components/Sidebar.vue'; 
+import Sidebar from '@/Components/Sidebar.vue';
 import CalendarView from '@/Components/ScheduleModal/CalendarView.vue';
 import AppointmentModal from '@/Components/ScheduleModal/AppointmentModal.vue';
 import TableComponent from '@/Components/ScheduleModal/TableComponent.vue';
@@ -26,27 +26,28 @@ const createDate = (dateStr, timeStr) => {
 }
 
 const events = ref([
-    { id: 1, title: 'Team Meeting', list: 'Work', allDay: false, start: createDate('2025-11-10', '09:00'), end: createDate('2025-11-10', '10:30') },
-    { id: 2, title: 'Project Deadline', list: 'Work', allDay: true, start: createDate('2025-11-15'), end: createDate('2025-11-15') },
+    // Dummy data
+    { id: 1, title: 'Training', list: 'Work', allDay: false, start: createDate('2024-09-15', '10:00'), end: createDate('2024-09-15', '12:00') },
+    { id: 2, title: 'Meeting Webinar', list: 'Work', allDay: false, start: createDate('2024-09-15', '10:00'), end: createDate('2024-09-15', '12:00') },
     { id: 3, title: 'Doctor Appointment', list: 'Personal', allDay: false, start: createDate('2025-11-07', '14:00'), end: createDate('2025-11-07', '15:00') },
 ]);
 
 // --- LAYOUT & VIEW STATE ---
 const sidebarOpen = ref(true);
 const toggleSidebar = () => (sidebarOpen.value = !sidebarOpen.value);
-const currentView = ref('calendar'); // Start on the calendar view for convenience
+// Initial view is set to 'table' based on the image's active state
+const currentView = ref('table');
 
 // --- CALENDAR STATE & CONTROLS ---
 const currentCalendarDate = ref(new Date());
 const currentCalendarMode = ref('list'); // Controls what the calendar shows
-const nextEventId = computed(() => (events.value.length > 0 ? Math.max(...events.value.map(e => e.id)) : 0) + 1); 
+const nextEventId = computed(() => (events.value.length > 0 ? Math.max(...events.value.map(e => e.id)) : 0) + 1);
 
 // --- MODAL STATE ---
 const isModalVisible = ref(false);
 const modalSelectedDate = ref(new Date().toISOString().slice(0, 10));
 const modalSelectedHour = ref(null);
 const modalSelectedMinute = ref(null);
-// New state to hold the event being edited
 const editingEvent = ref(null);
 
 // --- UTILITIES (for parsing appointment data) ---
@@ -66,10 +67,10 @@ const timeTo24h = (timeAmPm) => {
     let [hours, minutes] = time.split(':');
     let h = parseInt(hours, 10);
     let m = parseInt(minutes, 10);
-    
-    if (h === 12 && modifier === 'AM') { h = 0; } 
+
+    if (h === 12 && modifier === 'AM') { h = 0; }
     else if (modifier === 'PM' && h < 12) { h += 12; }
-    
+
     return [h, m];
 };
 
@@ -81,7 +82,7 @@ const transformDataToEvent = (data, eventId) => {
 
     if (allDay) {
         startDate = createDate(appointmentDay, '00:00');
-        endDate = createDate(appointmentDay, '23:59'); 
+        endDate = createDate(appointmentDay, '23:59');
     } else {
         const timeParts = time.split('-');
         const [startH, startM] = timeTo24h(timeParts[0].trim());
@@ -93,7 +94,7 @@ const transformDataToEvent = (data, eventId) => {
             endDate = createDate(appointmentDay, `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`);
         } else {
             // Default 30-minute duration if no end time is provided
-            endDate = new Date(startDate.getTime() + 30 * 60000); 
+            endDate = new Date(startDate.getTime() + 30 * 60000);
         }
     }
 
@@ -109,58 +110,44 @@ const transformDataToEvent = (data, eventId) => {
 
 
 // --- HANDLERS ---
-
 const closeModal = () => {
     isModalVisible.value = false;
     editingEvent.value = null; // Clear editing state on close
 };
 
-/**
- * Opens the AppointmentModal, pre-populating date and time if clicked from a calendar slot.
- */
 const handleDateClick = (date, hour, minute) => {
-    editingEvent.value = null; // Ensure we are creating, not editing
+    editingEvent.value = null;
     modalSelectedDate.value = dateToIsoDateString(date);
     modalSelectedHour.value = hour;
     modalSelectedMinute.value = minute;
     isModalVisible.value = true;
 };
 
-/**
- * Handles saving the new or updated event data emitted by AppointmentModal.
- */
 const handleAppointmentSuccess = (data) => {
     const eventId = editingEvent.value ? editingEvent.value.id : nextEventId.value;
     const newOrUpdatedEvent = transformDataToEvent(data, eventId);
 
     if (editingEvent.value) {
-        // Find index and replace for editing
         const index = events.value.findIndex(e => e.id === eventId);
         if (index !== -1) {
-            // Replace the old event with the updated one
             events.value[index] = newOrUpdatedEvent;
         }
     } else {
-        // Add new event
         events.value.push(newOrUpdatedEvent);
     }
-    
+
     closeModal();
-    
-    // Switch to the view of the new/updated event
+
     currentCalendarDate.value = newOrUpdatedEvent.start;
-    currentCalendarMode.value = newOrUpdatedEvent.allDay ? 'list' : 'day'; 
+    currentCalendarMode.value = newOrUpdatedEvent.allDay ? 'list' : 'day';
 };
 
-/**
- * Handler for the main 'Add Appointment' button
- */
 const handleAddAppointment = () => {
-    editingEvent.value = null; // Ensure we are creating
-    const dateToFocus = currentView.value === 'calendar' 
-        ? dateToIsoDateString(currentCalendarDate.value) 
+    editingEvent.value = null;
+    const dateToFocus = currentView.value === 'calendar'
+        ? dateToIsoDateString(currentCalendarDate.value)
         : new Date().toISOString().slice(0, 10);
-        
+
     modalSelectedDate.value = dateToFocus;
     modalSelectedHour.value = null;
     modalSelectedMinute.value = null;
@@ -170,35 +157,22 @@ const handleAddAppointment = () => {
 
 // --- TABLE COMPONENT HANDLERS ---
 
-/**
- * Jumps the calendar view to the specific event's day (used by 'VIEW DETAILS').
- */
 const selectEventInCalendar = (event) => {
-    currentView.value = 'calendar'; // Switch to calendar view
+    currentView.value = 'calendar';
     currentCalendarDate.value = event.start;
-    currentCalendarMode.value = event.allDay ? 'list' : 'day'; 
+    currentCalendarMode.value = event.allDay ? 'list' : 'day';
 };
 
-/**
- * Opens the modal to edit an existing event (used by 'EDIT').
- */
 const handleEditEvent = (event) => {
-    // Set the event data for the modal to pre-fill
     editingEvent.value = event;
-    
-    // Convert Date objects back to strings for the modal input props
     modalSelectedDate.value = dateToIsoDateString(event.start);
-    modalSelectedHour.value = event.start.getHours(); // Pass time data for initial focus
+    modalSelectedHour.value = event.start.getHours();
     modalSelectedMinute.value = event.start.getMinutes();
     isModalVisible.value = true;
 };
 
-/**
- * Permanently deletes an event (used by 'DELETE').
- */
 const handleDeleteEvent = (eventId) => {
     if (confirm('Are you sure you want to delete this appointment?')) {
-        // Filter out the event with the matching ID
         events.value = events.value.filter(e => e.id !== eventId);
     }
 };
@@ -207,31 +181,41 @@ const handleDeleteEvent = (eventId) => {
 
 <template>
     <div class="bg-gray-100 font-sans min-h-screen">
-        
+
         <Navbar @toggleSidebar="toggleSidebar" class="fixed top-0 left-0 right-0 z-30" />
 
-        <div class="flex pt-14 min-h-screen transition-all duration-300">
-            
-            <Sidebar 
-                :sidebarOpen="sidebarOpen" 
-                v-show="sidebarOpen" 
-                class="fixed top-14 left-0 h-[calc(100vh-3.5rem)] z-20 w-64 lg:relative lg:top-0 lg:h-full transition-all duration-300" 
+        <div class="pt-14 min-h-screen transition-all duration-300">
+
+            <Sidebar
+                :sidebarOpen="sidebarOpen"
+                :class="['fixed top-14 left-0 h-[calc(100vh-3.5rem)] z-20 transition-all duration-300 w-64',
+                         // Show/hide using transform:
+                         sidebarOpen ? 'translate-x-0' : '-translate-x-full']"
             />
 
-            <main class="flex-1 p-6 overflow-y-auto">
+            <main :class="['p-6 overflow-y-auto transition-all duration-300 min-h-[calc(100vh-3.5rem)]',
+                           // CRITICAL: Use margin-left to push content past the fixed sidebar when OPEN.
+                           // This ensures NO GAP and NO OVERLAP by reserving the space.
+                           sidebarOpen ? 'ml-64' : 'ml-0']">
+
                 <div class="mb-6 flex items-center justify-between">
-                    <div class="flex justify-start space-x-4">
-                        <button 
-                            @click="currentView = 'table'" 
-                            :class="['px-6 py-2 rounded-lg font-medium transition', currentView === 'table' ? 'bg-[#7A0C23] text-white shadow-lg' : 'bg-white text-gray-700 hover:bg-gray-100 border']"
+                    <div class="text-2xl font-semibold text-gray-800">Schedule</div>
+                    <div class="text-sm text-gray-500">UPCEBU > TERMS</div>
+                </div>
+
+                <div class="mb-6 flex items-center justify-between">
+                    <div class="flex justify-start space-x-2">
+                        <button
+                            @click="currentView = 'table'"
+                            :class="['px-4 py-2 rounded-lg font-medium transition flex items-center', currentView === 'table' ? 'bg-[#7A0C23] text-white shadow-lg' : 'bg-gray-200 text-gray-700 hover:bg-gray-300']"
                         >
-                            Schedule List Table 📋
+                            Appointment LIST <span class="ml-2"></span>
                         </button>
-                        <button 
-                            @click="currentView = 'calendar'" 
-                            :class="['px-6 py-2 rounded-lg font-medium transition', currentView === 'calendar' ? 'bg-[#7A0C23] text-white shadow-lg' : 'bg-white text-gray-700 hover:bg-gray-100 border']"
+                        <button
+                            @click="currentView = 'calendar'"
+                            :class="['px-4 py-2 rounded-lg font-medium transition flex items-center', currentView === 'calendar' ? 'bg-[#7A0C23] text-white shadow-lg' : 'bg-gray-200 text-gray-700 hover:bg-gray-300']"
                         >
-                            Calendar View 🗓️
+                            Calendar List <span class="ml-2"></span>
                         </button>
                     </div>
 
@@ -239,14 +223,22 @@ const handleDeleteEvent = (eventId) => {
                         @click="handleAddAppointment"
                         class="px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition duration-150"
                     >
-                        + Add Appointment
+                        NEW APPOINTMENT
                     </button>
                 </div>
-                
-                <div v-if="currentView === 'calendar'" class="mt-8">
-                    <h1 class="text-3xl font-bold text-gray-800 border-b pb-2 mb-6">🗓️ Calendar View</h1>
+
+                <div v-if="currentView === 'table'" class="mt-4">
+                    <TableComponent
+                        :events="events"
+                        @view-details="selectEventInCalendar"
+                        @edit-event="handleEditEvent"
+                        @delete-event="handleDeleteEvent"
+                    />
+                </div>
+
+                <div v-else-if="currentView === 'calendar'" class="mt-4">
                     <div class="shadow-lg rounded-lg">
-                        <CalendarView 
+                        <CalendarView
                             :data="events"
                             :initial-date="currentCalendarDate"
                             :initial-mode="currentCalendarMode"
@@ -258,16 +250,6 @@ const handleDeleteEvent = (eventId) => {
                     </div>
                 </div>
 
-                <div v-else-if="currentView === 'table'" class="mt-8">
-                    <h1 class="text-3xl font-bold text-gray-800 border-b pb-2 mb-6">📋 Scheduled Appointments List</h1>
-                    <TableComponent
-                        :events="events" 
-                        @view-details="selectEventInCalendar"
-                        @edit-event="handleEditEvent"
-                        @delete-event="handleDeleteEvent"
-                        @switch-to-list-mode="currentCalendarMode = 'list'"
-                    />
-                </div>
             </main>
         </div>
 
@@ -276,7 +258,7 @@ const handleDeleteEvent = (eventId) => {
             :selected-date="modalSelectedDate"
             :selected-hour="modalSelectedHour"
             :selected-minute="modalSelectedMinute"
-            :editing-event="editingEvent" 
+            :editing-event="editingEvent"
             @close="closeModal"
             @success="handleAppointmentSuccess"
         />
