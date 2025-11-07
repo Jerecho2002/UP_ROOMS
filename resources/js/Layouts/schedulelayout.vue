@@ -1,185 +1,208 @@
 <script setup>
-import { ref, computed, onMounted, nextTick } from 'vue';
-import Navbar from '@/Components/Navbar.vue';
-import Sidebar from '@/Components/Sidebar.vue';
-import TableList from '@/Components/ScheduleModal/TableComponent.vue';
-import CalendarView from '@/Components/ScheduleModal/CalendarView.vue';
-import ScheduleModal from '@/Components/ScheduleModal/ScheduleModal.vue'; 
+import { 
+    ref, 
+    computed, 
+    onMounted, 
+    nextTick 
+} from 'vue';
 
-// --- Layout State ---
+// Component Imports
+import Navbar from '@/Components/Navbar.vue';
+import Sidebar from '@/Components/Sidebar.vue'; 
+import CalendarView from '@/Components/ScheduleModal/CalendarView.vue';
+import AppointmentModal from '@/Components/ScheduleModal/AppointmentModal.vue';
+import TableComponent from '@/Components/ScheduleModal/TableComponent.vue';
+
+// --- INITIAL DUMMY DATA ---
+// Helper to create a Date object consistently
+const createDate = (dateStr, timeStr) => {
+    if (timeStr) {
+        const [h, m] = timeStr.split(':').map(Number);
+        const [y, M, d] = dateStr.split('-').map(Number);
+        return new Date(y, M - 1, d, h, m);
+    }
+    const [y, M, d] = dateStr.split('-').map(Number);
+    return new Date(y, M - 1, d);
+}
+
+const events = ref([
+    { id: 1, title: 'Team Meeting', list: 'Work', allDay: false, start: createDate('2025-11-10', '09:00'), end: createDate('2025-11-10', '10:30') },
+    { id: 2, title: 'Project Deadline', list: 'Work', allDay: true, start: createDate('2025-11-15'), end: createDate('2025-11-15') },
+    { id: 3, title: 'Doctor Appointment', list: 'Personal', allDay: false, start: createDate('2025-11-07', '14:00'), end: createDate('2025-11-07', '15:00') },
+]);
+
+// --- LAYOUT & VIEW STATE ---
 const sidebarOpen = ref(true);
 const toggleSidebar = () => (sidebarOpen.value = !sidebarOpen.value);
+const currentView = ref('calendar'); // Start on the calendar view for convenience
 
-// --- View Management State ---
-const currentView = ref('table');
-const setView = (view) => {
-    currentView.value = view;
-};
+// --- CALENDAR STATE & CONTROLS ---
+const currentCalendarDate = ref(new Date());
+const currentCalendarMode = ref('list'); // Controls what the calendar shows
+const nextEventId = computed(() => (events.value.length > 0 ? Math.max(...events.value.map(e => e.id)) : 0) + 1); 
 
-// --- Modal State ---
-const isModalOpen = ref(false);
+// --- MODAL STATE ---
+const isModalVisible = ref(false);
 const modalSelectedDate = ref(new Date().toISOString().slice(0, 10));
+const modalSelectedHour = ref(null);
+const modalSelectedMinute = ref(null);
+// New state to hold the event being edited
+const editingEvent = ref(null);
 
-const openModal = (dateString = new Date().toISOString().slice(0, 10)) => {
-    modalSelectedDate.value = dateString;
-    isModalOpen.value = true;
-};
-const closeModal = () => {
-    isModalOpen.value = false;
-};
+// --- UTILITIES (for parsing appointment data) ---
 
-// --- Schedule Data and View Management ---
-const tableListRef = ref(null);
-const rawScheduleItems = ref([]); 
-
-// Reliable function to get data from the TableList component
-const syncRawScheduleItems = () => {
-    // Check if the ref exists and exposes the scheduleItems property
-    if (tableListRef.value && tableListRef.value.scheduleItems) {
-        // Accessing the .value of the ref exposed by the child
-        rawScheduleItems.value = tableListRef.value.scheduleItems.value;
-        console.log('Data synced successfully:', rawScheduleItems.value.length, 'items.');
-    } else {
-        // Fallback or debug logging
-        // console.warn("TableList reference or its scheduleItems is not available yet.");
-    }
+// Helper to format Date object into YYYY-MM-DD string
+const dateToIsoDateString = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
 };
 
-onMounted(() => {
-    // Use nextTick to ensure the child component is rendered before attempting to access its ref
-    nextTick(() => {
-        syncRawScheduleItems(); 
-    });
-});
+// Helper to convert AM/PM time string (e.g., '2:30 PM') into [hour, minute] 24h format
+const timeTo24h = (timeAmPm) => {
+    if (!timeAmPm) return [0, 0];
+    let [time, modifier] = timeAmPm.split(' ');
+    let [hours, minutes] = time.split(':');
+    let h = parseInt(hours, 10);
+    let m = parseInt(minutes, 10);
+    
+    if (h === 12 && modifier === 'AM') { h = 0; } 
+    else if (modifier === 'PM' && h < 12) { h += 12; }
+    
+    return [h, m];
+};
 
-// --- Date/Time Parsing Utility (Crucial for data transformation) ---
-const transformToCalendarEvent = (item) => {
-    // Check for required fields
-    if (!item || !item.appointmentDay || !item.title) {
-        console.error("Invalid item data:", item);
-        return null;
-    }
+// --- CORE LOGIC: DATA TRANSFORMATION (Needed for saving/updating) ---
 
-    const allDay = !item.time || item.time.trim() === '';
-    let startDate = null;
-    let endDate = null;
+const transformDataToEvent = (data, eventId) => {
+    const { title, list, appointmentDay, time, allDay } = data;
+    let startDate, endDate = null;
 
     if (allDay) {
-        // For all-day events, use midday to avoid timezone issues with Date objects
-        startDate = new Date(item.appointmentDay + 'T12:00:00');
-        // Set end date to the *next* day for all-day visualization on calendars
-        endDate = new Date(startDate.getTime() + 24 * 60 * 60 * 1000); 
+        startDate = createDate(appointmentDay, '00:00');
+        endDate = createDate(appointmentDay, '23:59'); 
     } else {
-        // Improved time parsing utility
-        const convertTo24Hour = (timeStr) => {
-            const timePart = timeStr.trim();
-            const ampm = timePart.includes('AM') ? 'AM' : (timePart.includes('PM') ? 'PM' : '');
-            let [hours, minutes] = timePart.replace(ampm, '').trim().split(':');
-            
-            hours = parseInt(hours) || 0;
-            minutes = parseInt(minutes) || 0;
+        const timeParts = time.split('-');
+        const [startH, startM] = timeTo24h(timeParts[0].trim());
+        startDate = createDate(appointmentDay, `${String(startH).padStart(2, '0')}:${String(startM).padStart(2, '0')}`);
 
-            if (ampm === 'PM' && hours !== 12) hours += 12;
-            if (ampm === 'AM' && hours === 12) hours = 0; // Midnight 12AM is 00
-            
-            return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
-        };
-
-        const [startTimeStr, endTimeStr] = item.time.split('-').map(s => s.trim());
-        
-        try {
-            const startTime24h = convertTo24Hour(startTimeStr);
-            startDate = new Date(item.appointmentDay + 'T' + startTime24h + ':00');
-            
-            if (endTimeStr) {
-                const endTime24h = convertTo24Hour(endTimeStr);
-                endDate = new Date(item.appointmentDay + 'T' + endTime24h + ':00');
-            } else {
-                // Default 1-hour duration if end time is missing
-                endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
-            }
-        } catch (e) {
-            console.error("Error parsing time for item:", item, e);
-            return null;
+        const endTimeStr = timeParts[1] ? timeParts[1].trim() : null;
+        if (endTimeStr) {
+            const [endH, endM] = timeTo24h(endTimeStr);
+            endDate = createDate(appointmentDay, `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`);
+        } else {
+            // Default 30-minute duration if no end time is provided
+            endDate = new Date(startDate.getTime() + 30 * 60000); 
         }
     }
-    
+
     return {
-        id: item.id,
-        title: item.title,
-        list: item.list || 'Appointment', 
-        start: startDate, 
+        id: eventId,
+        title,
+        list,
+        allDay,
+        start: startDate,
         end: endDate,
-        allDay: allDay,
     };
 };
 
-/**
- * Computed property to convert the raw schedule items into the format 
- * required by the CalendarView component. Filters out nulls from failed parsing.
- */
-const calendarEvents = computed(() => {
-    if (!Array.isArray(rawScheduleItems.value)) return [];
-    return rawScheduleItems.value.map(transformToCalendarEvent).filter(event => event !== null);
-});
-
-// Configuration state for the CalendarView
-const calendarConfig = ref({
-    date: new Date(), 
-    mode: 'list',
-});
 
 // --- HANDLERS ---
 
-const handleNewScheduleItem = async (newItemData) => {
-    // 1. Give the new item a temporary ID and default list property
-    const tempId = Math.max(0, ...rawScheduleItems.value.map(i => i.id || 0)) + 1;
-    const itemWithId = { ...newItemData, id: newItemData.id || tempId, list: newItemData.list || 'New Appointment' };
+const closeModal = () => {
+    isModalVisible.value = false;
+    editingEvent.value = null; // Clear editing state on close
+};
 
-    // 2. Add the new item to the TableList's internal data
-    if (tableListRef.value && tableListRef.value.addItem) {
-        tableListRef.value.addItem(itemWithId);
+/**
+ * Opens the AppointmentModal, pre-populating date and time if clicked from a calendar slot.
+ */
+const handleDateClick = (date, hour, minute) => {
+    editingEvent.value = null; // Ensure we are creating, not editing
+    modalSelectedDate.value = dateToIsoDateString(date);
+    modalSelectedHour.value = hour;
+    modalSelectedMinute.value = minute;
+    isModalVisible.value = true;
+};
+
+/**
+ * Handles saving the new or updated event data emitted by AppointmentModal.
+ */
+const handleAppointmentSuccess = (data) => {
+    const eventId = editingEvent.value ? editingEvent.value.id : nextEventId.value;
+    const newOrUpdatedEvent = transformDataToEvent(data, eventId);
+
+    if (editingEvent.value) {
+        // Find index and replace for editing
+        const index = events.value.findIndex(e => e.id === eventId);
+        if (index !== -1) {
+            // Replace the old event with the updated one
+            events.value[index] = newOrUpdatedEvent;
+        }
     } else {
-        // Fallback for calendar view if TableList ref is not ready
-        rawScheduleItems.value.push(itemWithId);
+        // Add new event
+        events.value.push(newOrUpdatedEvent);
     }
-
-    // 3. Ensure reactivity updates have processed before re-syncing
-    await nextTick(); 
-    syncRawScheduleItems(); 
-
-    // 4. Switch to calendar view and focus on the new date
-    currentView.value = 'calendar';
-    const newFocusDate = new Date(itemWithId.appointmentDay + 'T12:00:00');
-
-    calendarConfig.value = {
-        date: newFocusDate,
-        mode: itemWithId.time ? 'day' : 'month', 
-    };
+    
     closeModal();
+    
+    // Switch to the view of the new/updated event
+    currentCalendarDate.value = newOrUpdatedEvent.start;
+    currentCalendarMode.value = newOrUpdatedEvent.allDay ? 'list' : 'day'; 
 };
 
-const handleViewDetails = (dateString) => {
-    currentView.value = 'calendar';
-    const newFocusDate = new Date(dateString + 'T12:00:00');
-    calendarConfig.value = {
-        date: newFocusDate,
-        mode: 'day',
-    };
+/**
+ * Handler for the main 'Add Appointment' button
+ */
+const handleAddAppointment = () => {
+    editingEvent.value = null; // Ensure we are creating
+    const dateToFocus = currentView.value === 'calendar' 
+        ? dateToIsoDateString(currentCalendarDate.value) 
+        : new Date().toISOString().slice(0, 10);
+        
+    modalSelectedDate.value = dateToFocus;
+    modalSelectedHour.value = null;
+    modalSelectedMinute.value = null;
+    isModalVisible.value = true;
+}
+
+
+// --- TABLE COMPONENT HANDLERS ---
+
+/**
+ * Jumps the calendar view to the specific event's day (used by 'VIEW DETAILS').
+ */
+const selectEventInCalendar = (event) => {
+    currentView.value = 'calendar'; // Switch to calendar view
+    currentCalendarDate.value = event.start;
+    currentCalendarMode.value = event.allDay ? 'list' : 'day'; 
 };
 
-const handleCalendarDateClick = (date) => {
-    const dateString = date.toISOString().slice(0, 10);
-    openModal(dateString);
+/**
+ * Opens the modal to edit an existing event (used by 'EDIT').
+ */
+const handleEditEvent = (event) => {
+    // Set the event data for the modal to pre-fill
+    editingEvent.value = event;
+    
+    // Convert Date objects back to strings for the modal input props
+    modalSelectedDate.value = dateToIsoDateString(event.start);
+    modalSelectedHour.value = event.start.getHours(); // Pass time data for initial focus
+    modalSelectedMinute.value = event.start.getMinutes();
+    isModalVisible.value = true;
 };
 
-const handleCalendarDateUpdate = (newDate) => {
-    calendarConfig.value.date = newDate;
+/**
+ * Permanently deletes an event (used by 'DELETE').
+ */
+const handleDeleteEvent = (eventId) => {
+    if (confirm('Are you sure you want to delete this appointment?')) {
+        // Filter out the event with the matching ID
+        events.value = events.value.filter(e => e.id !== eventId);
+    }
 };
 
-const handleCalendarModeUpdate = (newMode) => {
-    calendarConfig.value.mode = newMode;
-};
 </script>
 
 <template>
@@ -199,13 +222,13 @@ const handleCalendarModeUpdate = (newMode) => {
                 <div class="mb-6 flex items-center justify-between">
                     <div class="flex justify-start space-x-4">
                         <button 
-                            @click="setView('table')" 
+                            @click="currentView = 'table'" 
                             :class="['px-6 py-2 rounded-lg font-medium transition', currentView === 'table' ? 'bg-[#7A0C23] text-white shadow-lg' : 'bg-white text-gray-700 hover:bg-gray-100 border']"
                         >
                             Schedule List Table 📋
                         </button>
                         <button 
-                            @click="setView('calendar')" 
+                            @click="currentView = 'calendar'" 
                             :class="['px-6 py-2 rounded-lg font-medium transition', currentView === 'calendar' ? 'bg-[#7A0C23] text-white shadow-lg' : 'bg-white text-gray-700 hover:bg-gray-100 border']"
                         >
                             Calendar View 🗓️
@@ -213,43 +236,49 @@ const handleCalendarModeUpdate = (newMode) => {
                     </div>
 
                     <button
-                        @click="openModal()"
+                        @click="handleAddAppointment"
                         class="px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition duration-150"
                     >
                         + Add Appointment
                     </button>
                 </div>
                 
-                <div v-if="currentView === 'table'" class="mt-8">
-                    <h2 class="text-2xl font-bold text-gray-800 mb-4">Scheduled Appointments List</h2>
-                    <TableList 
-                        ref="tableListRef" 
-                        @view-details="handleViewDetails" 
-                    />
+                <div v-if="currentView === 'calendar'" class="mt-8">
+                    <h1 class="text-3xl font-bold text-gray-800 border-b pb-2 mb-6">🗓️ Calendar View</h1>
+                    <div class="shadow-lg rounded-lg">
+                        <CalendarView 
+                            :data="events"
+                            :initial-date="currentCalendarDate"
+                            :initial-mode="currentCalendarMode"
+                            @update:date="(date) => currentCalendarDate = date"
+                            @update:mode="(mode) => currentCalendarMode = mode"
+                            @dateClicked="handleDateClick"
+                            @eventSelected="(id) => console.log('Event Selected ID:', id)"
+                        />
+                    </div>
                 </div>
 
-                <div v-else-if="currentView === 'calendar'" class="mt-8">
-                    <h2 class="text-2xl font-bold text-gray-800 mb-4">Calendar View</h2>
-                    <CalendarView 
-                        :data="calendarEvents" 
-                        :initial-date="calendarConfig.date"
-                        :initial-mode="calendarConfig.mode"
-                        @update:date="handleCalendarDateUpdate"
-                        @update:mode="handleCalendarModeUpdate"
-                        @event-selected="() => {}"
-                        @date-clicked="handleCalendarDateClick" />
+                <div v-else-if="currentView === 'table'" class="mt-8">
+                    <h1 class="text-3xl font-bold text-gray-800 border-b pb-2 mb-6">📋 Scheduled Appointments List</h1>
+                    <TableComponent
+                        :events="events" 
+                        @view-details="selectEventInCalendar"
+                        @edit-event="handleEditEvent"
+                        @delete-event="handleDeleteEvent"
+                        @switch-to-list-mode="currentCalendarMode = 'list'"
+                    />
                 </div>
             </main>
         </div>
 
-        <ScheduleModal 
-            :isVisible="isModalOpen"
-            :selectedDate="modalSelectedDate"
+        <AppointmentModal
+            :is-visible="isModalVisible"
+            :selected-date="modalSelectedDate"
+            :selected-hour="modalSelectedHour"
+            :selected-minute="modalSelectedMinute"
+            :editing-event="editingEvent" 
             @close="closeModal"
-            @success="handleNewScheduleItem" />
+            @success="handleAppointmentSuccess"
+        />
     </div>
 </template>
-
-<style scoped>
-/* Add any necessary styles here */
-</style>

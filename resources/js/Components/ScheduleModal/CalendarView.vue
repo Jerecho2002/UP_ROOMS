@@ -1,4 +1,7 @@
 <script setup>
+// ... (Your original CalendarView.vue script remains here)
+// Note: This script is very long, so I am omitting the exact copy/paste, but it should be placed here.
+// The provided component code is self-contained and correct for this section.
 import { ref, computed, reactive, watch } from 'vue';
 
 // Define the props that this view will accept
@@ -70,7 +73,7 @@ const dateToTimeString = (date) => {
 };
 
 
-// --- EVENT STYING AND CALCULATION ---
+// --- EVENT STYLING AND CALCULATION ---
 
 /**
  * Calculates the CSS style for timed events in Day/Week view.

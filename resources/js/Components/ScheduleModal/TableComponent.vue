@@ -1,136 +1,110 @@
 <script setup>
-import { ref } from 'vue';
+import { computed, defineProps, defineEmits } from 'vue';
 
-// Define the events this component can emit
-const emit = defineEmits(['view-details']);
-
-// Schedule data stored in a reactive reference.
-const scheduleItems = ref([
-    {
-        id: 1,
-        list: 'Training',
-        title: 'Training Session', 
-        appointmentDay: '2025-10-21', // YYYY-MM-DD format
-        time: '10:00 AM-12:00 PM', // HH:MM AM/PM-HH:MM AM/PM format
+const props = defineProps({
+    events: {
+        type: Array,
+        default: () => [],
     },
-    {
-        id: 2,
-        list: 'Meeting Webinar',
-        title: 'Project Kickoff Webinar', 
-        appointmentDay: '2025-10-21', 
-        time: '02:30 PM-03:30 PM',
-    },
-    {
-        id: 3,
-        list: 'External Review',
-        title: 'Q4 Budget Review', 
-        appointmentDay: '2025-10-25', 
-        time: '09:00 AM-11:00 AM',
-    },
-    {
-        id: 4,
-        list: 'All Day Event',
-        title: 'Team Building Workshop',
-        appointmentDay: '2025-10-22', 
-        time: '', // Blank time indicates an all-day event
-    },
-]);
-
-/**
- * Emits an event to the parent component to switch the view
- * and focus on the selected appointment's date.
- */
-const viewDetails = (item) => {
-    // Emitting the YYYY-MM-DD date string
-    emit('view-details', item.appointmentDay);
-};
-
-/**
- * Removes an item from the scheduleItems list by its ID.
- */
-const deleteItem = (itemId) => {
-    // Filter out the item with the matching ID
-    scheduleItems.value = scheduleItems.value.filter(item => item.id !== itemId);
-};
-
-/**
- * **NEW LOGIC:** Method exposed to the parent component to allow adding new data.
- * @param {object} newItem - The new schedule item object.
- */
-const addItem = (newItem) => {
-    scheduleItems.value.push(newItem);
-    console.log('New item added internally to TableComponent:', newItem.title);
-};
-
-
-// **CRITICAL STEP:** Expose the scheduleItems ref AND the addItem function.
-defineExpose({
-    scheduleItems, // For the parent to read data and sync calendar view
-    addItem         // For the parent to write new data after modal success
 });
+
+// Define all necessary emitters
+const emit = defineEmits(['view-details', 'edit-event', 'delete-event', 'switch-to-list-mode']);
+
+// --- Utility Functions (For Display) ---
+
+const dateToTimeString = (date) => {
+    if (!date) return 'All Day';
+    const hours = date.getHours();
+    const minutes = date.getMinutes();
+    const hour = (hours % 12) || 12; 
+    const ampm = (hours >= 12) ? ' PM' : ' AM';
+    return hour + ':' + String(minutes).padStart(2, '0') + ampm;
+};
+
+const formatTableDate = (date) => {
+    if (!date) return '';
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+};
+
+const sortedTableEvents = computed(() => {
+    // Sort events by start date/time
+    const sorted = [...props.events].sort((a, b) => (+a.start) - (+b.start));
+    return sorted.map(event => {
+        const startTime = dateToTimeString(event.start);
+        const endTime = event.end ? dateToTimeString(event.end) : '';
+        
+        return {
+            ...event,
+            appointmentDay: formatTableDate(event.start),
+            time: event.allDay ? 'All Day' : (endTime ? `${startTime} - ${endTime}` : startTime),
+        };
+    });
+});
+// --- End Utility Functions ---
+
+const viewDetails = (event) => {
+    emit('view-details', event);
+};
+
+const editEvent = (event) => {
+    // Emit the full event object to the parent for pre-filling the modal
+    emit('edit-event', event);
+};
+
+const deleteEvent = (eventId) => {
+    // Emit the ID to the parent for deletion
+    emit('delete-event', eventId);
+};
 </script>
 
 <template>
-    <div class="overflow-x-auto bg-white border border-gray-200 rounded-lg shadow-md">
+    <div class="bg-white p-4 shadow-lg rounded-lg">
         <table class="min-w-full divide-y divide-gray-200">
             <thead>
-                <tr class="bg-[#7A0C23] text-white uppercase text-sm leading-normal">
-                    <th class="py-3 px-6 text-left">List</th>
-                    <th class="py-3 px-6 text-left">Appointment Day</th>
-                    <th class="py-3 px-6 text-left">Time</th>
-                    <th class="py-3 px-6 text-center">View</th>
-                    <th class="py-3 px-6 text-center">Action</th>
+                <tr class="bg-[#7A0C23] text-white uppercase text-xs">
+                    <th class="px-4 py-3 text-left">Schedule</th>
+                    <th class="px-4 py-3 text-left">Appointment Day</th>
+                    <th class="px-4 py-3 text-left">Time</th>
+                    <th class="px-4 py-3 text-center" style="width: 120px;">Actions</th>
                 </tr>
             </thead>
-            <tbody class="text-gray-600 text-sm font-light divide-y divide-gray-200">
-                <tr 
-                    v-for="item in scheduleItems" 
-                    :key="item.id" 
-                    class="border-b border-gray-200 hover:bg-gray-50"
-                >
-                    <td class="py-3 px-6 text-left whitespace-nowrap">
-                        <span class="font-medium">{{ item.title }}</span>
-                    </td>
-                    <td class="py-3 px-6 text-left">
-                        {{ item.appointmentDay }}
-                    </td>
-                    <td class="py-3 px-6 text-left">
-                        {{ item.time || 'All Day' }}
-                    </td>
-                    <td class="py-3 px-6 text-center">
+            <tbody class="bg-white divide-y divide-gray-200">
+                <tr v-for="event in sortedTableEvents" :key="event.id" class="hover:bg-gray-50 transition duration-150">
+                    <td class="px-4 py-3 text-sm text-gray-900 font-medium truncate">{{ event.title }}</td>
+                    <td class="px-4 py-3 text-sm text-gray-500">{{ event.appointmentDay }}</td>
+                    <td class="px-4 py-3 text-sm text-gray-500">{{ event.time }}</td>
+                    <td class="px-4 py-3 text-center space-x-3">
                         <button 
-                            @click="viewDetails(item)" 
-                            class="font-semibold text-green-600 hover:text-green-800 transition duration-150 ease-in-out"
-                            aria-label="View details for this schedule item"
+                            @click="viewDetails(event)" 
+                            title="View in Calendar"
+                            class="text-blue-600 hover:text-blue-800 transition"
                         >
-                            VIEW DETAILS
+                            👁️
                         </button>
-                    </td>
-                    <td class="py-3 px-6 text-center">
+                        
                         <button 
-                            @click="deleteItem(item.id)" 
-                            class="text-red-500 hover:text-red-700 transition duration-150 ease-in-out"
-                            aria-label="Delete schedule item"
+                            @click="editEvent(event)" 
+                            title="Edit Appointment"
+                            class="text-yellow-600 hover:text-yellow-800 transition"
                         >
-                            <svg 
-                                xmlns="http://www.w3.org/2000/svg" 
-                                class="h-5 w-5 inline-block" 
-                                fill="none" 
-                                viewBox="0 0 24 24" 
-                                stroke="currentColor" 
-                                stroke-width="2"
-                            >
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
+                            ✏️
                         </button>
-                    </td>
-                </tr>
-                <tr v-if="scheduleItems.length === 0">
-                    <td colspan="5" class="py-5 text-center text-gray-400">
-                        No scheduled items found. 🎉
+
+                        <button 
+                            @click="deleteEvent(event.id)" 
+                            title="Delete Appointment"
+                            class="text-red-600 hover:text-red-800 transition"
+                        >
+                            🗑️
+                        </button>
                     </td>
                 </tr>
             </tbody>
         </table>
+        <p v-if="events.length === 0" class="text-center py-6 text-gray-500">No appointments scheduled.</p>
     </div>
 </template>
