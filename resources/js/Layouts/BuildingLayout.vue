@@ -52,9 +52,10 @@ const buildings = ref([
 ]);
 
 
-// --- Layout State (Optional, based on your UI needs) ---
+// --- Layout State (Sidebar Logic) ---
 const sidebarVisible = ref(true)
 const toggleSidebar = () => {
+    // Toggles the visibility state of the sidebar
     sidebarVisible.value = !sidebarVisible.value
 }
 
@@ -122,11 +123,14 @@ const deleteBuilding = (buildingId) => {
         <Navbar @toggleSidebar="toggleSidebar" />
         
         <div class="flex pt-14 min-h-screen transition-all duration-300">
-            <Sidebar v-show="sidebarVisible" class="fixed top-14 left-0 h-full z-20 w-64 lg:relative" />
+            
+            <Sidebar 
+                v-show="sidebarVisible" 
+                class="fixed top-14 left-0 h-full z-20 w-64 lg:relative" 
+            />
 
             <main id="main" class="flex-1 transition-all p-6">
-                <!-- Pass the buildings data and handle modal opening -->
-                <h2 class="text-3xl font-bold mb-6 text-gray-800">Building Management Dashboard</h2>
+                <h2 class="text-xl font-bold mb-6 text-[#7A0C23]">Building Management Dashboard</h2>
                 <BuildingTable :buildings="buildings" @openModal="handleOpenModal" />
             </main>
         </div>

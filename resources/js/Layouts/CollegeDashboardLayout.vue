@@ -6,7 +6,7 @@ import Sidebar from '@/Components/Sidebar.vue'
 
 // Import the new dashboard content components
 import CollegeCalendar from '@/Components//CollegeModals/CollegeCalendar.vue'
-import CollegeStatsAndLinks from '@/Components//CollegeModals/CollegeStatsAndLinks.vue'
+import CollegeStatsAndLinks from '@/Components//CollegeModals/CollegeStatsAndLinks.vue' // Contains Stats Cards, User Table, and Quick Links
 import CollegeModals from '@/Components//CollegeModals/CollegeModals.vue' // Placeholder
 
 // ----------------------------------------------
@@ -22,35 +22,28 @@ const toggleSidebar = () => {
 
 <template>
     <div class="bg-gray-100 font-sans">
-        <!-- NAVBAR -->
-        <!-- Navbar contains toggle button which triggers sidebar visibility toggle -->
         <Navbar @toggleSidebar="toggleSidebar" />
 
-        <!-- MAIN LAYOUT -->
         <div class="flex pt-14 min-h-screen transition-all duration-300">
-            
-            <!-- SIDEBAR -->
-            <!-- Sidebar visibility controlled reactively -->
+
             <Sidebar v-show="sidebarVisible" />
 
-            <!-- MAIN CONTENT AREA -->
             <main id="mainContent" class="flex-1 p-6 bg-gray-50 transition-all duration-300">
 
-                <!-- PAGE HEADER -->
-                <h1 class="text-2xl font-bold text-gray-800 mb-6">College</h1>
-
-                <!-- The Dashboard content is now split into two main components -->
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
                     
-                    <!-- Left and Center Content (Stats, Leaderboard, Links) -->
-                    <CollegeStatsAndLinks class="lg:col-span-2 space-y-6" />
+                    <div class="lg:col-span-2 space-y-6">
+                        <CollegeStatsAndLinks />
+                    </div>
 
-                    <!-- Right Content (Calendar) -->
-                    <CollegeCalendar />
-                    
+                    <div class="space-y-6">
+                         <div class="bg-white shadow rounded-lg p-4">
+                            <h2 class="font-semibold text-xl text-gray-800 mb-4 border-b pb-2">📅 Class Schedule</h2>
+                            <CollegeCalendar />
+                         </div>
+                    </div>
                 </div>
-                
-                <!-- Modals Placeholder -->
+
                 <CollegeModals />
 
             </main>

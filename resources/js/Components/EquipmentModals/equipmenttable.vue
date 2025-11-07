@@ -7,7 +7,7 @@
         <!-- Top Header with Filters -->
         <div class="bg-white shadow rounded-lg p-3">
             <div class="flex flex-wrap items-center justify-between gap-3">
-                <h2 class="text-lg font-bold text-gray-700">Equipment Availability</h2>
+                <h2 class="text-lg font-bold text-[#7A0C23]">Equipment Availability</h2>
 
                 <!-- Filter Buttons -->
                 <div class="flex flex-wrap items-center gap-2">

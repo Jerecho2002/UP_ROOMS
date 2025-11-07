@@ -39,7 +39,6 @@ const scheduleItems = ref([
 /**
  * Emits an event to the parent component to switch the view
  * and focus on the selected appointment's date.
- * @param {object} item - The schedule item object.
  */
 const viewDetails = (item) => {
     // Emitting the YYYY-MM-DD date string
@@ -54,10 +53,20 @@ const deleteItem = (itemId) => {
     scheduleItems.value = scheduleItems.value.filter(item => item.id !== itemId);
 };
 
-// **CRITICAL STEP:** Expose the scheduleItems so the parent component (ScheduleLayout.vue) 
-// can access the data for conversion into calendar events.
+/**
+ * **NEW LOGIC:** Method exposed to the parent component to allow adding new data.
+ * @param {object} newItem - The new schedule item object.
+ */
+const addItem = (newItem) => {
+    scheduleItems.value.push(newItem);
+    console.log('New item added internally to TableComponent:', newItem.title);
+};
+
+
+// **CRITICAL STEP:** Expose the scheduleItems ref AND the addItem function.
 defineExpose({
-    scheduleItems
+    scheduleItems, // For the parent to read data and sync calendar view
+    addItem         // For the parent to write new data after modal success
 });
 </script>
 
@@ -80,7 +89,7 @@ defineExpose({
                     class="border-b border-gray-200 hover:bg-gray-50"
                 >
                     <td class="py-3 px-6 text-left whitespace-nowrap">
-                        <span class="font-medium">{{ item.list }}</span>
+                        <span class="font-medium">{{ item.title }}</span>
                     </td>
                     <td class="py-3 px-6 text-left">
                         {{ item.appointmentDay }}

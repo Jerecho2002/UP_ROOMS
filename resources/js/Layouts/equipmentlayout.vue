@@ -4,7 +4,7 @@
 // -------------------------------------------
 import Navbar from '@/Components/Navbar.vue'
 import Sidebar from '@/Components/Sidebar.vue'
-import EquipmentTable from '@/Components/EquipmentModals/EquipmentTable.vue'
+import EquipmentTable from '@/Components/EquipmentModals/Equipmenttable.vue'
 import EquipmentModals from '@/Components/EquipmentModals/EquipmentModal.vue'
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import Chart from 'chart.js/auto'

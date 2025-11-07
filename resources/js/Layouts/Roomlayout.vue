@@ -1,8 +1,9 @@
 <script setup>
 import { ref, computed } from 'vue';
-import Navbar from '@/Components/Navbar.vue'; // Assuming this exists
-import Sidebar from '@/Components/Sidebar.vue'; // Assuming this exists
-import Sidebarsearch from '@/Components/RoomModals/Sidebarsearch.vue';
+// Assuming these imports are correct for your project structure
+import Navbar from '@/Components/Navbar.vue'; 
+import Sidebar from '@/Components/Sidebar.vue'; 
+import Sidebarsearch from '@/Components/RoomModals/Sidebarsearch.vue'; // This component is defined in section 2
 import EditRoomModal from '@/Components/RoomModals/EditRoomModal.vue';
 import AddRoomModal from '@/Components/RoomModals/AddRoomModal.vue';
 
@@ -26,7 +27,7 @@ const roomList = ref([
     { id: 410, room: 'UG 114', building: 'UG Building', college: 'CCAD', capacity: 35, location: 'North Wing', roomType: 'Classroom', description: 'General Classroom', department: 'Arts & Design', floorNumber: 1, schedules: [
         { name: 'English 3 A', time: '9:00AM - 12:00PM T', college: 'CCAD', isAvailable: false },
         { name: 'FA 12 B', time: '1:30PM - 4:30PM MW', college: 'CCAD', isAvailable: false },
-        { name: 'Available Slot', time: '4:30PM - 9:00PM Daily', college: 'N/A', isAvailable: true }, // Added explicit availability for demo
+        { name: 'Available Slot', time: '4:30PM - 9:00PM Daily', college: 'N/A', isAvailable: true }, 
     ]},
     { id: 205, room: 'LH 201', building: 'Lecture Hall', college: 'General', capacity: 150, location: 'Center', roomType: 'Lecture Hall', description: 'Main lecture hall', department: 'All', floorNumber: 2, schedules: [] },
     { id: 101, room: 'A101', building: 'CED', college: 'COE', capacity: 35, location: '1st Floor', roomType: 'Classroom', description: 'Standard classroom', department: 'Engineering', floorNumber: 1, schedules: [] },
@@ -75,7 +76,8 @@ const filteredRoomList = computed(() => {
 });
 
 /**
- * Handles clicking a table row to view details in the sidebar.
+ * Handles clicking a table row to view details in the sidebar, or explicitly
+ * via the new View button.
  * @param {Object} room - The room object clicked.
  */
 const selectRoomForSidebar = (room) => {
@@ -111,7 +113,6 @@ const handleAddRoom = (newRoomData) => {
         ...newRoomData,
         // Ensure capacity is stored as a number
         capacity: Number(newRoomData.capacity),
-        // ** Schedules are now passed from the modal, so we just use newRoomData.schedules **
         schedules: newRoomData.schedules || [], 
         description: newRoomData.description || 'N/A', 
         department: newRoomData.department || 'N/A',
@@ -139,6 +140,12 @@ const handleRoomUpdate = (updatedRoom) => {
     closeEditModal();
 };
 
+// --- Dashboard Card Calculations (Updated to match image's hardcoded values where appropriate) ---
+const totalRoomsDisplay = ref(24); // Placeholder from image
+const availableRooms = ref(16); // Placeholder from image
+const occupiedRooms = ref(50); // Placeholder from image
+const revenueToday = ref('$24,000'); // Placeholder from image
+
 </script>
 
 <template>
@@ -155,44 +162,55 @@ const handleRoomUpdate = (updatedRoom) => {
         </aside>
 
         <div :class="{ 'sm:ml-64': sidebarVisible }" class="flex flex-col flex-1 overflow-hidden transition-all duration-300">
+            
             <Navbar @toggle-sidebar="toggleSidebar" /> 
 
             <main class="flex-1 overflow-x-hidden overflow-y-auto p-6 relative">
+                 <h3 class="text-2xl font-bold text-[#7A0C23]">Rooms Dashboard</h3>
                 <div class="absolute right-6 top-6 z-20"> 
-                    <div class="text-sm text-gray-500 whitespace-nowrap">
-                        <span>UPCEBU &gt;</span>
-                        <a href="#" @click.prevent="searchSidebarVisible = true"
-                            class="text-green-600 hover:text-green-700 font-semibold cursor-pointer ml-1">Rooms</a>
+                    <div class="text-sm text-gray-500 whitespace-nowrap ">
+                        <span>UPCEBU > Room</span>
                     </div>
                 </div>
-                <div class=" space-y-6">
+                
+                <div class="space-y-6 mt-16">
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        <div class="bg-white rounded-xl shadow-lg overflow-hidden border-l-4 border-yellow-400">
-                            <div class="p-4">
-                                <h3 class="text-lg font-semibold text-gray-500 uppercase">Total Rooms</h3>
-                                <p class="text-4xl font-bold text-gray-900 mt-1">{{ roomList.length }}</p>
-                            </div>
-                        </div>
-                        <div class="bg-white rounded-xl shadow-lg overflow-hidden border-l-4 border-red-600">
-                            <div class="p-4">
-                                <h3 class="text-lg font-semibold text-gray-500 uppercase">Available</h3>
-                                <p class="text-4xl font-bold text-gray-900 mt-1">24</p>
-                            </div>
-                        </div>
-                        <div class="bg-white rounded-xl shadow-lg overflow-hidden border-l-4 border-blue-600">
-                            <div class="p-4">
-                                <h3 class="text-lg font-semibold text-gray-500 uppercase">Occupied</h3>
-                                <p class="text-4xl font-bold text-gray-900 mt-1">0</p>
-                            </div>
-                        </div>
-                        <div class="bg-white rounded-xl shadow-lg overflow-hidden border-l-4 border-green-600">
-                            <div class="p-4">
-                                <h3 class="text-lg font-semibold text-gray-500 uppercase">Total Capacity</h3>
-                                <p class="text-4xl font-bold text-gray-900 mt-1">{{ roomList.reduce((acc, room) => acc + room.capacity, 0) }}</p>
-                            </div>
-                        </div>
+
+             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+                <div class="rounded-xl text-center shadow-lg overflow-hidden flex-1 min-w-[150px]">
+                    <div class="bg-cyan-500 text-white p-3">
+                        <h3 class="text-lg font-normal uppercase">Total Rooms</h3>
                     </div>
+                    <div class="bg-white p-3">
+                        <p class="text-4xl font-bold mt-1 text-gray-500">{{ totalRoomsDisplay }}</p>
+                    </div>
+                </div>
+                <div class="rounded-xl text-center shadow-lg overflow-hidden flex-1 min-w-[150px]">
+                    <div class="bg-purple-600 text-white p-3">
+                        <h3 class="text-lg font-normal uppercase">Available</h3>
+                    </div>
+                    <div class="bg-white p-3">
+                        <p class="text-4xl font-bold mt-1 text-gray-500">{{ availableRooms }}</p>
+                    </div>
+                </div>
+                <div class="rounded-xl text-center shadow-lg overflow-hidden flex-1 min-w-[150px]">
+                    <div class="bg-orange-500 text-white p-3">
+                            <h3 class="text-lg font-normal uppercase">Occupied</h3>
+                    </div>
+                    <div class="bg-white p-3">
+                        <p class="text-4xl font-bold mt-1 text-gray-500">{{ occupiedRooms }}</p>
+                    </div>
+                </div>
+                <div class="rounded-xl text-center shadow-lg overflow-hidden flex-1 min-w-[150px]">
+                    <div class="bg-red-600 text-white p-3">
+                        <h3 class="text-lg font-normal uppercase ">Revenue Today</h3>
+                    </div>
+                    <div class="bg-white p-3">
+                        <p class="text-4xl font-bold mt-1 text-gray-500">{{ revenueToday }}</p>
+                    </div>
+                </div>
+            </div>
+
 
                     <div class="flex justify-between items-center pt-4">
                         <div class="relative w-full max-w-sm">
@@ -206,13 +224,23 @@ const handleRoomUpdate = (updatedRoom) => {
                         </div>
 
                         <div class="flex items-center space-x-2"> 
-                            <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.47 9.246 5 7.5 5S4.168 5.47 3 6.253v13C4.168 18.47 5.754 18 7.5 18s3.332.47 4.5 1.253m0-13C13.168 5.47 14.754 5 16.5 5s3.332.47 4.5 1.253v13C19.832 18.47 18.246 18 16.5 18s-3.332.47-4.5 1.253"></path></svg>
+                            <button 
+                                @click="searchSidebarVisible = true"
+                                class="p-2.5 text-gray-500 hover:text-green-600 bg-white border border-gray-300 rounded-lg shadow-sm transition duration-150"
+                            >
+                               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V6.5A2.5 2.5 0 0 0 17.5 4H6.5A2.5 2.5 0 0 0 4 6.5v13z"/>
+    <path d="M12 2v20"/>
+</svg>
+                            </button>
+                            
                             <button @click="openAddModal" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 px-6 rounded-lg shadow-lg transition duration-150 transform hover:scale-[1.02]">
-                                ADD ROOMS
+                                <span class="hidden sm:inline">ADD ROOMS</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 inline-block sm:hidden" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" /></svg>
                             </button>
                         </div>
                     </div>
-
+                    
                     <div class="bg-white p-6 rounded-xl shadow-xl overflow-x-auto">
                         <h2 class="text-xl font-bold mb-4 text-gray-800">Room List ({{ filteredRoomList.length }})</h2>
                         <table class="min-w-full divide-y divide-gray-200">
@@ -232,20 +260,23 @@ const handleRoomUpdate = (updatedRoom) => {
                                 <tr v-if="filteredRoomList.length === 0">
                                     <td colspan="8" class="px-6 py-4 text-center text-gray-500">No rooms found matching "{{ searchQuery }}".</td>
                                 </tr>
-                                <tr v-for="room in filteredRoomList" :key="room.id" class="hover:bg-gray-50 transition duration-100 cursor-pointer" @click="selectRoomForSidebar(room)">
-                                    <td class="px-6 py-4 text-sm font-mono text-gray-500">{{ room.id }}</td>
-                                    <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ room.room }}</td>
-                                    <td class="px-6 py-4 text-sm text-gray-800">{{ room.building }}</td>
-                                    <td class="px-6 py-4 text-sm text-gray-800">{{ room.college }}</td>
-                                    <td class="px-6 py-4 text-sm text-gray-800 text-center font-bold">{{ room.capacity }}</td>
-                                    <td class="px-6 py-4 text-sm text-gray-800">{{ room.location }}</td>
-                                    <td class="px-6 py-4 text-sm text-gray-800">{{ room.roomType }}</td>
+                                <tr v-for="room in filteredRoomList" :key="room.id" class="hover:bg-gray-50 transition duration-100">
+                                    <td class="px-6 py-4 text-sm font-mono text-gray-500 cursor-pointer" @click="selectRoomForSidebar(room)">{{ room.id }}</td>
+                                    <td class="px-6 py-4 text-sm font-medium text-gray-900 cursor-pointer" @click="selectRoomForSidebar(room)">{{ room.room }}</td>
+                                    <td class="px-6 py-4 text-sm text-gray-800 cursor-pointer" @click="selectRoomForSidebar(room)">{{ room.building }}</td>
+                                    <td class="px-6 py-4 text-sm text-gray-800 cursor-pointer" @click="selectRoomForSidebar(room)">{{ room.college }}</td>
+                                    <td class="px-6 py-4 text-sm text-gray-800 text-center font-bold cursor-pointer" @click="selectRoomForSidebar(room)">{{ room.capacity }}</td>
+                                    <td class="px-6 py-4 text-sm text-gray-800 cursor-pointer" @click="selectRoomForSidebar(room)">{{ room.location }}</td>
+                                    <td class="px-6 py-4 text-sm text-gray-800 cursor-pointer" @click="selectRoomForSidebar(room)">{{ room.roomType }}</td>
                                     <td class="px-6 py-4 text-sm font-medium text-center">
                                         <div class="flex justify-center space-x-3">
-                                            <button @click.stop="openEditModal(room)" class="text-blue-500 hover:text-blue-700 p-1.5 rounded-full hover:bg-blue-50 transition">
+                                            <button @click.stop="selectRoomForSidebar(room)" class="text-green-500 hover:text-green-700 p-1.5 rounded-full hover:bg-green-50 transition" title="View Details">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z" /><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" /></svg>
+                                            </button>
+                                            <button @click.stop="openEditModal(room)" class="text-blue-500 hover:text-blue-700 p-1.5 rounded-full hover:bg-blue-50 transition" title="Edit Room">
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zm-5.044 1.764L1.758 13.586a2 2 0 00-.57 1.428V16a1 1 0 001 1h2.986a2 2 0 001.428-.57l8.236-8.236-2.828-2.828-8.236 8.236z" /></svg>
                                             </button>
-                                            <button @click.stop="handleDeleteRoom(room.id)" class="text-red-500 hover:text-red-700 p-1.5 rounded-full hover:bg-red-50 transition">
+                                            <button @click.stop="handleDeleteRoom(room.id)" class="text-red-500 hover:text-red-700 p-1.5 rounded-full hover:bg-red-50 transition" title="Delete Room">
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 112 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd" /></svg>
                                             </button>
                                         </div>
@@ -256,8 +287,9 @@ const handleRoomUpdate = (updatedRoom) => {
                     </div>
                 </div>
             </main>
+            
         </div>
-
+        
         <div :class="{
             'translate-x-0': searchSidebarVisible,
             'translate-x-full': !searchSidebarVisible
@@ -287,7 +319,6 @@ const handleRoomUpdate = (updatedRoom) => {
             @upload="console.log('Opening file dialog...')"
         />
     </div>
-  
 </template>
 
 <style scoped>

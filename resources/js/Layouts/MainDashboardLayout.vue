@@ -136,8 +136,8 @@ const rooms = computed(() => page.props.rooms)
       <main id="mainContent" class="flex-1 px-6 py-6 bg-gray-50 transition-all duration-300">
         
         <slot>
-          <div class="text-xs text-gray-500 mb-4 flex justify-between items-center">
-            <span class="hidden md:block">Dashboard</span>
+          <div class=" text-gray-500 mb-4 flex justify-between items-center">
+            <h1 class="hidden md:block text-[#7A0C23]">Dashboard</h1>
             <span>UPCEBU &gt; Dashboard</span>
           </div>
 

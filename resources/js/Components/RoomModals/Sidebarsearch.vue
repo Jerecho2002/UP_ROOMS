@@ -25,24 +25,40 @@
             </div>
 
             <div class="mb-6 space-y-2">
-                <h4 class="text-sm font-medium text-gray-500 border-b pb-1 mb-2">Room Details:</h4>
+                <h4 class="text-md font-bold text-gray-700 border-b pb-1 mb-3">Room Details</h4>
+
                 <div class="grid grid-cols-2 gap-y-2 text-sm">
-                    <span class="font-semibold text-gray-600">ID:</span> <span class="text-gray-900 font-mono">{{ roomData.id }}</span>
-                    <span class="font-semibold text-gray-600">Capacity:</span> <span class="text-gray-900 font-bold">{{ roomData.capacity }}</span>
                     <span class="font-semibold text-gray-600">College:</span> <span class="text-gray-900">{{ roomData.college }}</span>
-                    <span class="font-semibold text-gray-600">Type:</span> <span class="text-gray-900">{{ roomData.roomType }}</span>
+                    <span class="font-semibold text-gray-600">Capacity:</span> <span class="text-gray-900 font-bold">{{ roomData.capacity }}</span>
+                </div>
+
+                <div class="grid grid-cols-2 gap-y-2 text-sm">
                     <span class="font-semibold text-gray-600">Building:</span> <span class="text-gray-900">{{ roomData.building }}</span>
-                    <span class="font-semibold text-gray-600">Floor:</span> <span class="text-gray-900">{{ roomData.floorNumber || 'N/A' }}</span>
-                    <span class="font-semibold text-gray-600 col-span-2">Location:</span> <span class="text-gray-900 col-span-2">{{ roomData.location }}</span>
-                    <span class="font-semibold text-gray-600 col-span-2">Description:</span> <span class="text-gray-900 col-span-2">{{ roomData.description }}</span>
+                    <span class="font-semibold text-gray-600">Type:</span> <span class="text-gray-900">{{ roomData.roomType }}</span>
+                </div>
+
+                <div class="grid grid-cols-2 gap-y-2 text-sm">
+                    <span class="font-semibold text-gray-600">Department:</span> <span class="text-gray-900">{{ roomData.department || 'N/A' }}</span>
+                    <span class="font-semibold text-gray-600">Floor Number:</span> <span class="text-gray-900">{{ roomData.floorNumber || 'N/A' }}</span>
+                </div>
+
+                <div class="grid grid-cols-1 gap-y-2 text-sm pt-2">
+                    <span class="font-semibold text-gray-600">Location:</span> <span class="text-gray-900">{{ roomData.location }}</span>
+                </div>
+
+                <div class="grid grid-cols-1 gap-y-2 text-sm pt-2">
+                    <span class="font-semibold text-gray-600">ID:</span> <span class="text-gray-900 font-mono">{{ roomData.id }}</span>
+                </div>
+                <div class="grid grid-cols-1 gap-y-2 text-sm pt-2">
+                    <span class="font-semibold text-gray-600">Description:</span> <span class="text-gray-900">{{ roomData.description || 'N/A' }}</span>
                 </div>
             </div>
 
             <div class="flex-1 overflow-y-auto">
-                <h4 class="text-sm font-medium text-gray-500 mb-2 border-b pb-1">Schedules ({{ roomData.schedules.length || 0 }})</h4>
+                <h4 class="text-md font-bold text-gray-700 mb-3 border-b pb-1">Schedules ({{ roomData.schedules.length || 0 }})</h4>
                 <div class="space-y-2 text-sm">
                     <div v-if="!roomData.schedules || roomData.schedules.length === 0" class="p-2 text-center text-gray-500 italic">No schedules found. Room is likely Available.</div>
-                    <div v-for="(schedule, index) in roomData.schedules" :key="index" :class="{'bg-green-50': schedule.isAvailable, 'bg-red-50': !schedule.isAvailable, 'text-green-700': schedule.isAvailable, 'text-red-700': !schedule.isAvailable}" class="p-2 border rounded-lg">
+                    <div v-for="(schedule, index) in roomData.schedules" :key="index" :class="{'bg-green-50': schedule.isAvailable, 'bg-red-50': !schedule.isAvailable, 'text-green-700': schedule.isAvailable, 'text-red-700': !schedule.isAvailable}" class="p-2 border rounded-lg shadow-sm">
                         <p class="font-semibold">{{ schedule.name }}</p>
                         <p class="text-xs text-gray-600">{{ schedule.time }} <span class="font-medium text-gray-400">|</span> {{ schedule.college }}</p>
                     </div>
@@ -76,11 +92,6 @@
 <script setup>
 import { ref, computed } from 'vue';
 
-/**
- * SidebarSearch.vue
- * This component displays the details and schedule for a selected room
- * and includes a search function to select a different room.
- */
 const props = defineProps({
     roomData: {
         type: Object,
@@ -103,18 +114,16 @@ const localSearchQuery = ref('');
 const filteredRoomsForSidebar = computed(() => {
     const query = localSearchQuery.value.toLowerCase().trim();
     if (!query) {
-        // If there's no query, don't show all rooms in the search section,
-        // focus on the selected room or prompt
         return [];
     }
 
     return props.allRooms.filter(room =>
         // Search by ID, Room, Building, College, or Room Type
         String(room.id).includes(query) ||
-        room.room.toLowerCase().includes(query) ||
-        room.building.toLowerCase().includes(query) ||
-        room.college.toLowerCase().includes(query) ||
-        room.roomType.toLowerCase().includes(query)
+        (room.room && room.room.toLowerCase().includes(query)) ||
+        (room.building && room.building.toLowerCase().includes(query)) ||
+        (room.college && room.college.toLowerCase().includes(query)) ||
+        (room.roomType && room.roomType.toLowerCase().includes(query))
     );
 });
 </script>

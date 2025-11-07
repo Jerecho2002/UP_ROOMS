@@ -19,7 +19,7 @@ const newRoom = ref({
     capacity: null,
     location: '',
     roomType: '',
-    // --- NEW SCHEDULE FIELD ---
+    description: '', // Added for completeness in layout
     schedules: []
 });
 
@@ -40,6 +40,7 @@ const resetForm = () => {
         capacity: null,
         location: '',
         roomType: '',
+        description: '', // Added for completeness in layout
         schedules: [] // Reset schedules as well
     };
     resetTempSchedule();
@@ -85,11 +86,10 @@ const handleSubmit = () => {
         return;
     }
 
-    // Emit the new room data up to the parent component, which will send it to the Laravel Controller
-    // The schedules array is included in newRoom.value
+    // Emit the new room data up to the parent component
     emit('save', { ...newRoom.value });
 
-    // Reset and close the modal after successful submission (or handle failure in parent)
+    // Reset and close the modal after submission
     resetForm();
     emit('close');
 };
@@ -161,6 +161,12 @@ const handleClose = () => {
                         <input type="text" id="location" v-model="newRoom.location"
                                 class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm p-2">
                     </div>
+                    
+                    <div>
+                        <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
+                        <input type="text" id="description" v-model="newRoom.description"
+                                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm p-2">
+                    </div>
 
                     <div class="border-t pt-4 mt-4">
                         <h4 class="text-lg font-semibold text-gray-800 mb-3">Room Schedules 🗓️</h4>
@@ -223,9 +229,9 @@ const handleClose = () => {
 
 <style scoped>
 .modal-fade-enter-active, .modal-fade-leave-active {
-  transition: opacity 0.3s ease;
+    transition: opacity 0.3s ease;
 }
 .modal-fade-enter-from, .modal-fade-leave-to {
-  opacity: 0;
+    opacity: 0;
 }
 </style>

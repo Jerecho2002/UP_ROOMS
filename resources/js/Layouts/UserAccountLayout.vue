@@ -92,7 +92,7 @@ const deleteUser = (userId) => {
     <div class="bg-gray-100 font-sans">
         <Navbar @toggleSidebar="toggleSidebar" />
         
-        <div class="flex pt-14 min-h-screen transition-all duration-300">
+        <div class="flex pt-10 min-h-screen transition-all duration-300">
             
             <Sidebar v-show="sidebarVisible" class="fixed top-14 left-0 h-full z-20 w-64 lg:relative" />
 

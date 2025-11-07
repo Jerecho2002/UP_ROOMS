@@ -1,77 +1,113 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-// Assuming the path to your components is correct as provided
+import { ref, computed, onMounted, nextTick } from 'vue';
 import Navbar from '@/Components/Navbar.vue';
 import Sidebar from '@/Components/Sidebar.vue';
 import TableList from '@/Components/ScheduleModal/TableComponent.vue';
 import CalendarView from '@/Components/ScheduleModal/CalendarView.vue';
+import ScheduleModal from '@/Components/ScheduleModal/ScheduleModal.vue'; 
 
 // --- Layout State ---
 const sidebarOpen = ref(true);
 const toggleSidebar = () => (sidebarOpen.value = !sidebarOpen.value);
 
-// --- View Management State (NEW) ---
-// Controls whether to show 'table' or 'calendar'
+// --- View Management State ---
 const currentView = ref('table');
 const setView = (view) => {
     currentView.value = view;
 };
 
+// --- Modal State ---
+const isModalOpen = ref(false);
+const modalSelectedDate = ref(new Date().toISOString().slice(0, 10));
+
+const openModal = (dateString = new Date().toISOString().slice(0, 10)) => {
+    modalSelectedDate.value = dateString;
+    isModalOpen.value = true;
+};
+const closeModal = () => {
+    isModalOpen.value = false;
+};
+
 // --- Schedule Data and View Management ---
-// Reference to the TableComponent to access its exposed data
 const tableListRef = ref(null);
+const rawScheduleItems = ref([]); 
 
-// Reactive state to hold the raw schedule items from TableComponent
-const rawScheduleItems = ref([]);
-
-// Configuration state for the CalendarView, using a Date object for the focused day.
-const calendarConfig = ref({
-    date: new Date(), // Initialize with today's Date object
-    mode: 'list',
-});
-
-// Once the component is mounted, grab the initial data exposed by the TableList
-onMounted(() => {
-    // Check if the ref and the exposed property exist before assigning
+// Reliable function to get data from the TableList component
+const syncRawScheduleItems = () => {
+    // Check if the ref exists and exposes the scheduleItems property
     if (tableListRef.value && tableListRef.value.scheduleItems) {
-        rawScheduleItems.value = tableListRef.value.scheduleItems;
+        // Accessing the .value of the ref exposed by the child
+        rawScheduleItems.value = tableListRef.value.scheduleItems.value;
+        console.log('Data synced successfully:', rawScheduleItems.value.length, 'items.');
+    } else {
+        // Fallback or debug logging
+        // console.warn("TableList reference or its scheduleItems is not available yet.");
     }
+};
+
+onMounted(() => {
+    // Use nextTick to ensure the child component is rendered before attempting to access its ref
+    nextTick(() => {
+        syncRawScheduleItems(); 
+    });
 });
 
 // --- Date/Time Parsing Utility (Crucial for data transformation) ---
-/**
- * Converts a date string ('YYYY-MM-DD') and a time string ('HH:MM AM-HH:MM PM' or '')
- * into a structured event object with proper Date objects for start and end times.
- * @param {object} item - The raw schedule item.
- * @returns {object} The transformed calendar event object.
- */
 const transformToCalendarEvent = (item) => {
-    const allDay = !item.time;
-    let startDate, endDate = null;
+    // Check for required fields
+    if (!item || !item.appointmentDay || !item.title) {
+        console.error("Invalid item data:", item);
+        return null;
+    }
+
+    const allDay = !item.time || item.time.trim() === '';
+    let startDate = null;
+    let endDate = null;
 
     if (allDay) {
-        // For all-day events, the 'start' date is the day itself at midnight
-        startDate = new Date(item.appointmentDay + 'T00:00:00');
+        // For all-day events, use midday to avoid timezone issues with Date objects
+        startDate = new Date(item.appointmentDay + 'T12:00:00');
+        // Set end date to the *next* day for all-day visualization on calendars
+        endDate = new Date(startDate.getTime() + 24 * 60 * 60 * 1000); 
     } else {
-        // For timed events, parse the start and end times
-        const [startTimeStr, endTimeStr] = item.time.split('-');
+        // Improved time parsing utility
+        const convertTo24Hour = (timeStr) => {
+            const timePart = timeStr.trim();
+            const ampm = timePart.includes('AM') ? 'AM' : (timePart.includes('PM') ? 'PM' : '');
+            let [hours, minutes] = timePart.replace(ampm, '').trim().split(':');
+            
+            hours = parseInt(hours) || 0;
+            minutes = parseInt(minutes) || 0;
 
-        // Parse start time
-        // Note: Using a helper function (not visible in provided code) is best practice,
-        // but for simplicity, we rely on the browser's date parsing here.
-        // The date part is crucial for making the Date object valid.
-        startDate = new Date(item.appointmentDay + ' ' + startTimeStr);
+            if (ampm === 'PM' && hours !== 12) hours += 12;
+            if (ampm === 'AM' && hours === 12) hours = 0; // Midnight 12AM is 00
+            
+            return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+        };
+
+        const [startTimeStr, endTimeStr] = item.time.split('-').map(s => s.trim());
         
-        // Parse end time (optional)
-        if (endTimeStr) {
-            endDate = new Date(item.appointmentDay + ' ' + endTimeStr);
+        try {
+            const startTime24h = convertTo24Hour(startTimeStr);
+            startDate = new Date(item.appointmentDay + 'T' + startTime24h + ':00');
+            
+            if (endTimeStr) {
+                const endTime24h = convertTo24Hour(endTimeStr);
+                endDate = new Date(item.appointmentDay + 'T' + endTime24h + ':00');
+            } else {
+                // Default 1-hour duration if end time is missing
+                endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
+            }
+        } catch (e) {
+            console.error("Error parsing time for item:", item, e);
+            return null;
         }
     }
     
     return {
         id: item.id,
         title: item.title,
-        // The 'start' and 'end' must be Date objects for CalendarView
+        list: item.list || 'Appointment', 
         start: startDate, 
         end: endDate,
         allDay: allDay,
@@ -80,38 +116,63 @@ const transformToCalendarEvent = (item) => {
 
 /**
  * Computed property to convert the raw schedule items into the format 
- * required by the CalendarView component.
+ * required by the CalendarView component. Filters out nulls from failed parsing.
  */
 const calendarEvents = computed(() => {
-    return rawScheduleItems.value.map(transformToCalendarEvent);
+    if (!Array.isArray(rawScheduleItems.value)) return [];
+    return rawScheduleItems.value.map(transformToCalendarEvent).filter(event => event !== null);
 });
 
+// Configuration state for the CalendarView
+const calendarConfig = ref({
+    date: new Date(), 
+    mode: 'list',
+});
 
 // --- HANDLERS ---
 
-/**
- * Handles the 'view-details' event emitted by the TableList component.
- * It switches to the calendar view and focuses on the selected date in 'day' mode.
- * @param {string} dateString - The 'YYYY-MM-DD' date string from the schedule item.
- */
-const handleViewDetails = (dateString) => {
-    // 1. Switch the main layout view to 'calendar'
+const handleNewScheduleItem = async (newItemData) => {
+    // 1. Give the new item a temporary ID and default list property
+    const tempId = Math.max(0, ...rawScheduleItems.value.map(i => i.id || 0)) + 1;
+    const itemWithId = { ...newItemData, id: newItemData.id || tempId, list: newItemData.list || 'New Appointment' };
+
+    // 2. Add the new item to the TableList's internal data
+    if (tableListRef.value && tableListRef.value.addItem) {
+        tableListRef.value.addItem(itemWithId);
+    } else {
+        // Fallback for calendar view if TableList ref is not ready
+        rawScheduleItems.value.push(itemWithId);
+    }
+
+    // 3. Ensure reactivity updates have processed before re-syncing
+    await nextTick(); 
+    syncRawScheduleItems(); 
+
+    // 4. Switch to calendar view and focus on the new date
     currentView.value = 'calendar';
+    const newFocusDate = new Date(itemWithId.appointmentDay + 'T12:00:00');
 
-    // 2. Create a new Date object from the date string.
-    // Setting it to a safe time like midday prevents timezone issues from shifting the day.
+    calendarConfig.value = {
+        date: newFocusDate,
+        mode: itemWithId.time ? 'day' : 'month', 
+    };
+    closeModal();
+};
+
+const handleViewDetails = (dateString) => {
+    currentView.value = 'calendar';
     const newFocusDate = new Date(dateString + 'T12:00:00');
-
-    // 3. Update the calendar configuration to focus on the new date and switch to 'day' mode
     calendarConfig.value = {
         date: newFocusDate,
         mode: 'day',
     };
 };
 
-/**
- * Handlers for CalendarView updates (if needed to sync back to the parent state)
- */
+const handleCalendarDateClick = (date) => {
+    const dateString = date.toISOString().slice(0, 10);
+    openModal(dateString);
+};
+
 const handleCalendarDateUpdate = (newDate) => {
     calendarConfig.value.date = newDate;
 };
@@ -119,41 +180,43 @@ const handleCalendarDateUpdate = (newDate) => {
 const handleCalendarModeUpdate = (newMode) => {
     calendarConfig.value.mode = newMode;
 };
-
-// Expose internal state/methods if this layout itself is intended to be used by a grand-parent
-// defineExpose({}); 
 </script>
 
 <template>
-   <div class="flex pt-14 min-h-screen transition-all duration-300">
-
+    <div class="bg-gray-100 font-sans min-h-screen">
         
+        <Navbar @toggleSidebar="toggleSidebar" class="fixed top-0 left-0 right-0 z-30" />
 
-        <Sidebar :sidebarOpen="sidebarOpen" />
-
-
-
-        <div class="flex flex-col flex-1 overflow-hidden">
-
+        <div class="flex pt-14 min-h-screen transition-all duration-300">
             
+            <Sidebar 
+                :sidebarOpen="sidebarOpen" 
+                v-show="sidebarOpen" 
+                class="fixed top-14 left-0 h-[calc(100vh-3.5rem)] z-20 w-64 lg:relative lg:top-0 lg:h-full transition-all duration-300" 
+            />
 
-            <Navbar @toggleSidebar="toggleSidebar" />
+            <main class="flex-1 p-6 overflow-y-auto">
+                <div class="mb-6 flex items-center justify-between">
+                    <div class="flex justify-start space-x-4">
+                        <button 
+                            @click="setView('table')" 
+                            :class="['px-6 py-2 rounded-lg font-medium transition', currentView === 'table' ? 'bg-[#7A0C23] text-white shadow-lg' : 'bg-white text-gray-700 hover:bg-gray-100 border']"
+                        >
+                            Schedule List Table 📋
+                        </button>
+                        <button 
+                            @click="setView('calendar')" 
+                            :class="['px-6 py-2 rounded-lg font-medium transition', currentView === 'calendar' ? 'bg-[#7A0C23] text-white shadow-lg' : 'bg-white text-gray-700 hover:bg-gray-100 border']"
+                        >
+                            Calendar View 🗓️
+                        </button>
+                    </div>
 
-
-            
-            <main class="p-6">
-                <div class="mb-6 flex justify-center space-x-4">
-                    <button 
-                        @click="setView('table')" 
-                        :class="['px-6 py-2 rounded-lg font-medium transition', currentView === 'table' ? 'bg-[#7A0C23] text-white shadow-lg' : 'bg-white text-gray-700 hover:bg-gray-100 border']"
+                    <button
+                        @click="openModal()"
+                        class="px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition duration-150"
                     >
-                        Schedule List Table 📋
-                    </button>
-                    <button 
-                        @click="setView('calendar')" 
-                        :class="['px-6 py-2 rounded-lg font-medium transition', currentView === 'calendar' ? 'bg-[#7A0C23] text-white shadow-lg' : 'bg-white text-gray-700 hover:bg-gray-100 border']"
-                    >
-                        Calendar View 🗓️
+                        + Add Appointment
                     </button>
                 </div>
                 
@@ -174,10 +237,16 @@ const handleCalendarModeUpdate = (newMode) => {
                         @update:date="handleCalendarDateUpdate"
                         @update:mode="handleCalendarModeUpdate"
                         @event-selected="() => {}"
-                    />
+                        @date-clicked="handleCalendarDateClick" />
                 </div>
             </main>
         </div>
+
+        <ScheduleModal 
+            :isVisible="isModalOpen"
+            :selectedDate="modalSelectedDate"
+            @close="closeModal"
+            @success="handleNewScheduleItem" />
     </div>
 </template>
 
