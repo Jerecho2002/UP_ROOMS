@@ -76,8 +76,8 @@ const handleDelete = (user) => {
             </button>
         </div>
 
-        <div class="overflow-x-auto bg-white rounded-lg shadow-xl">
-            <div class="overflow-y-auto max-h-[80vh]">
+        <div class=" bg-white rounded-lg shadow-xl">
+            <div class=" max-h-[80vh]">
                 <table class="min-w-full border border-gray-200 text-sm text-center">
                     <thead class="bg-[#7A0C23] text-white sticky top-0 shadow">
                         <tr>

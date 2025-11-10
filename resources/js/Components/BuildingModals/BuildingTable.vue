@@ -1,5 +1,9 @@
 <script setup>
 import { computed, ref, defineProps, defineEmits } from 'vue';
+// 1. Import FontAwesomeIcon component
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+// 2. Import the specific icons you need (solid style)
+import { faEye, faPen, faTrash } from '@fortawesome/free-solid-svg-icons';
 
 // Define props to receive the list of buildings from the parent
 const props = defineProps({
@@ -9,6 +13,13 @@ const props = defineProps({
         default: () => []
     }
 })
+
+// Define the icons for use in the template
+const icons = {
+    eye: faEye,
+    edit: faPen, // Using faPen for a modern edit icon
+    delete: faTrash, // Using faTrash for delete
+};
 
 // Define events to notify the parent about modal actions
 const emit = defineEmits(['openModal']);
@@ -99,17 +110,16 @@ const handleView = (building) => {
                             <td class="px-6 py-3 text-center">
                                 <div class="flex justify-center space-x-2">
                                     <button @click="handleView(b)" title="View" class="text-sky-500 hover:text-sky-700 transform hover:scale-110 transition">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                        <!-- Fixed: Using FontAwesomeIcon with the imported icon -->
+                                        <FontAwesomeIcon :icon="icons.eye" class="h-5 w-5" />
                                     </button>
                                     <button @click="handleEdit(b)" title="Edit" class="text-blue-500 hover:text-blue-700 transform hover:scale-110 transition">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zm-7.586 11l-2 2h4l9.293-9.293-2.828-2.828L5 14.004v-2.004H3v4h4l-2 2H3v-2z" />
-                                        </svg>
+                                        <!-- Fixed: Using FontAwesomeIcon with the imported icon -->
+                                        <FontAwesomeIcon :icon="icons.edit" class="h-5 w-5" />
                                     </button>
                                     <button @click="handleDelete(b)" title="Delete" class="text-red-600 hover:text-red-800 transform hover:scale-110 transition">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 11a1 1 0 10-2 0v5a1 1 0 102 0v-5zm6-1a1 1 0 00-1 1v5a1 1 0 102 0v-5a1 1 0 00-1-1z" clip-rule="evenodd" />
-                                        </svg>
+                                        <!-- Fixed: Using FontAwesomeIcon with the imported icon -->
+                                        <FontAwesomeIcon :icon="icons.delete" class="h-5 w-5" />
                                     </button>
                                 </div>
                             </td>

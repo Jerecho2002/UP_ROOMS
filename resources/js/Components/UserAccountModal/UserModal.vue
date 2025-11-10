@@ -141,7 +141,7 @@ const roles = ['Admin', 'Staff', 'Faculty'];
                     
                     <div class="pt-4 border-t flex justify-end space-x-3">
                         <button type="button" @click="emit('close')" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded transition">Cancel</button>
-                        <button type="submit" :class="isAdd ? 'bg-green-600 hover:bg-green-700' : 'bg-yellow-600 hover:bg-yellow-700'" class="text-white px-4 py-2 rounded transition">
+                        <button type="submit" :class="isAdd ? 'bg-green-600 hover:bg-green-700' : 'bg-green-600 hover:bg-green-700'" class="text-white px-4 py-2 rounded transition">
                             {{ isAdd ? 'Add Account' : 'Save Changes' }}
                         </button>
                     </div>

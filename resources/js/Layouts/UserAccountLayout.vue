@@ -96,7 +96,7 @@ const deleteUser = (userId) => {
         
         <div class="flex pt-10 min-h-screen transition-all duration-300">
             
-            <Sidebar v-show="sidebarVisible" class="fixed top-14 left-0 h-full z-20 w-64 lg:relative" />
+            <Sidebar v-show="sidebarVisible" class="fixed top-5 left-0 h-full z-20 w-64 lg:relative" />
 
             <main id="main" class="flex-1 transition-all">
                 <UserAccountTable :users="users" @openModal="handleOpenModal" />
