@@ -126,7 +126,7 @@ const deleteBuilding = (buildingId) => {
             
             <Sidebar 
                 v-show="sidebarVisible" 
-                class="fixed top-14 left-0 h-full z-20 w-64 lg:relative" 
+                class="fixed top-1 left-0 h-full z-20 w-64 lg:relative" 
             />
 
             <main id="main" class="flex-1 transition-all p-6">
