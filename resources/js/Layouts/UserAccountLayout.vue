@@ -1,24 +1,22 @@
 <script setup>
 import { ref } from 'vue'
+// Mock components for context, assuming they exist in the actual project
 import Navbar from '@/Components/Navbar.vue'
 import Sidebar from '@/Components/Sidebar.vue'
-// Corrected import: UserAccountTable
 import UserAccountTable from '@/Components/UserAccountModal/UserAccountTable.vue'
 import UserModal from '@/Components/UserAccountModal/UserModal.vue'
 
 // --- Data State (Master Array) ---
-// Initialize with mock data and manage it here
 const nextId = ref(16);
+// Initialized with mock data matching the Laravel schema
 const users = ref(
     Array.from({ length: 15 }, (_, i) => ({
         id: i + 1,
-        name: `Student Name ${i + 1}`,
-        school: `School ${i % 3 + 1}`,
-        age: 18 + (i % 5),
-        address: `Address St. ${i + 1}`,
-        room: `R${100 + i}`,
-        start: `2024-01-01`,
-        end: `2024-12-31`,
+        username: `user_${i + 1}`,
+        email: `user${i + 1}@example.com`,
+        first_name: i % 2 === 0 ? `Alice${i + 1}` : `Bob${i + 1}`,
+        last_name: `Smith${i + 1}`,
+        role: ['Admin', 'Staff', 'Faculty'][i % 3],
     }))
 );
 
@@ -64,17 +62,20 @@ const handleDataUpdated = (data, type) => {
 }
 
 const addUser = (newUser) => {
-    // Assign a new ID
+    // Assign a new ID (simulating DB insertion)
     newUser.id = nextId.value++;
+    // Set a default role if none is provided in the form
+    if (!newUser.role) newUser.role = 'Staff'; 
     users.value.push(newUser);
-    console.log('User added:', newUser.name);
+    console.log('User added:', newUser.username);
 };
 
 const updateUser = (updatedUser) => {
     const index = users.value.findIndex(u => u.id === updatedUser.id);
     if (index !== -1) {
+        // Simple update/replace of the object
         users.value[index] = updatedUser;
-        console.log('User updated:', updatedUser.name);
+        console.log('User updated:', updatedUser.username);
     }
 };
 
@@ -90,6 +91,7 @@ const deleteUser = (userId) => {
 
 <template>
     <div class="bg-gray-100 font-sans">
+        <!-- Assuming Navbar and Sidebar exist and are correctly imported -->
         <Navbar @toggleSidebar="toggleSidebar" />
         
         <div class="flex pt-10 min-h-screen transition-all duration-300">
@@ -97,7 +99,6 @@ const deleteUser = (userId) => {
             <Sidebar v-show="sidebarVisible" class="fixed top-14 left-0 h-full z-20 w-64 lg:relative" />
 
             <main id="main" class="flex-1 transition-all">
-                <!-- Pass the users array down as a prop -->
                 <UserAccountTable :users="users" @openModal="handleOpenModal" />
             </main>
         </div>

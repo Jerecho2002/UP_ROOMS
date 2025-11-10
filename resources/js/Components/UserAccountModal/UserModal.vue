@@ -16,7 +16,6 @@ const props = defineProps({
     },
 });
 
-// Emits 'close' and 'dataUpdated(data, type)'
 const emit = defineEmits(['close', 'dataUpdated']);
 
 // Local state for the form (used for edit/add)
@@ -25,18 +24,16 @@ const formData = ref({});
 // Watch for changes in the 'user' prop and update local formData for editing
 watch(() => [props.user, props.type], ([newUser, newType]) => {
     if (newType === 'add') {
-        // Reset for a fresh 'add' form
+        // Reset for a fresh 'add' form with initial values for the new schema
         formData.value = { 
-            name: '', 
-            school: '', 
-            age: 0, 
-            address: '', 
-            room: '', 
-            start: new Date().toISOString().substring(0, 10), // Current date default
-            end: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().substring(0, 10), // Next year default
+            username: '', 
+            email: '', 
+            first_name: '', 
+            last_name: '', 
+            role: 'Staff', // Default role
         };
     } else if (newUser) {
-        // Deep copy the user object to formData for modification in edit/view
+        // Deep copy the user object to formData for modification
         formData.value = { ...newUser };
     } else {
         // Fallback reset
@@ -49,23 +46,28 @@ watch(() => [props.user, props.type], ([newUser, newType]) => {
 const modalTitle = computed(() => {
     switch (props.type) {
         case 'add': return 'Add New User Account';
-        case 'view': return `View Details: ${props.user?.name || 'User'}`;
-        case 'edit': return `Edit User Account: ${props.user?.name || 'User'}`;
-        case 'delete': return `Confirm Delete: ${props.user?.name || 'User'}`;
+        case 'view': return `View Details: ${props.user?.username || 'User'}`;
+        case 'edit': return `Edit User Account: ${props.user?.username || 'User'}`;
+        case 'delete': return `Confirm Delete: ${props.user?.username || 'User'}`;
         default: return 'User Account Action';
     }
 });
 
 const isView = computed(() => props.type === 'view');
-const isEdit = computed(() => props.type === 'edit');
 const isAdd = computed(() => props.type === 'add');
+const isEditOrAdd = computed(() => props.type === 'edit' || props.type === 'add');
 const isDelete = computed(() => props.type === 'delete');
 
 
 // --- Action Handlers ---
 
 const handleSubmit = () => {
-    if (isAdd.value || isEdit.value) {
+    if (isAdd.value || props.type === 'edit') {
+        // Validate basic fields
+        if (!formData.value.username || !formData.value.email) {
+            console.error('Username and Email are required.');
+            return;
+        }
         // Notify parent with the modified data and the action type
         emit('dataUpdated', formData.value, props.type);
     }
@@ -75,6 +77,9 @@ const handleDeleteConfirm = () => {
     // Notify parent with the user data and the delete action type
     emit('dataUpdated', props.user, 'delete');
 };
+
+// Available roles, matching the factory
+const roles = ['Admin', 'Staff', 'Faculty'];
 
 </script>
 
@@ -94,56 +99,46 @@ const handleDeleteConfirm = () => {
                 <!-- VIEW MODE -->
                 <div v-if="isView && user" class="space-y-3 text-gray-700">
                     <p><strong>ID:</strong> {{ user.id }}</p>
-                    <p><strong>Name:</strong> {{ user.name }}</p>
-                    <p><strong>School:</strong> {{ user.school }}</p>
-                    <p><strong>Age:</strong> {{ user.age }}</p>
-                    <p><strong>Address:</strong> {{ user.address }}</p>
-                    <p><strong>Room:</strong> {{ user.room }}</p>
-                    <p><strong>Start Date:</strong> {{ user.start }}</p>
-                    <p><strong>End Date:</strong> {{ user.end }}</p>
+                    <p><strong>Username:</strong> {{ user.username }}</p>
+                    <p><strong>Email:</strong> {{ user.email }}</p>
+                    <p><strong>First Name:</strong> {{ user.first_name || 'N/A' }}</p>
+                    <p><strong>Last Name:</strong> {{ user.last_name || 'N/A' }}</p>
+                    <p><strong>Role:</strong> {{ user.role }}</p>
                     <div class="mt-6 pt-4 border-t flex justify-end">
                         <button @click="emit('close')" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded transition">Close</button>
                     </div>
                 </div>
 
                 <!-- ADD/EDIT FORM -->
-                <form v-else-if="isAdd || isEdit" @submit.prevent="handleSubmit" class="space-y-4">
-                    <div>
-                        <label for="name" class="block text-sm font-medium text-gray-700">Name</label>
-                        <input type="text" id="name" v-model="formData.name" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                <form v-else-if="isEditOrAdd" @submit.prevent="handleSubmit" class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="first_name" class="block text-sm font-medium text-gray-700">First Name</label>
+                            <input type="text" id="first_name" v-model="formData.first_name" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                        </div>
+                        <div>
+                            <label for="last_name" class="block text-sm font-medium text-gray-700">Last Name</label>
+                            <input type="text" id="last_name" v-model="formData.last_name" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                        </div>
                     </div>
+
                     <div>
-                        <label for="school" class="block text-sm font-medium text-gray-700">School</label>
-                        <input type="text" id="school" v-model="formData.school" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                        <label for="username" class="block text-sm font-medium text-gray-700">Username <span class="text-red-500">*</span></label>
+                        <input type="text" id="username" v-model="formData.username" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
                     </div>
+
                     <div>
-                        <label for="room" class="block text-sm font-medium text-gray-700">Room</label>
-                        <input type="text" id="room" v-model="formData.room" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                        <label for="email" class="block text-sm font-medium text-gray-700">Email <span class="text-red-500">*</span></label>
+                        <input type="email" id="email" v-model="formData.email" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
                     </div>
                     
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label for="age" class="block text-sm font-medium text-gray-700">Age</label>
-                            <input type="number" id="age" v-model.number="formData.age" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
-                        </div>
-                        <div>
-                            <label for="address" class="block text-sm font-medium text-gray-700">Address</label>
-                            <input type="text" id="address" v-model="formData.address" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
-                        </div>
+                    <div>
+                        <label for="role" class="block text-sm font-medium text-gray-700">Role</label>
+                        <select id="role" v-model="formData.role" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                            <option v-for="role in roles" :key="role" :value="role">{{ role }}</option>
+                        </select>
                     </div>
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label for="start" class="block text-sm font-medium text-gray-700">Start Date</label>
-                            <input type="date" id="start" v-model="formData.start" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
-                        </div>
-                        <div>
-                            <label for="end" class="block text-sm font-medium text-gray-700">End Date</label>
-                            <input type="date" id="end" v-model="formData.end" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
-                        </div>
-                    </div>
-
-
+                    
                     <div class="pt-4 border-t flex justify-end space-x-3">
                         <button type="button" @click="emit('close')" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded transition">Cancel</button>
                         <button type="submit" :class="isAdd ? 'bg-green-600 hover:bg-green-700' : 'bg-yellow-600 hover:bg-yellow-700'" class="text-white px-4 py-2 rounded transition">
@@ -154,7 +149,7 @@ const handleDeleteConfirm = () => {
 
                 <!-- DELETE CONFIRMATION -->
                 <div v-else-if="isDelete && user" class="space-y-4">
-                    <p class="text-lg text-red-600">Are you sure you want to delete the account for **{{ user.name }}**?</p>
+                    <p class="text-lg text-red-600">Are you sure you want to delete the account for **{{ user.username }}**?</p>
                     <p class="text-gray-600">This action cannot be undone.</p>
                     <div class="mt-6 pt-4 border-t flex justify-end space-x-3">
                         <button @click="emit('close')" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded transition">Cancel</button>
