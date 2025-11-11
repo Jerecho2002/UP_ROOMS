@@ -1,5 +1,15 @@
 <script setup>
 import { ref, computed } from 'vue';
+import { faEye, faPenToSquare, faTrash, faSearch } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+
+
+const icons = {
+    eye: faEye,
+    edit: faPenToSquare,
+    delete: faTrash,
+    search: faSearch,
+};
 
 // Define props to receive the function to open the modal from the parent
 const props = defineProps({
@@ -78,7 +88,7 @@ const handleDelete2 = (item) => props.openModal('delete', item, 'lastMonthUsers'
 <template>
     <div class="p-6 bg-gray-100">
         <div class="bg-white shadow-2xl rounded-xl p-6 mb-10">
-            <h2 class="font-bold text-xl text-gray-800 mb-4 border-b pb-2">User Details</h2>
+            <h2 class="font-bold text-xl text-gray-800 mb-4 border-b pb-2">Department of Information Tech.</h2>
 
             <div class="mb-4">
                 <input
@@ -90,7 +100,7 @@ const handleDelete2 = (item) => props.openModal('delete', item, 'lastMonthUsers'
             </div>
 
             <div class="overflow-x-auto">
-                <div class="overflow-y-auto max-h-96 border rounded-lg">
+                <div class=" " >
                     <table class="min-w-full text-sm border-collapse">
                         <thead class="bg-[#7A0C23] text-white sticky top-0 shadow-md">
                             <tr>
@@ -119,15 +129,18 @@ const handleDelete2 = (item) => props.openModal('delete', item, 'lastMonthUsers'
                                     </span>
                                 </td>
                                 <td class="p-4 text-left space-x-3 whitespace-nowrap w-0 min-w-min">
-                                    <button @click="handleView(user)" title="View Details" class="text-blue-500 hover:text-blue-700 transition transform hover:scale-110">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-                                    </button>
-                                    <button @click="handleEdit(user)" title="Edit User" class="text-yellow-600 hover:text-yellow-800 transition transform hover:scale-110">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                                    </button>
-                                    <button @click="handleDelete(user)" title="Delete User" class="text-red-600 hover:text-red-800 transition transform hover:scale-110">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                                    </button>
+                                       <button @click="handleViewDetails(user, 'CFIC')" title="View Details"
+                                    class="text-blue-500 hover:text-blue-700 transform hover:scale-110 transition">
+                                    <FontAwesomeIcon :icon="icons.eye" class="h-5 w-5" />
+                                </button>
+                                <button @click="handleEditDetails(user, 'CFIC')" title="Edit User"
+                                    class="text-green-600 hover:text-green-800 transform hover:scale-110 transition">
+                                    <FontAwesomeIcon :icon="icons.edit" class="h-5 w-5" />
+                                </button>
+                                <button @click="handleDeleteDetails(user, 'CFIC')" title="Delete User"
+                                    class="text-red-600 hover:text-red-800 transform hover:scale-110 transition">
+                                    <FontAwesomeIcon :icon="icons.delete" class="h-5 w-5" />
+                                </button>
                                 </td>
                             </tr>
                             <tr v-if="filteredUsers.length === 0">
@@ -143,7 +156,7 @@ const handleDelete2 = (item) => props.openModal('delete', item, 'lastMonthUsers'
 
 
         <div class="bg-white shadow-2xl rounded-xl p-6">
-            <h2 class="font-bold text-xl text-gray-800 mb-4 border-b pb-2">Last Month Created User IDs</h2>
+            <h2 class="font-bold text-xl text-gray-800 mb-4 border-b pb-2">Department of Education</h2>
 
             <div class="mb-4">
                 <input
@@ -155,7 +168,7 @@ const handleDelete2 = (item) => props.openModal('delete', item, 'lastMonthUsers'
             </div>
 
             <div class="overflow-x-auto">
-                <div class="overflow-y-auto max-h-96 border rounded-lg">
+                <div class="">
                     <table class="min-w-full text-sm border-collapse">
                         <thead class="bg-[#7A0C23] text-white sticky top-0 shadow-md">
                             <tr>
@@ -179,15 +192,18 @@ const handleDelete2 = (item) => props.openModal('delete', item, 'lastMonthUsers'
                                 <td class="p-4 text-left text-gray-600 hidden md:table-cell">{{ item.yearStart }}</td>
                                 <td class="p-4 text-left text-gray-600 hidden lg:table-cell">{{ item.yearEnd }}</td>
                                 <td class="p-4 text-left space-x-3 whitespace-nowrap w-0 min-w-min">
-                                    <button @click="handleView2(item)" title="View Details" class="text-blue-500 hover:text-blue-700 transition transform hover:scale-110">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-                                    </button>
-                                    <button @click="handleEdit2(item)" title="Edit User" class="text-yellow-600 hover:text-yellow-800 transition transform hover:scale-110">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                                    </button>
-                                    <button @click="handleDelete2(item)" title="Delete User" class="text-red-600 hover:text-red-800 transition transform hover:scale-110">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                                    </button>
+                                          <button @click="handleViewDetails(user, 'CFIC')" title="View Details"
+                                    class="text-blue-500 hover:text-blue-700 transform hover:scale-110 transition">
+                                    <FontAwesomeIcon :icon="icons.eye" class="h-5 w-5" />
+                                </button>
+                                <button @click="handleEditDetails(user, 'CFIC')" title="Edit User"
+                                    class="text-green-600 hover:text-green-800 transform hover:scale-110 transition">
+                                    <FontAwesomeIcon :icon="icons.edit" class="h-5 w-5" />
+                                </button>
+                                <button @click="handleDeleteDetails(user, 'CFIC')" title="Delete User"
+                                    class="text-red-600 hover:text-red-800 transform hover:scale-110 transition">
+                                    <FontAwesomeIcon :icon="icons.delete" class="h-5 w-5" />
+                                </button>
                                 </td>
                             </tr>
                             <tr v-if="filteredLastMonthUsers.length === 0">

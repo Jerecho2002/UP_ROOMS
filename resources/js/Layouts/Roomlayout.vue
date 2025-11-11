@@ -1,11 +1,26 @@
 <script setup>
 import { ref, computed } from 'vue';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'; // <--- NEW/UNCOMMENTED: Required for template
+import { faEye, faPenToSquare, faTrash, faPlus, faSearch } from '@fortawesome/free-solid-svg-icons';
+
 // Assuming these imports are correct for your project structure
 import Navbar from '@/Components/Navbar.vue'; 
 import Sidebar from '@/Components/Sidebar.vue'; 
-import Sidebarsearch from '@/Components/RoomModals/Sidebarsearch.vue'; // This component is defined in section 2
+import Sidebarsearch from '@/Components/RoomModals/Sidebarsearch.vue'; 
 import EditRoomModal from '@/Components/RoomModals/EditRoomModal.vue';
 import AddRoomModal from '@/Components/RoomModals/AddRoomModal.vue';
+
+/* ------------------------------------------------------------------- */
+/* --- Icon Mapping --- */
+/* ------------------------------------------------------------------- */
+const icons = {
+    eye: faEye,
+    edit: faPenToSquare, // Mapped to faPenToSquare
+    delete: faTrash, // Mapped to faTrash
+    plus: faPlus,
+    search: faSearch,
+};
+
 
 /* ------------------------------------------------------------------- */
 /* --- State & Layout Visibility (Controller State) --- */
@@ -89,7 +104,17 @@ const selectRoomForSidebar = (room) => {
 /* --- Data Management (Controller Actions) --- */
 /* ------------------------------------------------------------------- */
 
+// Handlers for template actions (NEW/FIXED)
+const handleViewDetails = (room) => {
+    selectRoomForSidebar(room);
+};
+
+const handleEditRoom = (room) => {
+    openEditModal(room);
+};
+
 const handleDeleteRoom = (id) => {
+    // Note: The script logic correctly handles an ID input
     if (confirm(`Are you sure you want to delete Room ID ${id}?`)) {
         const index = roomList.value.findIndex(room => room.id === id);
         if (index !== -1) {
@@ -104,6 +129,7 @@ const handleDeleteRoom = (id) => {
 };
 
 const handleAddRoom = (newRoomData) => {
+    // Generate a new ID based on the highest existing ID
     const newId = roomList.value.length > 0
         ? Math.max(...roomList.value.map(r => r.id)) + 1
         : 1;
@@ -140,17 +166,38 @@ const handleRoomUpdate = (updatedRoom) => {
     closeEditModal();
 };
 
-// --- Dashboard Card Calculations (Updated to match image's hardcoded values where appropriate) ---
-const totalRoomsDisplay = ref(24); // Placeholder from image
-const availableRooms = ref(16); // Placeholder from image
-const occupiedRooms = ref(50); // Placeholder from image
-const revenueToday = ref('$24,000'); // Placeholder from image
+/* ------------------------------------------------------------------- */
+/* --- Dashboard Card Calculations (Computed Properties) --- */
+/* ------------------------------------------------------------------- */
 
+const totalRoomsDisplay = computed(() => roomList.value.length);
+
+const availableRoomsCount = computed(() => {
+    // A room is considered 'Available/Vacant' if ALL its schedule slots are marked as 'isAvailable: true'
+    // OR if it has NO schedules at all (fully free).
+    return roomList.value.filter(room => 
+        room.schedules.length === 0 || 
+        room.schedules.every(s => s.isAvailable)
+    ).length;
+});
+
+const occupiedRoomsCount = computed(() => {
+    // A room is considered 'Occupied' if it has AT LEAST ONE schedule slot marked as 'isAvailable: false'
+    // This correctly captures rooms that are in use for any period.
+    return roomList.value.filter(room => 
+        room.schedules.some(s => !s.isAvailable)
+    ).length;
+});
+
+const uniqueRoomTypesCount = computed(() => {
+    const types = new Set(roomList.value.map(room => room.roomType));
+    // Display the count of unique room types
+    return types.size; 
+});
 </script>
-
 <template>
     <div class="flex pt-14 min-h-screen transition-all duration-300 bg-gray-50">
-      
+        
         <aside
             :class="{
                 'w-64': sidebarVisible,
@@ -167,126 +214,137 @@ const revenueToday = ref('$24,000'); // Placeholder from image
 
             <main class="flex-1 overflow-x-hidden overflow-y-auto p-6 relative">
                  <h3 class="text-2xl font-bold text-[#7A0C23]">Rooms Dashboard</h3>
-                <div class="absolute right-6 top-6 z-20"> 
-                    <div class="text-sm text-gray-500 whitespace-nowrap ">
-                        <span>UPCEBU > Room</span>
-                    </div>
-                </div>
-                
-                <div class="space-y-4 mt-8">
+                 <div class="absolute right-6 top-6 z-20"> 
+                      <div class="text-sm text-gray-500 whitespace-nowrap ">
+                          <span>UPCEBU > Room</span>
+                      </div>
+                 </div>
+                 
+                 <div class="space-y-4 mt-8">
 
 
-             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-                <div class="rounded-xl text-center shadow-lg overflow-hidden flex-1 min-w-[150px]">
-                    <div class="bg-cyan-500 text-white p-3">
-                        <h3 class="text-lg font-normal uppercase">Total Rooms</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+                    <div class="rounded-xl text-center shadow-lg overflow-hidden flex-1 min-w-[150px]">
+                        <div class="bg-cyan-500 text-white p-3">
+                            <h3 class="text-lg font-normal uppercase">Total Rooms</h3>
+                        </div>
+                        <div class="bg-white p-3">
+                            <p class="text-2xl font-bold mt-1 text-gray-800">{{ totalRoomsDisplay }}</p>
+                        </div>
                     </div>
-                    <div class="bg-white p-3">
-                        <p class="text-2xl font-bold mt-1 text-gray-500">{{ totalRoomsDisplay }}</p>
+                    <div class="rounded-xl text-center shadow-lg overflow-hidden flex-1 min-w-[150px]">
+                        <div class="bg-purple-600 text-white p-3">
+                            <h3 class="text-lg font-normal uppercase">Room Vacant</h3>
+                        </div>
+                        <div class="bg-white p-3">
+                            <p class="text-2xl font-bold mt-1 text-gray-800">{{ availableRoomsCount }}</p>
+                        </div>
+                    </div>
+                    <div class="rounded-xl text-center shadow-lg overflow-hidden flex-1 min-w-[150px]">
+                        <div class="bg-orange-500 text-white p-3">
+                                   <h3 class="text-lg font-normal uppercase">Rooms Occupied</h3>
+                        </div>
+                        <div class="bg-white p-3">
+                            <p class="text-2xl font-bold mt-1 text-gray-800">{{ occupiedRoomsCount }}</p>
+                        </div>
+                    </div>
+                    <div class="rounded-xl text-center shadow-lg overflow-hidden flex-1 min-w-[150px]">
+                        <div class="bg-red-600 text-white p-3">
+                            <h3 class="text-lg font-normal uppercase ">Room Types</h3>
+                        </div>
+                        <div class="bg-white p-3">
+                            <p class="text-2xl font-bold mt-1 text-gray-800">{{ uniqueRoomTypesCount }}</p>
+                        </div>
                     </div>
                 </div>
-                <div class="rounded-xl text-center shadow-lg overflow-hidden flex-1 min-w-[150px]">
-                    <div class="bg-purple-600 text-white p-3">
-                        <h3 class="text-lg font-normal uppercase">Available</h3>
-                    </div>
-                    <div class="bg-white p-3">
-                        <p class="text-2xl font-bold mt-1 text-gray-500">{{ availableRooms }}</p>
-                    </div>
-                </div>
-                <div class="rounded-xl text-center shadow-lg overflow-hidden flex-1 min-w-[150px]">
-                    <div class="bg-orange-500 text-white p-3">
-                            <h3 class="text-lg font-normal uppercase">Occupied</h3>
-                    </div>
-                    <div class="bg-white p-3">
-                        <p class="text-2xl font-bold mt-1 text-gray-500">{{ occupiedRooms }}</p>
-                    </div>
-                </div>
-                <div class="rounded-xl text-center shadow-lg overflow-hidden flex-1 min-w-[150px]">
-                    <div class="bg-red-600 text-white p-3">
-                        <h3 class="text-lg font-normal uppercase ">Revenue Today</h3>
-                    </div>
-                    <div class="bg-white p-3">
-                        <p class="text-2xl font-bold mt-1 text-gray-500">{{ revenueToday }}</p>
-                    </div>
-                </div>
-            </div>
 
 
                     <div class="flex justify-between items-center pt-4">
-                        <div class="relative w-full max-w-sm">
-                            <input 
-                                type="text" 
-                                placeholder="SEARCH" 
-                                v-model="searchQuery"
-                                class="pl-12 pr-4 py-2 w-full rounded-lg border-2 border-gray-300 focus:outline-none focus:border-green-500 transition duration-150 bg-white" 
-                            />
-                            <svg class="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                        </div>
+                          <div class="relative w-full max-w-sm">
+                              <input 
+                                   type="text" 
+                                   placeholder="SEARCH" 
+                                   v-model="searchQuery"
+                                   class="pl-12 pr-4 py-2 w-full rounded-lg border-2 border-gray-300 focus:outline-none focus:border-green-500 transition duration-150 bg-white" 
+                              />
+                              <svg class="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                          </div>
 
-                        <div class="flex items-center space-x-2"> 
-                            <button 
-                                @click="searchSidebarVisible = true"
-                                class="p-2.5 text-gray-500 hover:text-green-600 bg-white border border-gray-300 rounded-lg shadow-sm transition duration-150"
-                            >
-                               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V6.5A2.5 2.5 0 0 0 17.5 4H6.5A2.5 2.5 0 0 0 4 6.5v13z"/>
-    <path d="M12 2v20"/>
-</svg>
-                            </button>
-                            
-                            <button @click="openAddModal" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 px-6 rounded-lg shadow-lg transition duration-150 transform hover:scale-[1.02]">
-                                <span class="hidden sm:inline">ADD ROOMS</span>
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 inline-block sm:hidden" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" /></svg>
-                            </button>
-                        </div>
+                          <div class="flex items-center space-x-2"> 
+    
+                                  <button 
+        @click="searchSidebarVisible = true"
+        class=" text-gray-500 mr-3 " 
+      
+    >
+        
+        <svg 
+            xmlns="http://www.w3.org/2000/svg" 
+            viewBox="0 0 640 640" 
+            class="h-5 w-5 inline-block ml-1" 
+            fill="currentColor" 
+        >
+            <path d="M480 576L192 576C139 576 96 533 96 480L96 160C96 107 139 64 192 64L496 64C522.5 64 544 85.5 544 112L544 400C544 420.9 530.6 438.7 512 445.3L512 512C529.7 512 544 526.3 544 544C544 561.7 529.7 576 512 576L480 576zM192 448C174.3 448 160 462.3 160 480C160 497.7 174.3 512 192 512L448 512L448 448L192 448zM224 216C224 229.3 234.7 240 248 240L424 240C437.3 240 448 229.3 448 216C448 202.7 437.3 192 424 192L248 192C234.7 192 224 202.7 224 216zM248 288C234.7 288 224 298.7 224 312C224 325.3 234.7 336 248 336L424 336C437.3 336 448 325.3 448 312C448 298.7 437.3 288 424 288L248 288z"/>
+        </svg>
+    </button>
+    
+    <button @click="openAddModal" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 px-6 rounded-lg shadow-lg transition duration-150 transform hover:scale-[1.02]">
+        <span class="hidden sm:inline">ADD ROOMS</span>
+        
+    </button>
+</div>
                     </div>
                     
                     <div class="bg-white p-6 rounded-xl shadow-xl overflow-x-auto">
-                        <h2 class="text-xl font-bold mb-4 text-gray-800">Room List ({{ filteredRoomList.length }})</h2>
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">ID</th>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Room</th>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Building</th>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">College</th>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Capacity</th>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Location</th>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Room Type</th>
-                                    <th class="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                <tr v-if="filteredRoomList.length === 0">
-                                    <td colspan="8" class="px-6 py-4 text-center text-gray-500">No rooms found matching "{{ searchQuery }}".</td>
-                                </tr>
-                                <tr v-for="room in filteredRoomList" :key="room.id" class="hover:bg-gray-50 transition duration-100">
-                                    <td class="px-6 py-4 text-sm font-mono text-gray-500 cursor-pointer" @click="selectRoomForSidebar(room)">{{ room.id }}</td>
-                                    <td class="px-6 py-4 text-sm font-medium text-gray-900 cursor-pointer" @click="selectRoomForSidebar(room)">{{ room.room }}</td>
-                                    <td class="px-6 py-4 text-sm text-gray-800 cursor-pointer" @click="selectRoomForSidebar(room)">{{ room.building }}</td>
-                                    <td class="px-6 py-4 text-sm text-gray-800 cursor-pointer" @click="selectRoomForSidebar(room)">{{ room.college }}</td>
-                                    <td class="px-6 py-4 text-sm text-gray-800 text-center font-bold cursor-pointer" @click="selectRoomForSidebar(room)">{{ room.capacity }}</td>
-                                    <td class="px-6 py-4 text-sm text-gray-800 cursor-pointer" @click="selectRoomForSidebar(room)">{{ room.location }}</td>
-                                    <td class="px-6 py-4 text-sm text-gray-800 cursor-pointer" @click="selectRoomForSidebar(room)">{{ room.roomType }}</td>
-                                    <td class="px-6 py-4 text-sm font-medium text-center">
-                                        <div class="flex justify-center space-x-3">
-                                            <button @click.stop="selectRoomForSidebar(room)" class="text-green-500 hover:text-green-700 p-1.5 rounded-full hover:bg-green-50 transition" title="View Details">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z" /><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" /></svg>
-                                            </button>
-                                            <button @click.stop="openEditModal(room)" class="text-blue-500 hover:text-blue-700 p-1.5 rounded-full hover:bg-blue-50 transition" title="Edit Room">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zm-5.044 1.764L1.758 13.586a2 2 0 00-.57 1.428V16a1 1 0 001 1h2.986a2 2 0 001.428-.57l8.236-8.236-2.828-2.828-8.236 8.236z" /></svg>
-                                            </button>
-                                            <button @click.stop="handleDeleteRoom(room.id)" class="text-red-500 hover:text-red-700 p-1.5 rounded-full hover:bg-red-50 transition" title="Delete Room">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 112 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd" /></svg>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                          <h2 class="text-xl font-bold mb-4 text-gray-800">Room List ({{ filteredRoomList.length }})</h2>
+                          <table class="min-w-full divide-y divide-gray-200">
+                               <thead class="bg-gray-50">
+                                   <tr>
+                                       <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">ID</th>
+                                       <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Room</th>
+                                       <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Building</th>
+                                       <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">College</th>
+                                       <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Capacity</th>
+                                       <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Location</th>
+                                       <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Room Type</th>
+                                       <th class="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Action</th>
+                                   </tr>
+                               </thead>
+                               <tbody class="bg-white divide-y divide-gray-200">
+                                   <tr v-if="filteredRoomList.length === 0">
+                                       <td colspan="8" class="px-6 py-4 text-center text-gray-500">No rooms found matching "{{ searchQuery }}".</td>
+                                   </tr>
+                                   <tr v-for="room in filteredRoomList" :key="room.id" class="hover:bg-gray-50 transition duration-100">
+                                       <td class="px-6 py-4 text-sm font-mono text-gray-500 cursor-pointer" @click="selectRoomForSidebar(room)">{{ room.id }}</td>
+                                       <td class="px-6 py-4 text-sm font-medium text-gray-900 cursor-pointer" @click="selectRoomForSidebar(room)">{{ room.room }}</td>
+                                       <td class="px-6 py-4 text-sm text-gray-800 cursor-pointer" @click="selectRoomForSidebar(room)">{{ room.building }}</td>
+                                       <td class="px-6 py-4 text-sm text-gray-800 cursor-pointer" @click="selectRoomForSidebar(room)">{{ room.college }}</td>
+                                       <td class="px-6 py-4 text-sm text-gray-800 text-center font-bold cursor-pointer" @click="selectRoomForSidebar(room)">{{ room.capacity }}</td>
+                                       <td class="px-6 py-4 text-sm text-gray-800 cursor-pointer" @click="selectRoomForSidebar(room)">{{ room.location }}</td>
+                                       <td class="px-6 py-4 text-sm text-gray-800 cursor-pointer" @click="selectRoomForSidebar(room)">{{ room.roomType }}</td>
+                                       <td class="px-6 py-4 text-sm font-medium text-center">
+                                           <div class="flex justify-center space-x-3">
+                                               <!-- FIX: Use defined handlers and icons object -->
+                                               <button @click="handleViewDetails(room)" title="View Details"
+                                                   class="text-blue-500 hover:text-blue-700 transform hover:scale-110 transition">
+                                                   <FontAwesomeIcon :icon="icons.eye" class="h-5 w-5" />
+                                               </button>
+                                               <button @click="handleEditRoom(room)" title="Edit Room"
+                                                   class="text-green-600 hover:text-green-800 transform hover:scale-110 transition">
+                                                   <FontAwesomeIcon :icon="icons.edit" class="h-5 w-5" />
+                                               </button>
+                                               <button @click="handleDeleteRoom(room.id)" title="Delete Room"
+                                                   class="text-red-600 hover:text-red-800 transform hover:scale-110 transition">
+                                                   <FontAwesomeIcon :icon="icons.delete" class="h-5 w-5" />
+                                               </button>
+                                           </div>
+                                       </td>
+                                   </tr>
+                               </tbody>
+                          </table>
                     </div>
-                </div>
-            </main>
+                 </div>
+             </main>
             
         </div>
         

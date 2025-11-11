@@ -97,12 +97,12 @@ const closeDetailsModal = () => {
     <div class="space-y-3">
         <div class="bg-white shadow rounded-lg p-3">
             <div class="flex flex-wrap items-center justify-between gap-3">
-                <h2 class="text-lg font-bold text-[#7A0C23]">Equipment Availability</h2>
+                <h2 class="text-lg font-bold text-[#7A0C23]">Rooms have Equipment</h2>
 
                 <div class="flex flex-wrap items-center gap-2">
                     <div class="flex items-center rounded-lg bg-purple-600 p-2 text-white cursor-pointer hover:bg-purple-700 transition">
                         <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zM8 11a2 2 0 100-4 2 2 0 000 4zM12 11a2 2 0 100-4 2 2 0 000 4zM14 13a6 6 0 00-12 0v2h12v-2z"></path></svg>
-                        <span class="font-semibold text-sm">Student</span>
+                        <span class="font-semibold text-sm">Account</span>
                         <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                     </div>
 
@@ -134,7 +134,7 @@ const closeDetailsModal = () => {
         </div>
 
         <div class="bg-white shadow rounded-lg p-3 overflow-x-auto">
-            <h2 class="text-lg font-bold mb-2 text-gray-700">User Using Equipment</h2>
+            <h2 class="text-lg font-bold mb-2 text-gray-700">Rooms have Equipment</h2>
 
             <div class="max-h-[300px] overflow-y-auto border border-gray-200 rounded-lg">
                 <table class="table-auto w-full border-collapse text-sm">
@@ -143,8 +143,9 @@ const closeDetailsModal = () => {
                             <th class="px-3 py-2 border-b-2 border-r border-maroon-dark">Room</th>
                             <th class="px-3 py-2 border-b-2 border-r border-maroon-dark">Name</th>
                             <th class="px-3 py-2 border-b-2 border-r border-maroon-dark">Building</th>
+                            <th class="px-3 py-2 border-b-2 border-r border-maroon-dark">Location</th>
                             <th class="px-3 py-2 border-b-2 border-r border-maroon-dark">College</th>
-                            <th class="px-3 py-2 border-b-2 border-r border-maroon-dark text-center">Status</th>
+                            
                             <th class="px-3 py-2 border-b-2 text-center">Action</th>
                         </tr>
                     </thead>
@@ -155,11 +156,7 @@ const closeDetailsModal = () => {
                             <td class="border-r px-3 py-2 font-medium">{{ item.name }}</td>
                             <td class="border-r px-3 py-2 text-center">{{ item.building }}</td>
                             <td class="border-r px-3 py-2 text-center">{{ item.college }}</td>
-                            <td class="border-r px-3 py-2 text-center">
-                                <span v-if="item.status === 'Completed'" class="text-green-600 font-semibold">✔ Completed</span>
-                                <span v-else-if="item.status === 'Cancel'" class="text-red-600 font-semibold">✘ Cancel</span>
-                                <span v-else class="text-yellow-600 font-semibold">⚪ Pending</span>
-                            </td>
+                           <td class="border-r px-3 py-2 text-center">{{ item.college }}</td>
                             <td class="px-3 py-2 text-center">
                                 <button 
                                     @click="handleViewDetails(item)"

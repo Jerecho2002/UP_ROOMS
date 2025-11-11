@@ -17,7 +17,7 @@
         :class="isBuildingOpen ? 'bg-gray-100 font-semibold text-gray-800' : 'hover:bg-gray-200 text-gray-700'"
       >
       
-        <span> Building Management</span>
+        <span> Build & Equip Management.</span>
         <svg 
           :class="{'rotate-90': isBuildingOpen}" 
           class="w-4 h-4 transform transition-transform duration-300" 
@@ -62,7 +62,7 @@
         class="flex justify-between items-center cursor-pointer px-4 py-2 rounded transition duration-150"
         :class="isRoomsOpen ? 'bg-gray-100 font-semibold text-gray-800' : 'hover:bg-gray-200 text-gray-700'"
       >
-        <span> Room Management</span>
+        <span> Room Management.</span>
         <svg 
           :class="{'rotate-90': isRoomsOpen}" 
           class="w-4 h-4 transform transition-transform duration-300" 

@@ -83,14 +83,28 @@ const handleDeleteData = (payload) => {
 
 </script>
 
+
 <template>
-    <div class="flex-1 flex flex-col h-full overflow-hidden">
+    <div class="flex flex-col h-screen bg-gray-100">
+
         <Navbar @toggleSidebar="toggleSidebar" />
         
-        <div class="flex pt-14 transition-all duration-300">
-            <Sidebar v-show="sidebarVisible" class="fixed top-14 left-0 h-full z-20 w-64 lg:relative" />
+        <div :class="[
+            'flex flex-1 h-full overflow-hidden relative mt-14', 
+            sidebarVisible ? 'lg:grid lg:grid-cols-[256px_1fr]' : 'flex' // 256px = w-64
+        ]">
+            
+            <Sidebar :sidebarOpen="sidebarVisible" @toggleSidebar="toggleSidebar" :class="[
+                'lg:relative lg:translate-x-0 lg:h-full', 
+                sidebarVisible ? 'lg:block' : 'lg:hidden'
+            ]" />
 
-            <main class="flex-1 p-6 overflow-y-auto">
+            <main :class="[
+                'flex-1 p-6 overflow-y-auto transition-all duration-300',
+                // Removed ml-64/lg:ml-64. The grid now handles the spacing automatically,
+                // making the transition seamless and gap-free on desktop.
+                sidebarVisible ? '' : '' 
+            ]">
                 <h1 class="text-3xl font-extrabold text-[#7A0C23] mb-8">Department Dashboard</h1>
 
                 <div class="flex flex-wrap gap-6 mb-10">
@@ -142,7 +156,6 @@ const handleDeleteData = (payload) => {
                     @updateData="handleUpdateData"
                     @deleteData="handleDeleteData"
                 />
-
             </main>
         </div>
     </div>

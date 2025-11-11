@@ -1,5 +1,16 @@
 <script setup>
 import { computed } from 'vue';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { faEye, faPenToSquare, faTrash, faPlus, faSearch } from '@fortawesome/free-solid-svg-icons';
+
+// 1. FIX: Define the icons object
+const icons = {
+    eye: faEye,
+    edit: faPenToSquare, // Correct icon for edit
+    delete: faTrash,     // Correct icon for delete
+    add: faPlus,
+    search: faSearch
+};
 
 const props = defineProps({
     events: {
@@ -8,28 +19,44 @@ const props = defineProps({
     }
 });
 
+// Emitted events match the required handlers
 const emit = defineEmits(['view-details', 'edit-event', 'delete-event']);
+
+// 3. FIX: Define the handler functions to emit the correct event and payload
+const handleViewDetails = (eventObject) => {
+    emit('view-details', eventObject);
+};
+const handleEditEvent = (eventObject) => {
+    emit('edit-event', eventObject);
+};
+const handleDeleteEvent = (eventObject) => {
+    emit('delete-event', eventObject);
+};
 
 // Helper to format Date object into HH:MM AM/PM string
 const formatTime = (date) => {
     if (!date) return '';
-    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+    // Ensure the input is treated as a Date object if it's not already
+    const d = date instanceof Date ? date : new Date(date); 
+    return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
 };
 
 // Helper to format Date object into YYYY-MM-DD string
 const formatDate = (date) => {
     if (!date) return '';
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
+    const d = date instanceof Date ? date : new Date(date);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
 };
 
 // Transform events for table display
 const tableEvents = computed(() => {
-    // Sort events by date and then by start time for a coherent list
+    // Note: It's assumed props.events contains objects with Date objects for `start` and `end`.
+    // If they are strings, new Date(event.start) is required for sorting.
     return [...props.events]
-        .sort((a, b) => a.start - b.start)
+        .sort((a, b) => new Date(a.start) - new Date(b.start)) // Ensure correct date sorting
         .map(event => {
             const appointmentDay = formatDate(event.start);
             let timeStr;
@@ -37,7 +64,8 @@ const tableEvents = computed(() => {
             if (event.allDay) {
                 timeStr = 'All Day';
             } else {
-                const startTime = formatTime(event.start);
+                // Pass the raw date property to formatTime, which handles conversion if needed
+                const startTime = formatTime(event.start); 
                 const endTime = event.end ? formatTime(event.end) : '';
                 timeStr = `${startTime} - ${endTime}`;
             }
@@ -45,7 +73,7 @@ const tableEvents = computed(() => {
             return {
                 id: event.id,
                 title: event.title,
-                list: event.list,
+                list: event.list, // 'list' property seems unused, using 'title' instead
                 appointmentDay: appointmentDay,
                 time: timeStr,
                 eventObject: event, // Keep a reference to the original event for action handlers
@@ -61,7 +89,7 @@ const tableEvents = computed(() => {
             <thead class="bg-[#7A0C23] text-white">
                 <tr>
                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                        List
+                        Event Title
                     </th>
                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                         Appointment Day
@@ -77,7 +105,7 @@ const tableEvents = computed(() => {
             <tbody class="divide-y divide-gray-200">
                 <tr v-for="item in tableEvents" :key="item.id" class="hover:bg-gray-50 transition duration-150">
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {{ item.title }}
+                        {{ item.title }} 
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {{ item.appointmentDay }}
@@ -86,29 +114,18 @@ const tableEvents = computed(() => {
                         {{ item.time }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
-                        <div class="flex items-center justify-center space-x-0 divide-x divide-gray-200">
-                            <button 
-                                @click="emit('view-details', item.eventObject)" 
-                                title="View Details"
-                                class="p-2 text-green-600 hover:text-green-800 transition duration-150 rounded-l-lg hover:bg-gray-100"
-                            >
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                        <div class="flex items-center justify-center space-x-2 divide-x divide-gray-200">
+                            <button @click="handleViewDetails(item.eventObject)" title="View Details"
+                                class="text-blue-500 hover:text-blue-700 transform hover:scale-110 transition px-2">
+                                <FontAwesomeIcon :icon="icons.eye" class="h-5 w-5" />
                             </button>
-
-                            <button 
-                                @click="emit('edit-event', item.eventObject)" 
-                                title="Edit Appointment"
-                                class="p-2 text-blue-600 hover:text-blue-800 transition duration-150 hover:bg-gray-100"
-                            >
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                            <button @click="handleEditEvent(item.eventObject)" title="Edit Event"
+                                class="text-green-600 hover:text-green-800 transform hover:scale-110 transition px-2">
+                                <FontAwesomeIcon :icon="icons.edit" class="h-5 w-5" />
                             </button>
-
-                            <button 
-                                @click="emit('delete-event', item.id)" 
-                                title="Delete Appointment"
-                                class="p-2 text-red-600 hover:text-red-800 transition duration-150 rounded-r-lg hover:bg-gray-100"
-                            >
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            <button @click="handleDeleteEvent(item.eventObject)" title="Delete Event"
+                                class="text-red-600 hover:text-red-800 transform hover:scale-110 transition px-2">
+                                <FontAwesomeIcon :icon="icons.delete" class="h-5 w-5" />
                             </button>
                         </div>
                     </td>
