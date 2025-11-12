@@ -115,14 +115,14 @@ onBeforeUnmount(() => {
             </div>
 
             <div class="bg-white shadow rounded-lg p-3">
-              <h2 class="text-sm font-bold mb-1 text-gray-700">Usage Summary</h2>
+              <h2 class="text-sm font-bold mb-1 text-gray-700">Rooms Summary</h2>
               <p class="text-xs text-green-600">Student: <span class="font-semibold">100%</span></p>
               <p class="text-xs text-orange-500">Room: <span class="font-semibold">80%</span></p>
               <p class="text-xs text-blue-500">Building: <span class="font-semibold">40%</span></p>
             </div>
 
             <div class="bg-white shadow rounded-lg p-3">
-              <h2 class="text-sm font-bold mb-1 text-gray-700">Equipment Usage Percentage</h2>
+              <h2 class="text-sm font-bold mb-1 text-gray-700">Rooms have alot equipment Percentage</h2>
               <canvas ref="pieChartRef" id="pieChart"></canvas>
               <div class="mt-2 text-xs">
                 <p class="text-green-600 font-medium">■ Student: 100%</p>
@@ -136,7 +136,7 @@ onBeforeUnmount(() => {
             <EquipmentTable />
 
             <div class="bg-white shadow rounded-lg p-3 mt-3">
-              <h2 class="text-lg font-bold mb-2 text-gray-700">Equipment Usage Trend (Monthly)</h2>
+              <h2 class="text-lg font-bold mb-2 text-gray-700">Accountability (Monthly)</h2>
               <canvas ref="lineChartRef" id="lineChart"></canvas>
             </div>
           </div>

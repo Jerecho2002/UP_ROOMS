@@ -1,23 +1,83 @@
 <script setup>
-// Dummy data for the User Details table to make the component functional
-const users = [
-    { user: 'User 1', email: 'user1@example.com', phone: '0912345601', profession: 'Student' },
-    { user: 'User 2', email: 'user2@example.com', phone: '0912345602', profession: 'Instructor' },
-    { user: 'User 3', email: 'user3@example.com', phone: '0912345603', profession: 'Admin' },
-    // Add more users here if needed
-];
+import { ref, computed } from 'vue';
+import { faEye, faPenToSquare, faTrash, faSearch } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 
-// Utility function to get the badge color based on profession
-const getBadgeColor = (profession) => {
-    switch (profession) {
-        case 'Student':
-            return 'bg-green-100 text-green-800';
-        case 'Instructor':
-            return 'bg-indigo-100 text-indigo-800';
-        case 'Admin':
-            return 'bg-pink-100 text-pink-800';
-        default:
-            return 'bg-gray-100 text-gray-800';
+// --- Reactive State & Data ---
+
+// 1. CFIC Data State
+const cficSearchTerm = ref(''); 
+const cficUsers = ref([ 
+    // Data copied directly from screenshot content
+    { id: 1, user: 'User-1', email: 'evan@gmail.com', phone: '09982077429', profession: 'CFIC' },
+    { id: 2, user: 'User-1', email: 'evan@gmail.com', phone: '09982077429', profession: 'CFIC' },
+    { id: 3, user: 'User-1', email: 'evan@gmail.com', phone: '09982077429', profession: 'CFIC' },
+    { id: 4, user: 'User-1', email: 'evan@gmail.com', phone: '09982077429', profession: 'CFIC' },
+]);
+
+// 2. Student Data State 
+const studentSearchTerm = ref('');
+const studentUsers = ref([
+    // Data copied directly from screenshot content
+    { id: 5, user: 'User-1', email: 'evan@gmail.com', phone: '09982077429', profession: 'CFIC' },
+    { id: 6, user: 'User-1', email: 'evan@gmail.com', phone: '09982077429', profession: 'CFIC' },
+    { id: 7, user: 'User-1', email: 'evan@gmail.com', phone: '09982077429', profession: 'CFIC' },
+    { id: 8, user: 'User-1', email: 'evan@gmail.com', phone: '09982077429', profession: 'CFIC' },
+]);
+
+
+const icons = {
+    eye: faEye,
+    edit: faPenToSquare,
+    delete: faTrash,
+    search: faSearch,
+};
+
+// --- Computed Properties for Filtering ---
+
+// CFIC Filtering
+const filteredCficUsers = computed(() => {
+    const query = cficSearchTerm.value.toLowerCase();
+    if (!query) return cficUsers.value;
+
+    return cficUsers.value.filter(user =>
+        user.user.toLowerCase().includes(query) ||
+        user.email.toLowerCase().includes(query)
+    );
+});
+
+// Student Filtering
+const filteredStudentUsers = computed(() => {
+    const query = studentSearchTerm.value.toLowerCase();
+    if (!query) return studentUsers.value;
+
+    return studentUsers.value.filter(user =>
+        user.user.toLowerCase().includes(query) ||
+        user.email.toLowerCase().includes(query)
+    );
+});
+
+// --- Action Handlers (Functionality) ---
+
+const handleViewDetails = (details, type) => {
+    // Placeholder function
+    alert(`Viewing ${type} details for: ${details.user} (Email: ${details.email})`);
+};
+
+const handleEditDetails = (details, type) => {
+    // Placeholder function
+    alert(`Opening edit form for ${type}: ${details.user}`);
+};
+
+const handleDeleteDetails = (details, type) => {
+    // Functional placeholder to demonstrate reactivity
+    if (confirm(`Are you sure you want to delete ${details.user} from ${type} Data?`)) {
+        if (type === 'CFIC') {
+            cficUsers.value = cficUsers.value.filter(u => u.id !== details.id);
+        } else if (type === 'STUDENT') {
+            studentUsers.value = studentUsers.value.filter(u => u.id !== details.id);
+        }
+        alert(`${details.user} has been deleted.`);
     }
 };
 </script>
@@ -25,53 +85,17 @@ const getBadgeColor = (profession) => {
 <template>
     <div class="space-y-6">
 
-        <h1 class="text-3xl font-bold text-[#7A0C23]">Department Dashboard</h1>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-
-            <div class="rounded-xl text-center shadow-lg overflow-hidden transition-transform duration-200 hover:scale-[1.02]">
-                <div class="bg-teal-500 text-white p-3">
-                    <h3 class="text-lg font-semibold">Total Accounts</h3>
-                </div>
-                <div class="bg-white p-3">
-                    <p class="text-3xl font-bold text-gray-800">20</p>
-                </div>
-            </div>
-
-            <div class="rounded-xl text-center shadow-lg overflow-hidden transition-transform duration-200 hover:scale-[1.02]">
-                <div class="bg-purple-700 text-white p-3">
-                    <h3 class="text-lg font-semibold">Total Depart.</h3>
-                </div>
-                <div class="bg-white p-3">
-                    <p class="text-3xl font-bold text-gray-800">5</p>
-                </div>
-            </div>
-
-            <div class="rounded-xl text-center shadow-lg overflow-hidden transition-transform duration-200 hover:scale-[1.02]">
-                <div class="bg-orange-600 text-white p-3">
-                    <h3 class="text-lg font-semibold">Total Colleges</h3>
-                </div>
-                <div class="bg-white p-3">
-                    <p class="text-3xl font-bold text-gray-800">3</p>
-                </div>
-            </div>
-
-            <div class="rounded-xl text-center shadow-lg overflow-hidden transition-transform duration-200 hover:scale-[1.02]">
-                <div class="bg-red-600 text-white p-3">
-                    <h3 class="text-lg font-semibold">Total Rooms</h3>
-                </div>
-                <div class="bg-white p-3">
-                    <p class="text-3xl font-bold text-gray-800">10</p>
-                </div>
-            </div>
-
-        </div>
-
         <div class="bg-white shadow rounded-lg p-4">
-            <h2 class="font-semibold text-xl text-gray-800 mb-4 border-b pb-2">User Details</h2>
+            <h2 class="font-semibold text-xl text-gray-800 mb-4 border-b pb-2">CFIC DATA</h2>
 
-            <div class="mb-4">
-                <input type="text" placeholder="Search by User or Email..." class="w-full p-3 border border-gray-300 rounded-lg focus:ring-[#7A0C23] focus:border-[#7A0C23]">
+            <div class="mb-4 relative">
+                <input 
+                    type="text" 
+                    placeholder="Search" 
+                    v-model="cficSearchTerm"
+                    class="w-full p-3 pl-10 border-0 rounded-lg focus:ring-0 shadow-sm bg-gray-200"
+                >
+                <FontAwesomeIcon :icon="icons.search" class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
             </div>
 
             <div class="overflow-x-auto">
@@ -85,26 +109,30 @@ const getBadgeColor = (profession) => {
                             <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">Action</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-200">
-                        <tr v-for="user in users" :key="user.user">
+                    <tbody class="divide-y divide-gray-200 bg-white">
+                        <tr v-for="user in filteredCficUsers" :key="user.id" class="hover:bg-gray-50"> 
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ user.user }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ user.email }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ user.phone }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                <span :class="['px-2 inline-flex text-xs leading-5 font-semibold rounded-full', getBadgeColor(user.profession)]">
-                                    {{ user.profession }}
-                                </span>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ user.profession }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center text-lg space-x-2">
+                                <button @click="handleViewDetails(user, 'CFIC')" title="View Details"
+                                    class="text-blue-500 hover:text-blue-700 transform hover:scale-110 transition">
+                                    <FontAwesomeIcon :icon="icons.eye" class="h-5 w-5" />
+                                </button>
+                                <button @click="handleEditDetails(user, 'CFIC')" title="Edit User"
+                                    class="text-green-600 hover:text-green-800 transform hover:scale-110 transition">
+                                    <FontAwesomeIcon :icon="icons.edit" class="h-5 w-5" />
+                                </button>
+                                <button @click="handleDeleteDetails(user, 'CFIC')" title="Delete User"
+                                    class="text-red-600 hover:text-red-800 transform hover:scale-110 transition">
+                                    <FontAwesomeIcon :icon="icons.delete" class="h-5 w-5" />
+                                </button>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-center text-lg">
-                                <button class="text-blue-500 hover:text-blue-700 mx-1">
-                                    <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-                                </button>
-                                <button class="text-yellow-500 hover:text-yellow-700 mx-1">
-                                    <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.284-8.284z"></path></svg>
-                                </button>
-                                <button class="text-red-500 hover:text-red-700 mx-1">
-                                    <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                </button>
+                        </tr>
+                        <tr v-if="filteredCficUsers.length === 0">
+                            <td colspan="5" class="px-6 py-4 text-center text-gray-500">
+                                No CFIC users found matching "{{ cficSearchTerm }}".
                             </td>
                         </tr>
                     </tbody>
@@ -113,14 +141,59 @@ const getBadgeColor = (profession) => {
         </div>
         
         <div class="bg-white shadow rounded-lg p-4">
-            <h2 class="font-semibold text-xl text-gray-800 mb-4 border-b pb-2">Quick Links</h2>
-            <div class="grid grid-cols-2 gap-4">
-                <button class="bg-[#7A0C23] hover:bg-[#5C0A1C] text-white py-3 rounded-lg shadow transition duration-150 font-medium">News Board</button>
-                <button class="bg-[#7A0C23] hover:bg-[#5C0A1C] text-white py-3 rounded-lg shadow transition duration-150 font-medium">Event</button>
-                <button class="bg-[#7A0C23] hover:bg-[#5C0A1C] text-white py-3 rounded-lg shadow transition duration-150 font-medium">Class Schedule</button>
-                <button class="bg-[#7A0C23] hover:bg-[#5C0A1C] text-white py-3 rounded-lg shadow transition duration-150 font-medium">Mail / SMS</button>
+            <h2 class="font-semibold text-xl text-gray-800 mb-4 border-b pb-2">STUDENT DATA</h2>
+
+            <div class="mb-4 relative">
+                <input 
+                    type="text" 
+                    placeholder="Search" 
+                    v-model="studentSearchTerm"
+                    class="w-full p-3 pl-10 border-0 rounded-lg focus:ring-0 shadow-sm bg-gray-200"
+                >
+                <FontAwesomeIcon :icon="icons.search" class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-[#7A0C23]">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">User</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Email-ID</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Phone</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Profession</th>
+                            <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200 bg-white">
+                        <tr v-for="user in filteredStudentUsers" :key="user.id" class="hover:bg-gray-50"> 
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ user.user }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ user.email }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ user.phone }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ user.profession }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center text-lg space-x-2">
+                                <button @click="handleViewDetails(user, 'STUDENT')" title="View Details"
+                                    class="text-blue-500 hover:text-blue-700 transform hover:scale-110 transition">
+                                    <FontAwesomeIcon :icon="icons.eye" class="h-5 w-5" />
+                                </button>
+                                <button @click="handleEditDetails(user, 'STUDENT')" title="Edit User"
+                                    class="text-green-600 hover:text-green-800 transform hover:scale-110 transition">
+                                    <FontAwesomeIcon :icon="icons.edit" class="h-5 w-5" />
+                                </button>
+                                <button @click="handleDeleteDetails(user, 'STUDENT')" title="Delete User"
+                                    class="text-red-600 hover:text-red-800 transform hover:scale-110 transition">
+                                    <FontAwesomeIcon :icon="icons.delete" class="h-5 w-5" />
+                                </button>
+                            </td>
+                        </tr>
+                        <tr v-if="filteredStudentUsers.length === 0">
+                            <td colspan="5" class="px-6 py-4 text-center text-gray-500">
+                                No student users found matching "{{ studentSearchTerm }}".
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
-
+        
     </div>
 </template>
