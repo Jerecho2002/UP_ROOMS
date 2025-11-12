@@ -1,18 +1,10 @@
 <?php
-use App\Http\Controllers\Controller;
-use App\Http\Controllers\RoomController;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\UserAccountController;
-use App\Http\Controllers\ScheduleController;
-use App\Http\Controllers\BuildingController; // <-- Ensure this is used
-use App\Http\Controllers\MainDashboardController;
-use App\Http\Controllers\CollegeDashboardController;
-use Illuminate\Foundation\Application;
-use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
-use App\Models\Building;
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ProductController;
+use App\Http\Controllers\MainDashboardController;
 
-
+Route::get('/products', [ProductController::class, 'index'])->name('products.index');
 // Existing Routes
 Route::get('/MainDashboard', [MainDashboardController::class, 'index'])->name('main.index');
 

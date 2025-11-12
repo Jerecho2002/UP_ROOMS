@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed, watchEffect } from "vue";
-import { usePage } from '@inertiajs/vue3';
+import { usePage, router } from '@inertiajs/vue3';
 import Navbar from "@/Components/Navbar.vue";
 import Sidebar from "@/Components/Sidebar.vue";
 
@@ -58,7 +58,8 @@ const page = usePage();
  * Assumes page.props.rooms is an object containing { data: [] }.
  * Defaults to an empty array if not found.
  */
-const rooms = computed(() => page.props.rooms?.data || []);
+const rooms = computed(() => page.props.rooms);
+const products = computed(() => page.props.products);
 
 
 // ===== DETAIL VIEW LOGIC (for the eye icon) =====
@@ -85,9 +86,19 @@ const closeDetailsModal = () => {
   isDetailsModalVisible.value = false;
   currentViewedDetails.value = null;
 };
+
+const goToPage = (url) => {
+  if (!url) return;
+  router.visit(url, {
+    preserveState: true,
+    replace: true,
+    preserveScroll: true,
+  });
+};
 </script>
 
 <template>
+  <pre>{{ products }}</pre>
   <div class="relative min-h-screen">
     <Navbar @toggleSidebar="toggleSidebar" :is-mobile-open="sidebarOpen" :is-desktop-open="sidebarForcedOpen"
       :is-desktop="isDesktop" />
@@ -157,7 +168,7 @@ const closeDetailsModal = () => {
                 <tr v-if="rooms.length === 0">
                   <td colspan="5" class="px-4 py-6 text-gray-500 italic">No room records found.</td>
                 </tr>
-                <tr v-for="room in rooms" :key="room.id" class="odd:bg-white even:bg-gray-50 hover:bg-gray-100">
+                <tr v-for="room in rooms.data" :key="room.id" class="odd:bg-white even:bg-gray-50 hover:bg-gray-100">
                   <td class="px-4 py-3 text-left">{{ room.user_account?.username || 'N/A' }}</td>
                   <td class="px-4 py-3 text-left hidden sm:table-cell">{{ room.college?.college_name || 'N/A' }}</td>
                   <td class="px-4 py-3 hidden md:table-cell">{{ room.location ?? "N/A" }}</td>
@@ -173,6 +184,29 @@ const closeDetailsModal = () => {
             </table>
           </div>
         </slot>
+        <!-- Pagination -->
+        <div class="mt-2 flex justify-end">
+          <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 
+                bg-gray-100 border border-gray-300 rounded-md px-3 py-1">
+            <p class="text-xs sm:text-sm border-r border-gray-300 px-3">
+              {{ rooms.from }}-{{ rooms.to }} of
+              {{ rooms.total }}
+            </p>
+            <div>
+              <span v-for="link in rooms.links" :key="link.label">
+                <span v-if="link.url" @click="goToPage(link.url)" class="cursor-pointer p-1 text-xs sm:text-sm" :class="{
+                  'text-gray-600 hover:underline': link.url,
+                  'text-blue-600 font-bold': link.active
+                }">
+                  <!-- Render label or icon -->
+                  <i v-if="link.label.includes('Previous')" class="fa-solid fa-chevron-left"></i>
+                  <i v-else-if="link.label.includes('Next')" class="fa-solid fa-chevron-right"></i>
+                  <span class="px-1" v-else>{{ link.label }}</span>
+                </span>
+              </span>
+            </div>
+          </div>
+        </div>
       </main>
     </div>
 

@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Room; // Assuming you have a Room model
 use Inertia\Inertia;
 
-class RoomController extends Controller
+class RoomController
 {
     /**
      * Store a newly created room resource in storage.

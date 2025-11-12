@@ -3,16 +3,21 @@
 namespace App\Http\Controllers;
 
 use App\Models\UserAccount;
-use App\Services\MainDashboardService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
+use App\Services\MainDashboardService;
 
 class MainDashboardController
 {
     public function index(Request $request, MainDashboardService $service)
     {
+        $response = Http::get('http://127.0.0.1:8000/api/products'); // System A URL
+        $products = $response->json();
+        
         $search = $request->input('search');
 
         return inertia('MainDashboard', [
+            'products' => $products,
             'rooms' => $service->getMainDashboard($search),
         ]);
     }
