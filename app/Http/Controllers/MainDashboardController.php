@@ -11,13 +11,13 @@ class MainDashboardController
 {
     public function index(Request $request, MainDashboardService $service)
     {
-        $response = Http::get('http://127.0.0.1:8000/api/products'); // System A URL
-        $products = $response->json();
+        $response = Http::get('http://127.0.0.1:8000/api/inventoryitems');
+        $inventoryitems = $response->json();
         
         $search = $request->input('search');
 
         return inertia('MainDashboard', [
-            'products' => $products,
+            'inventoryitems' => $inventoryitems,
             'rooms' => $service->getMainDashboard($search),
         ]);
     }
