@@ -81,10 +81,11 @@ const handleDelete = (user) => {
                 <table class="min-w-full border border-gray-200 text-sm text-center">
                     <thead class="bg-[#7A0C23] text-white sticky top-0 shadow">
                         <tr>
+                             <th class="px-4 py-3 border border-gray-500 font-semibold text-left">NAME</th>
                             <th class="px-4 py-3 border border-gray-500 font-semibold text-left">USERNAME</th>
                             <th class="px-4 py-3 border border-gray-500 font-semibold text-left">EMAIL</th>
-                            <th class="px-4 py-3 border border-gray-500 font-semibold text-left">NAME</th>
-                            <th class="px-4 py-3 border border-gray-500 font-semibold">ROLE</th>
+                            
+                            <th class="px-4 py-3 border border-gray-500 font-semibold">Profession</th>
                             <th class="px-4 py-3 border border-gray-500 font-semibold">ACTION</th>
                         </tr>
                     </thead>
@@ -94,9 +95,12 @@ const handleDelete = (user) => {
                             :key="user.id"
                             class="odd:bg-white even:bg-gray-100 hover:bg-gray-200 transition duration-100"
                         >
-                            <td class="px-4 py-2 text-left font-medium text-gray-800">{{ user.username }}</td>
+                            <td class="px-4 py-2 text-left font-medium text-gray-800">{{ user.first_name }}</td>
+                           
+                             <td class="px-4 py-2 text-left">{{ user.username }}</td>
+                            
                             <td class="px-4 py-2 text-left">{{ user.email }}</td>
-                            <td class="px-4 py-2 text-left">{{ user.first_name }} {{ user.last_name }}</td>
+                            
                             <td class="px-4 py-2">{{ user.role }}</td>
                             <td class="px-4 py-2 space-x-2 whitespace-nowrap">
                                 <button @click="handleView(user)" title="View" class="text-blue-500 hover:text-blue-700 transform hover:scale-110 transition">

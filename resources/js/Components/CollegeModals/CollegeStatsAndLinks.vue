@@ -102,10 +102,11 @@ const handleDeleteDetails = (details, type) => {
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-[#7A0C23]">
                         <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">User</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">ID</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Name</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Email-ID</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Phone</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Profession</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Subject</th>
                             <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">Action</th>
                         </tr>
                     </thead>
@@ -115,6 +116,7 @@ const handleDeleteDetails = (details, type) => {
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ user.email }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ user.phone }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ user.profession }}</td>
+                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ user.profession }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-center text-lg space-x-2">
                                 <button @click="handleViewDetails(user, 'CFIC')" title="View Details"
                                     class="text-blue-500 hover:text-blue-700 transform hover:scale-110 transition">
@@ -156,11 +158,12 @@ const handleDeleteDetails = (details, type) => {
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-[#7A0C23]">
-                        <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">User</th>
+                         <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">ID</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Name</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Email-ID</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Phone</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Profession</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Subject</th>
                             <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">Action</th>
                         </tr>
                     </thead>
@@ -170,6 +173,7 @@ const handleDeleteDetails = (details, type) => {
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ user.email }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ user.phone }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ user.profession }}</td>
+                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ user.profession }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-center text-lg space-x-2">
                                 <button @click="handleViewDetails(user, 'STUDENT')" title="View Details"
                                     class="text-blue-500 hover:text-blue-700 transform hover:scale-110 transition">
