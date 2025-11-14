@@ -238,11 +238,11 @@ const residents = ref([
               <thead class="bg-gray-50">
                 <tr>
                   <th scope="col" class="w-1/6 px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"> Room Type </th>
-                  <th scope="col" class="w-2/6 px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"> Description </th>
-                  <th scope="col" class="w-1/12 px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"> Rate </th>
-                  <th scope="col" class="w-[10%] px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"> Guests </th>
-                  <th scope="col" class="w-1/6 px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"> Amenities </th>
-                  <th scope="col" class="w-[10%] px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"> Avail. </th>
+                  <th scope="col" class="w-2/6 px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"> Rooms </th>
+                    <th scope="col" class="w-2/6 px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Building</th>
+                  <th scope="col" class="w-1/12 px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">College</th>
+                  <th scope="col" class="w-[10%] px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
+              
                   <th scope="col" class="w-[10%] px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"> Action </th>
                 </tr>
               </thead>
@@ -252,13 +252,13 @@ const residents = ref([
                     {{ room.name }}
                   </td>
                   <td class="px-2 py-4 text-sm text-gray-500 text-wrap">
-                    {{ room.description }}
+                    {{ room.building }}
                   </td>
                   <td :class="[colorMap[room.colorKey].price, 'px-2 py-4 text-lg font-extrabold text-center']">
-                    {{ room.price }}
+                    {{ room.college }}
                   </td>
                   <td class="px-2 py-4 text-sm text-gray-500 text-center">
-                    Max {{ room.maxGuests }}
+                    Max {{ room.location }}
                   </td>
                   <td class="px-2 py-4">
                     <div class="flex flex-wrap gap-1">
@@ -273,10 +273,7 @@ const residents = ref([
                       <span class="w-2 h-2 bg-red-600 rounded-full inline-block"></span>
                       <span>Fully Booked</span>
                     </span>
-                    <span v-else class="bg-green-100 text-green-800 px-1 py-0.5 rounded-full text-xs font-semibold inline-flex items-center justify-center space-x-1">
-                      <span class="w-2 h-2 bg-green-600 rounded-full inline-block animate-pulse-custom"></span>
-                      <span>{{ room.available }} Avail.</span>
-                    </span>
+                  
                   </td>
                   <td class="px-2 py-4 text-center text-sm font-medium">
                     <button @click="manageRoom(room.name)"

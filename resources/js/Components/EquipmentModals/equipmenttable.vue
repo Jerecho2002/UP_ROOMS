@@ -140,8 +140,9 @@ const closeDetailsModal = () => {
                 <table class="table-auto w-full border-collapse text-sm">
                     <thead class="bg-maroon text-white sticky top-0 shadow-md">
                         <tr>
-                            <th class="px-3 py-2 border-b-2 border-r border-maroon-dark">Room</th>
+                           
                             <th class="px-3 py-2 border-b-2 border-r border-maroon-dark">Name</th>
+                            <th class="px-3 py-2 border-b-2 border-r border-maroon-dark">Room</th>
                             <th class="px-3 py-2 border-b-2 border-r border-maroon-dark">Building</th>
                             <th class="px-3 py-2 border-b-2 border-r border-maroon-dark">Location</th>
                             <th class="px-3 py-2 border-b-2 border-r border-maroon-dark">College</th>
@@ -152,9 +153,9 @@ const closeDetailsModal = () => {
 
                     <tbody class="text-gray-700 divide-y divide-gray-100">
                         <tr v-for="(item, index) in filteredUsageList" :key="item.id" :class="{'bg-white': index % 2 === 0, 'bg-gray-50': index % 2 !== 0}">
+                            <td class="border-r px-3 py-2 text-center">{{ item.name }}</td>
+                            <td class="border-r px-3 py-2 font-medium">{{ item.building }}</td>
                             <td class="border-r px-3 py-2 text-center">{{ item.room }}</td>
-                            <td class="border-r px-3 py-2 font-medium">{{ item.name }}</td>
-                            <td class="border-r px-3 py-2 text-center">{{ item.building }}</td>
                             <td class="border-r px-3 py-2 text-center">{{ item.college }}</td>
                            <td class="border-r px-3 py-2 text-center">{{ item.college }}</td>
                             <td class="px-3 py-2 text-center">

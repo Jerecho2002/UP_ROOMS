@@ -107,11 +107,8 @@ onBeforeUnmount(() => {
       <main class="flex-1 bg-gray-100 p-3 h-full overflow-y-auto transition-all duration-300">
         <div class="grid grid-cols-12 gap-3 mb-3">
           <div class="col-span-12 md:col-span-3 space-y-3">
-            <div class="bg-white shadow rounded-lg p-3">
-              <h2 class="text-sm font-bold mb-1 text-gray-700">Total Population</h2>
-              <p class="text-xs text-gray-500">Student: <span class="font-semibold">100,000</span></p>
-              <p class="text-xs text-gray-500">Room: <span class="font-semibold">50,000</span></p>
-              <p class="text-xs text-gray-500">Building: <span class="font-semibold">14,000</span></p>
+            <div >
+            
             </div>
 
             <div class="bg-white shadow rounded-lg p-3">

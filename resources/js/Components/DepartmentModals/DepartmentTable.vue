@@ -104,7 +104,7 @@ const handleDelete2 = (item) => props.openModal('delete', item, 'lastMonthUsers'
                     <table class="min-w-full text-sm border-collapse">
                         <thead class="bg-[#7A0C23] text-white sticky top-0 shadow-md">
                             <tr>
-                                <th class="p-4 text-left">User</th>
+                                <th class="p-4 text-left">Name</th>
                                 <th class="p-4 text-left">Email-ID</th>
                                 <th class="p-4 text-left hidden sm:table-cell">Phone</th>
                                 <th class="p-4 text-left hidden md:table-cell">Profession</th>
@@ -172,6 +172,7 @@ const handleDelete2 = (item) => props.openModal('delete', item, 'lastMonthUsers'
                     <table class="min-w-full text-sm border-collapse">
                         <thead class="bg-[#7A0C23] text-white sticky top-0 shadow-md">
                             <tr>
+                                <th class="p-4 text-left">Name</th>
                                 <th class="p-4 text-left">Email</th>
                                 <th class="p-4 text-left">User-ID</th>
                                 <th class="p-4 text-left hidden sm:table-cell">Month</th>
