@@ -22,6 +22,8 @@ class MainDashboardController
         $inventoryitems = $response->successful()
             ? $response->json()
             : [];
+        // dd($token, $apiUrl);
+
         
         $search = $request->input('search');
 
