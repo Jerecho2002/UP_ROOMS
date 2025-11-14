@@ -11,8 +11,19 @@ class MainDashboardController
 {
     public function index(Request $request, MainDashboardService $service)
     {
-        $response = Http::get('http://127.0.0.1:8000/api/inventoryitems');
-        $inventoryitems = $response->json();
+        $apiUrl = env('SYSTEM_A_API_URL') . '/inventoryitems';
+        $token = env('SYSTEM_A_API_TOKEN');
+
+        $response = Http::withHeaders([
+            'Authorization' => "Bearer {$token}",
+            'Accept' => 'application/json',
+        ])->get($apiUrl);
+
+        $inventoryitems = $response->successful()
+            ? $response->json()
+            : [];
+        // dd($token, $apiUrl);
+
         
         $search = $request->input('search');
 
