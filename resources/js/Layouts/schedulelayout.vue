@@ -12,9 +12,6 @@ import Sidebar from '@/Components/Sidebar.vue';
 import CalendarView from '@/Components/ScheduleModal/CalendarView.vue';
 import AppointmentModal from '@/Components/ScheduleModal/AppointmentModal.vue';
 import TableComponent from '@/Components/ScheduleModal/TableComponent.vue';
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { faEye, faPenToSquare, faTrash, faPlus, faSearch } from '@fortawesome/free-solid-svg-icons'; // Added faSearch
-
 
 // --- INITIAL DUMMY DATA ---
 // Helper to create a Date object consistently
