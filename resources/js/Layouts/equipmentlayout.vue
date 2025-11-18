@@ -18,9 +18,12 @@ let pieChartInstance = null
 let lineChartInstance = null
 
 onMounted(() => {
+    // Destroy previous instances if they exist
     if (pieChartInstance) pieChartInstance.destroy()
     if (lineChartInstance) lineChartInstance.destroy()
 
+    // --- Pie Chart Initialization ---
+    // Note: The Chart.js options already hide the built-in legend (plugins: { legend: { display: false } })
     pieChartInstance = new Chart(pieChartRef.value, {
         type: 'pie',
         data: {
@@ -31,10 +34,13 @@ onMounted(() => {
             }]
         },
         options: {
+            responsive: true,
+            maintainAspectRatio: false, // Allows chart to respect the max-height
             plugins: { legend: { display: false } }
         }
     })
 
+    // --- Line Chart Initialization ---
     lineChartInstance = new Chart(lineChartRef.value, {
         type: 'line',
         data: {
@@ -66,45 +72,40 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="flex pt-14 h-screen">
+  <div class="flex pt-14 h-full">
     <Sidebar :sidebarOpen="sidebarOpen" />
 
-    <div class="flex-1 flex flex-col h-full overflow-hidden">
+    <div class="flex-1 flex flex-col h-screen">
       <Navbar @toggleSidebar="toggleSidebar" />
 
-      <main class="flex-1 bg-gray-100 p-3 h-full overflow-y-auto">
+      <main class="flex-1 bg-gray-50 p-3 h-full ">
 
-        <!-- GRID LAYOUT EXACTLY LIKE YOUR SCREENSHOT -->
         <div class="grid grid-cols-1 gap-3">
 
-          <!-- LEFT SIDE SMALL WIDGETS -->
-        
-
-          <!-- RIGHT SIDE FULL WIDTH TABLE + PIE + LINE -->
-          <div class="col-span-12 md:col-span-9 space-y-3">
-
-            <!-- TABLE FULL WIDTH -->
+          <div class="col-span-12">
             <EquipmentTable />
+          </div>
 
-            <!-- PIE CHART BELOW TABLE -->
-            <div class="bg-white shadow rounded-lg p-3">
-              <h2 class="text-lg font-bold text-gray-700">Equipment Usage Percentage</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 col-span-12">
 
-              <canvas id="pieChart" ref="pieChartRef"></canvas>
+           <div class="bg-white shadow rounded-lg p-3 flex flex-col justify-start items-center h-[500px]">
+    <h2 class="text-lg font-bold text-gray-700 w-full text-center mb-4">Equipment Usage Percentage</h2>
 
-              <div class="mt-2 text-xs">
-                <p class="text-green-600 font-medium">■ Student: 100%</p>
-                <p class="text-orange-500 font-medium">■ Room: 80%</p>
-                <p class="text-blue-500 font-medium">■ Building: 40%</p>
-              </div>
+    <div class="flex justify-center items-center h-[350px]"> 
+        <canvas id="pieChart" ref="pieChartRef" class="w-full "></canvas>
+    </div>
+
+<div class="mt-4 pt-2 border-t border-gray-100 text-sm flex flex-row items-center justify-center space-x-6 w-full">
+    <p class="text-green-600 font-medium">■ Student: 100%</p>
+    <p class="text-orange-500 font-medium">■ Room: 80%</p>
+    <p class="text-blue-500 font-medium">■ Building: 40%</p>
+</div>
+</div>
+            
+<div class="bg-white shadow rounded-lg p-3 flex flex-col justify-center items-center h-[500px]">
+             <h2 class="text-lg font-bold text-gray-700 h-full text-left ">Accountability (Monthly)</h2>
+              <canvas id="lineChart" ref="lineChartRef" class="w-full mb-[150px]"></canvas>
             </div>
-
-            <!-- LINE CHART LAST -->
-            <div class="bg-white shadow rounded-lg p-3">
-              <h2 class="text-lg font-bold text-gray-700">Accountability (Monthly)</h2>
-              <canvas id="lineChart" ref="lineChartRef"></canvas>
-            </div>
-
           </div>
         </div>
 
@@ -115,8 +116,5 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-#pieChart,
-#lineChart {
-  max-height: 250px;
-}
+/* Scoped styles are no longer needed for chart dimensions as they are handled by Tailwind classes inline */
 </style>
