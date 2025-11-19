@@ -1,60 +1,52 @@
 <script setup>
 import { ref } from 'vue'
-// NOTE: Assuming '@/Components/Navbar.vue' and '@/Components/Sidebar.vue' are defined.
 import Navbar from '@/Components/Navbar.vue'
 import Sidebar from '@/Components/Sidebar.vue'
+import CollegeTableComponent from '@/Components/CollegeModals/CollegeStatsAndLinks.vue'
 
-// Import the dashboard content components
-import CollegeCalendar from '@/Components/CollegeModals/CollegeCalendar.vue'
-import CollegeStatsAndLinks from '@/Components/CollegeModals/CollegeStatsAndLinks.vue'
-import CollegeModals from '@/Components/CollegeModals/CollegeModals.vue' // Placeholder
+const sidebarVisible = ref(true)
 
-// ----------------------------------------------
-// Sidebar toggle state and method
-// ----------------------------------------------
-const sidebarVisible = ref(true) // Controls sidebar visibility
-
-// Toggle sidebar visibility on toggle event
 const toggleSidebar = () => {
     sidebarVisible.value = !sidebarVisible.value
 }
 </script>
 
 <template>
-    <div class="bg-gray-100 font-sans">
+    <div class="bg-gray-100 font-sans min-h-screen">
+
+        <!-- NAVBAR -->
         <Navbar @toggleSidebar="toggleSidebar" />
 
-        <div class="flex pt-14 min-h-screen transition-all duration-300">
+        <div class="flex pt-14 min-h-screen w-full">
 
-            <Sidebar v-show="sidebarVisible" />
+            <!-- SIDEBAR ALWAYS ATTACHED | NO SPACING -->
+            <Sidebar 
+                v-show="sidebarVisible"
+                class="fixed top-14 left-0 h-[calc(100%-3.5rem)] w-56"
+            />
 
-            <main id="mainContent" class="flex-1 p-6 bg-gray-50 transition-all duration-300">
-                <h1 class="text-xl font-normal text-[#7A0C23] mb-6">College</h1>
+            <!-- MAIN CONTENT — NO LEFT MARGIN -->
+            <main 
+                id="mainContent"
+                class="flex-1 p-6 bg-gray-50 transition-all duration-300 w-full"
+                :style="sidebarVisible ? 'margin-left: 14rem;' : 'margin-left: 0;'"
+            >
 
-                <div class="grid grid-cols-4 gap-4 mb-6">
-                    <button class="bg-[#7A0C23] hover:bg-[#5C0A1C] text-white py-2 px-4 rounded shadow transition duration-150 font-medium text-base">News Board</button>
-                    <button class="bg-[#7A0C23] hover:bg-[#5C0A1C] text-white py-2 px-4 rounded shadow transition duration-150 font-medium text-base">Class Schedule</button>
-                    <button class="bg-[#7A0C23] hover:bg-[#5C0A1C] text-white py-2 px-4 rounded shadow transition duration-150 font-medium text-base">Event</button>
-                    <button class="bg-[#7A0C23] hover:bg-[#5C0A1C] text-white py-2 px-4 rounded shadow transition duration-150 font-medium text-base">Mail / SMS</button>
-                </div>
+                <h1 class="text-2xl font-normal text-[#7A0C23] mb-2">College</h1>
+              
 
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="bg-white shadow-lg rounded-lg p-4 sm:p-6 mb-6">
+
+                    <!-- Search -->
+                 
+
                     
-                    <div class="lg:col-span-2 space-y-6">
-                        <CollegeStatsAndLinks />
-                    </div>
-
-                    <div class="space-y-6">
-                        <div class="bg-white shadow rounded-lg p-4">
-                            <h2 class="font-semibold text-xl text-gray-800 mb-4 border-b pb-2">Calendar</h2>
-                            <CollegeCalendar />
-                        </div>
-                    </div>
+                    <!-- TABLE -->
+                    <CollegeTableComponent />
                 </div>
-
-                <CollegeModals />
 
             </main>
+
         </div>
     </div>
 </template>
