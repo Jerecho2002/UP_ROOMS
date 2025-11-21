@@ -62,7 +62,7 @@ const handleDelete = (user) => {
 
 <template>
     <div class="flex-1 p-6">
-        <h2 class="text-xl font-bold mb-4 text-gray-700">User Account Management</h2>
+        <h2 class="text-xl font-bold mb-4 text-[#7A0C23]">User Account Management</h2>
 
         <div class="mb-4 flex justify-between items-center">
             <input
@@ -85,7 +85,7 @@ const handleDelete = (user) => {
                             <th class="px-4 py-3 border border-gray-500 font-semibold text-left">USERNAME</th>
                             <th class="px-4 py-3 border border-gray-500 font-semibold text-left">EMAIL</th>
                             
-                            <th class="px-4 py-3 border border-gray-500 font-semibold">Profession</th>
+                            <th class="px-4 py-3 border border-gray-500 font-semibold">OFFICE</th>
                             <th class="px-4 py-3 border border-gray-500 font-semibold">ACTION</th>
                         </tr>
                     </thead>

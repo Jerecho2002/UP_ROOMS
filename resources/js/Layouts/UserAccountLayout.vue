@@ -90,7 +90,7 @@ const deleteUser = (userId) => {
 </script>
 
 <template>
-    <div class="bg-gray-100 font-sans">
+    <div class="bg-gray-200 font-sans">
         <!-- Assuming Navbar and Sidebar exist and are correctly imported -->
         <Navbar @toggleSidebar="toggleSidebar" />
         

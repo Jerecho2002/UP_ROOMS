@@ -97,7 +97,7 @@ const closeDetailsModal = () => {
     <div class="space-y-3">
         <div class="bg-white shadow rounded-lg p-3">
             <div class="flex flex-wrap items-center justify-between gap-3">
-                <h2 class="text-lg font-bold text-[#7A0C23]">Rooms have Equipment</h2>
+                <h2 class="text-lg font-bold text-[#7A0C23]">Equipment </h2>
 
                 <div class="flex flex-wrap items-center gap-2">
                     <div class="flex items-center rounded-lg bg-purple-600 p-2 text-white cursor-pointer hover:bg-purple-700 transition">

@@ -59,18 +59,21 @@ const handleView = building => emit('openModal', 'view', building)
 </script>
 
 <template>
-  <div class="p-4 bg-gray-200 min-h-screen">
+  <div class="p-4 bg-white min-h-screen">
     <div class="max-w-7xl mx-auto">
 
       <!-- ======================= Search & Add ======================= -->
-      <div class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <h6 class="font-bold text-l text-[#7A0C23] mt-4  ">TABLE LIST 📃</h6>
+       
+      <div class="pt-7 mb-3 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        
         <!-- 🔍 Search Bar -->
         <div class="relative w-full sm:w-96">
           <input
             type="text"
             v-model="searchQuery"
-            placeholder="Search buildings by name, address, or space..."
-            class="border border-gray-300 rounded-lg pl-10 pr-4 py-2 w-full focus:ring-2 focus:ring-[#7A0C23] focus:outline-none"
+            placeholder="Search buildings by name..."
+            class="max-w-[300px] border border-gray-300 rounded-lg pl-10 pr-4 py-2 w-full focus:ring-2 focus:ring-[#7A0C23] focus:outline-none"
           />
           <!-- Search Icon -->
           <svg

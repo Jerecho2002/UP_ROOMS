@@ -1,17 +1,25 @@
 <script setup>
 import { computed } from 'vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { faEye, faPenToSquare, faTrash, faPlus, faSearch } from '@fortawesome/free-solid-svg-icons';
+import { faEye, faPenToSquare, faTrash } from '@fortawesome/free-solid-svg-icons'; // Removed unused icons
 
-// 1. FIX: Define the icons object
+// --- ⚙️ Configuration: Font Awesome Icons ---
+
+/**
+ * Maps readable icon names to their Font Awesome SVG definition imports.
+ */
 const icons = {
     eye: faEye,
-    edit: faPenToSquare, // Correct icon for edit
-    delete: faTrash,     // Correct icon for delete
-    add: faPlus,
-    search: faSearch
+    edit: faPenToSquare,
+    delete: faTrash,
+    // add and search icons were imported but unused in the template and removed for brevity
 };
 
+// --- 📥 Component Properties (Props) ---
+
+/**
+ * Defines component properties. Expects an array of FullCalendar-style event objects.
+ */
 const props = defineProps({
     events: {
         type: Array,
@@ -19,119 +27,177 @@ const props = defineProps({
     }
 });
 
-// Emitted events match the required handlers
-const emit = defineEmits(['view-details', 'edit-event', 'delete-event']);
+// --- 📤 Custom Events (Emits) ---
 
-// 3. FIX: Define the handler functions to emit the correct event and payload
-const handleViewDetails = (eventObject) => {
-    emit('view-details', eventObject);
-};
-const handleEditEvent = (eventObject) => {
-    emit('edit-event', eventObject);
-};
-const handleDeleteEvent = (eventObject) => {
-    emit('delete-event', eventObject);
+/**
+ * Defines the custom events this component can emit to its parent.
+ * The emitted payload is always the original `eventObject`.
+ */
+const emit = defineEmits([
+    'view-details', // Triggered when the view icon is clicked
+    'edit-event',   // Triggered when the edit icon is clicked
+    'delete-event'  // Triggered when the delete icon is clicked
+]);
+
+// --- 🔄 Action Handlers ---
+
+/**
+ * Emits the specified action event with the full event object payload.
+ * @param {string} eventName - The name of the event to emit ('view-details', 'edit-event', 'delete-event').
+ * @param {Object} eventObject - The original event data object.
+ */
+const handleAction = (eventName, eventObject) => {
+    emit(eventName, eventObject);
 };
 
-// Helper to format Date object into HH:MM AM/PM string
+// --- 📐 Formatters ---
+
+/**
+ * Formats a Date object or date string into a readable time string (HH:MM AM/PM).
+ * @param {Date|string} date - The date object or string to format.
+ * @returns {string} Formatted time string, or empty string if input is invalid.
+ */
 const formatTime = (date) => {
     if (!date) return '';
-    // Ensure the input is treated as a Date object if it's not already
+    // Safely convert to Date object
     const d = date instanceof Date ? date : new Date(date); 
+    // Check if date is valid
+    if (isNaN(d)) return ''; 
     return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
 };
 
-// Helper to format Date object into YYYY-MM-DD string
+/**
+ * Formats a Date object or date string into a YYYY-MM-DD string.
+ * @param {Date|string} date - The date object or string to format.
+ * @returns {string} Formatted date string, or empty string if input is invalid.
+ */
 const formatDate = (date) => {
     if (!date) return '';
     const d = date instanceof Date ? date : new Date(date);
+    if (isNaN(d)) return '';
     const year = d.getFullYear();
     const month = String(d.getMonth() + 1).padStart(2, '0');
     const day = String(d.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
 };
 
-// Transform events for table display
+// --- ✨ Computed Property for Table Data ---
+
+/**
+ * Transforms the raw `props.events` array into a format optimized for table rendering.
+ * It handles sorting, date/time formatting, and preserves the original event object for actions.
+ */
 const tableEvents = computed(() => {
-    // Note: It's assumed props.events contains objects with Date objects for `start` and `end`.
-    // If they are strings, new Date(event.start) is required for sorting.
-    return [...props.events]
-        .sort((a, b) => new Date(a.start) - new Date(b.start)) // Ensure correct date sorting
-        .map(event => {
-            const appointmentDay = formatDate(event.start);
-            let timeStr;
+    // 1. Sort events by start date to ensure chronological order
+    const sortedEvents = [...props.events].sort((a, b) => 
+        new Date(a.start).getTime() - new Date(b.start).getTime() // Use getTime() for safer comparison
+    );
 
-            if (event.allDay) {
-                timeStr = 'All Day';
-            } else {
-                // Pass the raw date property to formatTime, which handles conversion if needed
-                const startTime = formatTime(event.start); 
-                const endTime = event.end ? formatTime(event.end) : '';
-                timeStr = `${startTime} - ${endTime}`;
-            }
+    // 2. Map and transform for display
+    return sortedEvents.map(event => {
+        // Handle time slot display
+        let timeStr;
+        if (event.allDay) {
+            timeStr = 'All Day';
+        } else {
+            const startTime = formatTime(event.start); 
+            const endTime = event.end ? formatTime(event.end) : '';
+            timeStr = `${startTime} ${endTime ? '- ' + endTime : ''}`;
+        }
+        
+        // Extract extended properties safely
+        const extendedProps = event.extendedProps || {};
 
-            return {
-                id: event.id,
-                title: event.title,
-                list: event.list, // 'list' property seems unused, using 'title' instead
-                appointmentDay: appointmentDay,
-                time: timeStr,
-                eventObject: event, // Keep a reference to the original event for action handlers
-            };
-        });
+        return {
+            id: event.id,
+            room: event.title, // Assuming event.title is the Room identifier
+            building: extendedProps.building || 'N/A', 
+            college: extendedProps.college || 'N/A', 
+            subject: extendedProps.subject || extendedProps.title || event.title, // Fallback to title
+            startDate: formatDate(event.start),
+            timeSlot: timeStr,
+            isRecurring: event.rrule ? 'Yes' : 'No', // Check for rrule for recurring events
+            eventObject: event,                      // Pass original object for actions
+        };
+    });
 });
-
 </script>
-
 <template>
-    <div class="bg-white shadow-lg rounded-xl overflow-hidden">
+    <div class="bg-white shadow-lg rounded-xl overflow-x-auto">
         <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-[#7A0C23] text-white">
                 <tr>
                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                        Event Title
+                        ROOM
                     </th>
                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                        Appointment Day
+                        BUILDING
                     </th>
                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                        Time
+                        COLLEGE
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                        SUBJECT
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                       START
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                        END
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                        RECURRING
                     </th>
                     <th scope="col" class="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider w-32">
-                        Action
+                        ACTION
                     </th>
                 </tr>
             </thead>
+            
             <tbody class="divide-y divide-gray-200">
                 <tr v-for="item in tableEvents" :key="item.id" class="hover:bg-gray-50 transition duration-150">
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {{ item.title }} 
+                        {{ item.room }} 
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {{ item.appointmentDay }}
+                        {{ item.building }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {{ item.time }}
+                        {{ item.college }}
                     </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {{ item.subject }} 
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {{ item.startDate }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {{ item.end }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {{ item.isRecurring }}
+                    </td>
+                    
                     <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
                         <div class="flex items-center justify-center space-x-2 divide-x divide-gray-200">
-                            <button @click="handleViewDetails(item.eventObject)" title="View Details"
+                            <button @click="handleAction('view-details', item.eventObject)" title="View Details"
                                 class="text-blue-500 hover:text-blue-700 transform hover:scale-110 transition px-2">
                                 <FontAwesomeIcon :icon="icons.eye" class="h-5 w-5" />
                             </button>
-                            <button @click="handleEditEvent(item.eventObject)" title="Edit Event"
+                            <button @click="handleAction('edit-event', item.eventObject)" title="Edit Event"
                                 class="text-green-600 hover:text-green-800 transform hover:scale-110 transition px-2">
                                 <FontAwesomeIcon :icon="icons.edit" class="h-5 w-5" />
                             </button>
-                            <button @click="handleDeleteEvent(item.eventObject)" title="Delete Event"
+                            <button @click="handleAction('delete-event', item.eventObject)" title="Delete Event"
                                 class="text-red-600 hover:text-red-800 transform hover:scale-110 transition px-2">
                                 <FontAwesomeIcon :icon="icons.delete" class="h-5 w-5" />
                             </button>
                         </div>
                     </td>
                 </tr>
+                
                 <tr v-if="tableEvents.length === 0">
-                    <td colspan="4" class="px-6 py-4 text-center text-gray-500">
+                    <td :colspan="8" class="px-6 py-4 text-center text-gray-500">
                         No scheduled appointments found.
                     </td>
                 </tr>
@@ -139,10 +205,13 @@ const tableEvents = computed(() => {
         </table>
     </div>
 </template>
-
 <style scoped>
-/* Optional styling to ensure the table header background matches the image */
+/* Ensure the custom color for the header is correctly applied */
 .bg-\[\#7A0C23\] {
-    background-color: #7A0C23; /* Dark red/maroon from the image */
+    background-color: #7A0C23; 
 }
+
+/* Tailwind CSS generally handles the rest of the styling. 
+ Keep custom/utility colors defined here if necessary.
+*/
 </style>

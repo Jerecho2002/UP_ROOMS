@@ -88,7 +88,7 @@ const handleDelete2 = (item) => props.openModal('delete', item, 'lastMonthUsers'
 <template>
     <div class="p-6 bg-gray-200">
         <div class="bg-white shadow-2xl rounded-xl p-6 mb-10">
-            <h2 class="font-bold text-xl text-[#7A0C23] mb-4 border-b pb-2">Department of Information Tech.</h2>
+             <h6 class="font-bold text-l text-[#7A0C23] mb-4 border-b pb-2">TABLE LIST 📃</h6>
 
         <div class="mb-4 relative">
                 <input 

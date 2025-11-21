@@ -180,7 +180,7 @@ const handleDeleteEvent = (eventId) => {
 </script>
 
 <template>
-    <div class="bg-gray-100 font-sans min-h-screen">
+    <div class="bg-gray-200 font-sans min-h-screen">
 
         <Navbar @toggleSidebar="toggleSidebar" class="fixed top-0 left-0 right-0 z-30" />
 
@@ -199,8 +199,8 @@ const handleDeleteEvent = (eventId) => {
                            sidebarOpen ? 'ml-64' : 'ml-0']">
 
                 <div class="mb-6 flex items-center justify-between">
-                    <div class="text-2xl font-semibold text-gray-800">Schedule</div>
-                    <div class="text-sm text-gray-500">UPCEBU > TERMS</div>
+                    <div class="text-2xl font-semibold text-[#7A0C23]">Schedule</div>
+                    <div class="text-sm text-gray-500">UPCEBU > SCHEDULES</div>
                 </div>
 
                 <div class="mb-6 flex items-center justify-between">

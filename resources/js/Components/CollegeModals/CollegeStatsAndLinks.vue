@@ -86,6 +86,8 @@ const handleDeleteDetails = (details, type) => {
     <div class="space-y-6">
 
         <div class="bg-white shadow rounded-lg p-4">
+                <h6 class="font-bold text-l text-[#7A0C23] mb-4 border-b pb-2">TABLE LIST 📃</h6>
+
           
 
             <div class="mb-4 relative">
@@ -95,8 +97,10 @@ const handleDeleteDetails = (details, type) => {
                     v-model="cficSearchTerm"
                     class=" max-w-[400px] p-3 pl-10 border-0 rounded-lg focus:ring-0 shadow-sm bg-gray-200"
                 >
+                
                 <FontAwesomeIcon :icon="icons.search" class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
             </div>
+            
 
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">

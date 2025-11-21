@@ -32,12 +32,12 @@ const setActiveTab = (tab) => {
       
       <Navbar @toggleSidebar="toggleSidebar" />
 
-      <main class="flex-1 overflow-y-auto p-0 md:p-6 bg-gray-100">
+      <main class="flex-1 overflow-y-auto p-0 md:p-6 bg-gray-200">
         <div class="bg-white rounded-lg shadow-md p-0">
           
           <div class="p-6">
             <div class="mb-6">
-              <h2 class="text-xl font-semibold text-gray-800">Terms</h2>
+              <h2 class="text-xl font-semibold text-[#850038]">Terms</h2>
             </div>
 
             <div class="flex items-center bg-gray-100 rounded-full w-full md:w-fit p-1 mb-6">
