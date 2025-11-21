@@ -28,14 +28,14 @@ const toggleSidebar = () => {
             <!-- MAIN CONTENT — NO LEFT MARGIN -->
             <main 
                 id="mainContent"
-                class="flex-1 p-6 bg-gray-50 transition-all duration-300 w-full"
+                class="flex-1 p-6 bg-gray-200 transition-all duration-300 w-full"
                 :style="sidebarVisible ? 'margin-left: 14rem;' : 'margin-left: 0;'"
             >
 
-                <h1 class="text-2xl font-normal text-[#7A0C23] mb-2">College</h1>
+                <h1 class="text-3xl font-bold text-[#7A0C23] mt-3 ml-10 mb-3">College</h1>
               
 
-                <div class="bg-white shadow-lg rounded-lg p-4 sm:p-6 mb-6">
+                <div class="bg-white shadow-lg rounded-lg p-4 sm:p-6 mb-6 ml-8 mt-6">
 
                     <!-- Search -->
                  

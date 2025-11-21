@@ -78,7 +78,7 @@ onBeforeUnmount(() => {
     <div class="flex-1 flex flex-col h-screen">
       <Navbar @toggleSidebar="toggleSidebar" />
 
-      <main class="flex-1 bg-gray-50 p-3 h-full ">
+      <main class="flex-1 bg-gray-300 p-3 max-h ">
 
         <div class="grid grid-cols-1 gap-3">
 
@@ -98,7 +98,7 @@ onBeforeUnmount(() => {
 <div class="mt-4 pt-2 border-t border-gray-100 text-sm flex flex-row items-center justify-center space-x-6 w-full">
     <p class="text-green-600 font-medium">■ Student: 100%</p>
     <p class="text-orange-500 font-medium">■ Room: 80%</p>
-    <p class="text-blue-500 font-medium">■ Building: 40%</p>
+    <p class="text-yellow-500 font-medium">■ Building: 40%</p>
 </div>
 </div>
             

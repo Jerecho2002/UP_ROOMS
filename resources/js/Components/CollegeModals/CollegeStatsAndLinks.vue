@@ -91,9 +91,9 @@ const handleDeleteDetails = (details, type) => {
             <div class="mb-4 relative">
                 <input 
                     type="text" 
-                    placeholder="Search" 
+                    placeholder="Search College,Depart" 
                     v-model="cficSearchTerm"
-                    class="w-full p-3 pl-10 border-0 rounded-lg focus:ring-0 shadow-sm bg-gray-200"
+                    class=" max-w-[400px] p-3 pl-10 border-0 rounded-lg focus:ring-0 shadow-sm bg-gray-200"
                 >
                 <FontAwesomeIcon :icon="icons.search" class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
             </div>

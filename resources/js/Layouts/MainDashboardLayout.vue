@@ -178,7 +178,7 @@ const goToPage = (url) => {
             // Content margin based on sidebar state
             isDesktop ? (sidebarForcedOpen ? 'ml-64' : 'ml-0') : 'ml-0']">
             
-            <main id="mainContent" class="flex-1 px-6 py-6 bg-gray-50 pt-20">
+            <main id="mainContent" class="flex-1 px-6 py-6 bg-gray-200 pt-20">
                 <slot>
                     <div class=" text-gray-500 mb-4 flex justify-between items-center">
                         <h1 class="hidden md:block text-[#7A0C23] font-bold text-2xl">Dashboard</h1>

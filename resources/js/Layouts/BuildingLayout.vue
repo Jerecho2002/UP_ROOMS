@@ -76,7 +76,7 @@ const handleDataUpdated = (data, type) => {
 </script>
 
 <template>
-  <div class="bg-gray-100 font-sans min-h-screen">
+  <div class="bg-gray-200 font-sans min-h-screen">
     <!-- 🧭 Navbar -->
     <Navbar @toggleSidebar="toggleSidebar" />
 

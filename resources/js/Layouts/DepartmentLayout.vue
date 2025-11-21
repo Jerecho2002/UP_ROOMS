@@ -85,7 +85,7 @@ const handleDeleteData = (payload) => {
 
 
 <template>
-    <div class="flex flex-col h-screen bg-gray-100">
+    <div class="flex flex-col h-screen bg-gray-200">
 
         <Navbar @toggleSidebar="toggleSidebar" />
         
@@ -105,45 +105,9 @@ const handleDeleteData = (payload) => {
                 // making the transition seamless and gap-free on desktop.
                 sidebarVisible ? '' : '' 
             ]">
-                <h1 class="text-3xl font-extrabold text-[#7A0C23] mb-8">Department Dashboard</h1>
+                <h1 class="text-3xl font-extrabold text-[#7A0C23] mt-3 mb-5">Department Dashboard</h1>
 
-                <div class="flex flex-wrap gap-6 mb-10">
-                    <div class="flex-1 min-w-[200px] rounded-xl text-center shadow-lg overflow-hidden transition-transform duration-200 hover:scale-[1.02]">
-                        <div class="bg-cyan-600 text-white p-3">
-                            <h3 class="text-lg font-semibold">Total Accounts</h3>
-                        </div>
-                        <div class="bg-white p-3">
-                            <p class="text-3xl font-bold text-gray-800">20</p>
-                        </div>
-                    </div>
-                    
-                    <div class="flex-1 min-w-[200px] rounded-xl text-center shadow-lg overflow-hidden transition-transform duration-200 hover:scale-[1.02]">
-                        <div class="bg-purple-700 text-white p-3">
-                            <h3 class="text-lg font-semibold">Total Departments</h3>
-                        </div>
-                        <div class="bg-white p-3">
-                            <p class="text-3xl font-bold text-gray-800">5</p>
-                        </div>
-                    </div>
-                    
-                    <div class="flex-1 min-w-[200px] rounded-xl text-center shadow-lg overflow-hidden transition-transform duration-200 hover:scale-[1.02]">
-                        <div class="bg-orange-600 text-white p-3">
-                            <h3 class="text-lg font-semibold">Total Colleges</h3>
-                        </div>
-                        <div class="bg-white p-3">
-                            <p class="text-3xl font-bold text-gray-800">3</p>
-                        </div>
-                    </div>
-                    
-                    <div class="flex-1 min-w-[200px] rounded-xl text-center shadow-lg overflow-hidden transition-transform duration-200 hover:scale-[1.02]">
-                        <div class="bg-red-600 text-white p-3">
-                            <h3 class="text-lg font-semibold">Total Rooms</h3>
-                        </div>
-                        <div class="bg-white p-3">
-                            <p class="text-3xl font-bold text-gray-800">10</p>
-                        </div>
-                    </div>
-                </div>
+               
 
                 <DepartmentTable 
                     :users="users"

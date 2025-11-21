@@ -86,18 +86,20 @@ const handleDelete2 = (item) => props.openModal('delete', item, 'lastMonthUsers'
 </script>
 
 <template>
-    <div class="p-6 bg-gray-100">
+    <div class="p-6 bg-gray-200">
         <div class="bg-white shadow-2xl rounded-xl p-6 mb-10">
-            <h2 class="font-bold text-xl text-gray-800 mb-4 border-b pb-2">Department of Information Tech.</h2>
+            <h2 class="font-bold text-xl text-[#7A0C23] mb-4 border-b pb-2">Department of Information Tech.</h2>
 
-            <div class="mb-4">
-                <input
-                    type="text"
-                    v-model="searchQuery"
-                    placeholder="Search by User or Email..."
-                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7A0C23] focus:border-[#7A0C23] transition duration-150 shadow-sm"
-                />
+        <div class="mb-4 relative">
+                <input 
+                    type="text" 
+                    placeholder="Search Name College.." 
+                    v-model="cficSearchTerm"
+                    class=" max-w-[400px] p-3 pl-10 border-0 rounded-lg focus:ring-0 shadow-sm bg-gray-200"
+                >
+                <FontAwesomeIcon :icon="icons.search" class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
             </div>
+          
 
             <div class="overflow-x-auto">
                 <div class=" " >
@@ -105,9 +107,8 @@ const handleDelete2 = (item) => props.openModal('delete', item, 'lastMonthUsers'
                         <thead class="bg-[#7A0C23] text-white sticky top-0 shadow-md">
                             <tr>
                                 <th class="p-4 text-left">Name</th>
-                                <th class="p-4 text-left">Email-ID</th>
-                                <th class="p-4 text-left hidden sm:table-cell">Phone</th>
-                                <th class="p-4 text-left hidden md:table-cell">Profession</th>
+                                <th class="p-4 text-left">College</th>
+                              
                                 <th class="p-4 text-left w-0 min-w-min">Action</th>
                             </tr>
                         </thead>
@@ -118,16 +119,8 @@ const handleDelete2 = (item) => props.openModal('delete', item, 'lastMonthUsers'
                                 :class="{'bg-gray-50': index % 2 !== 0, 'hover:bg-gray-100 transition duration-150': true}"
                             >
                                 <td class="p-4 text-left font-medium text-gray-700">{{ user.name }}</td>
-                                <td class="p-4 text-left text-gray-600">{{ user.email }}</td>
-                                <td class="p-4 text-left text-gray-600 hidden sm:table-cell">{{ user.phone }}</td>
-                                <td class="p-4 text-left hidden md:table-cell">
-                                    <span
-                                        :class="user.profession === 'Instructor' ? 'bg-indigo-100 text-indigo-800' : 'bg-green-100 text-green-800'"
-                                        class="px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap"
-                                    >
-                                        {{ user.profession }}
-                                    </span>
-                                </td>
+                                <td class="p-4 text-left text-gray-600">{{ user.College }}</td>
+                              
                                 <td class="p-4 text-left space-x-3 whitespace-nowrap w-0 min-w-min">
                                        <button @click="handleViewDetails(user, 'CFIC')" title="View Details"
                                     class="text-blue-500 hover:text-blue-700 transform hover:scale-110 transition">
@@ -155,67 +148,6 @@ const handleDelete2 = (item) => props.openModal('delete', item, 'lastMonthUsers'
         </div>
 
 
-        <div class="bg-white shadow-2xl rounded-xl p-6">
-            <h2 class="font-bold text-xl text-gray-800 mb-4 border-b pb-2">Department of Education</h2>
-
-            <div class="mb-4">
-                <input
-                    type="text"
-                    v-model="lastMonthSearchQuery"
-                    placeholder="Search by Email or User ID..."
-                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7A0C23] focus:border-[#7A0C23] transition duration-150 shadow-sm"
-                />
-            </div>
-
-            <div class="overflow-x-auto">
-                <div class="">
-                    <table class="min-w-full text-sm border-collapse">
-                        <thead class="bg-[#7A0C23] text-white sticky top-0 shadow-md">
-                            <tr>
-                                <th class="p-4 text-left">Name</th>
-                                <th class="p-4 text-left">Email</th>
-                                <th class="p-4 text-left">User-ID</th>
-                                <th class="p-4 text-left hidden sm:table-cell">Month</th>
-                                <th class="p-4 text-left hidden md:table-cell">Year Start</th>
-                                <th class="p-4 text-left hidden lg:table-cell">Year End</th>
-                                <th class="p-4 text-left w-0 min-w-min">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200">
-                            <tr
-                                v-for="(item, index) in filteredLastMonthUsers"
-                                :key="item.userId"
-                                :class="{'bg-gray-50': index % 2 !== 0, 'hover:bg-gray-100 transition duration-150': true}"
-                            >
-                                <td class="p-4 text-left text-gray-600">{{ item.email }}</td>
-                                <td class="p-4 text-left font-mono text-gray-800 font-semibold">{{ item.userId }}</td>
-                                <td class="p-4 text-left text-gray-600 hidden sm:table-cell">{{ item.month }}</td>
-                                <td class="p-4 text-left text-gray-600 hidden md:table-cell">{{ item.yearStart }}</td>
-                                <td class="p-4 text-left text-gray-600 hidden lg:table-cell">{{ item.yearEnd }}</td>
-                                <td class="p-4 text-left space-x-3 whitespace-nowrap w-0 min-w-min">
-                                          <button @click="handleViewDetails(user, 'CFIC')" title="View Details"
-                                    class="text-blue-500 hover:text-blue-700 transform hover:scale-110 transition">
-                                    <FontAwesomeIcon :icon="icons.eye" class="h-5 w-5" />
-                                </button>
-                                <button @click="handleEditDetails(user, 'CFIC')" title="Edit User"
-                                    class="text-green-600 hover:text-green-800 transform hover:scale-110 transition">
-                                    <FontAwesomeIcon :icon="icons.edit" class="h-5 w-5" />
-                                </button>
-                                <button @click="handleDeleteDetails(user, 'CFIC')" title="Delete User"
-                                    class="text-red-600 hover:text-red-800 transform hover:scale-110 transition">
-                                    <FontAwesomeIcon :icon="icons.delete" class="h-5 w-5" />
-                                </button>
-                                </td>
-                            </tr>
-                            <tr v-if="filteredLastMonthUsers.length === 0">
-                                <td colspan="6" class="p-4 text-center text-gray-500 bg-white">
-                                    <p class="py-4">No new users found matching your search query. 😥</p>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
+     
     </div>
 </template>

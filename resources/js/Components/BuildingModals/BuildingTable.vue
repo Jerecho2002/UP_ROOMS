@@ -59,7 +59,7 @@ const handleView = building => emit('openModal', 'view', building)
 </script>
 
 <template>
-  <div class="p-4 bg-gray-50 min-h-screen">
+  <div class="p-4 bg-gray-200 min-h-screen">
     <div class="max-w-7xl mx-auto">
 
       <!-- ======================= Search & Add ======================= -->
