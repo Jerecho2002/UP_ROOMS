@@ -213,7 +213,7 @@ const uniqueRoomTypesCount = computed(() => {
             <Navbar @toggle-sidebar="toggleSidebar" /> 
 
             <main class="flex-1 overflow-x-hidden overflow-y-auto p-6 relative">
-                 <h3 class="text-2xl font-bold text-[#7A0C23]">Rooms Dashboard</h3>
+                 <h3 class="text-xl font-bold text-[#7A0C23]">Rooms Dashboard</h3>
                  <div class="absolute right-6 top-6 z-20"> 
                       <div class="text-sm text-gray-500 whitespace-nowrap ">
                           <span>UPCEBU > Room</span>

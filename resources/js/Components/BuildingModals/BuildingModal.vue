@@ -103,7 +103,7 @@ const handleDelete = () => emit('dataUpdated', props.building, 'delete')
           <p><strong>Name:</strong> {{ building.name }}</p>
           <p><strong>Address:</strong> {{ building.address }}</p>
           <p><strong>Total Space:</strong> {{ building.total_space }}</p>
-          <p><strong>Lift:</strong> {{ building.lift }}</p>
+          <p><strong>Lift:</strong> {{ building.elevator }}</p>
           <p><strong>Number of CR:</strong> {{ building.cr_count }}</p>
           <p><strong>Ramps:</strong> {{ building.ramps }}</p>
           <p><strong>Floors:</strong> {{ building.floors }}</p>

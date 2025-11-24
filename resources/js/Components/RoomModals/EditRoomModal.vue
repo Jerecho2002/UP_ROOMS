@@ -11,7 +11,8 @@ const props = defineProps({
     roomData: {
         type: Object,
         default: () => ({ 
-            schedules: [], // Ensure schedules property exists for deep watch
+            schedules: [],
+            equipments: [], // Ensure equipments property exists for deep watch
         }),
     }
 });
@@ -19,16 +20,30 @@ const props = defineProps({
 // Events this component can emit
 const emit = defineEmits(['close', 'save', 'reset', 'upload']);
 
+// --- Equipment Options (Static List - COPIED from AddRoomModal) ---
+const equipmentOptions = [
+    'Table', 'Chair', 'Computer', 'Keyboard', 'Mouse', 
+    'Head Set', 'Laptop', 'Projector', 'Monitor', 'Whiteboard'
+];
+
 // LOCAL STATE: A reactive copy of the roomData to be bound to the form inputs
 const editableRoom = ref({});
 
-// State for the temporary schedule being added (copied from AddRoomModal)
+// State for the temporary schedule being added
 const tempSchedule = ref({
     name: '',
     time: '',
     college: '',
     isAvailable: false
 });
+
+// State for the temporary equipment being added (NEW)
+const tempEquipment = ref({
+    name: '',
+    quantity: 1, // Default quantity
+});
+
+// --- Reset Functions ---
 
 const resetTempSchedule = () => {
     tempSchedule.value = {
@@ -39,12 +54,19 @@ const resetTempSchedule = () => {
     };
 }
 
-// Function to add a schedule item to the editable room's schedules list (copied from AddRoomModal)
+const resetTempEquipment = () => { // NEW
+    tempEquipment.value = {
+        name: '',
+        quantity: 1
+    };
+}
+
+// --- Schedule Management Functions (Existing) ---
+
+// Function to add a schedule item
 const addSchedule = () => {
     if (tempSchedule.value.name && tempSchedule.value.time) {
-        // Automatically set college for the schedule based on the room's college, if not provided
         const college = tempSchedule.value.college || editableRoom.value.college || 'N/A';
-        // Ensure editableRoom.value.schedules is an array
         if (!Array.isArray(editableRoom.value.schedules)) {
              editableRoom.value.schedules = [];
         }
@@ -55,24 +77,73 @@ const addSchedule = () => {
     }
 }
 
-// Function to remove a schedule item (copied from AddRoomModal)
+// Function to remove a schedule item
 const removeSchedule = (index) => {
     editableRoom.value.schedules.splice(index, 1);
 }
 
+// --- Equipment Management Functions (NEW - COPIED from AddRoomModal) ---
+
+/**
+ * Adds the temporary equipment item to the room's equipment list.
+ */
+const addEquipment = () => {
+    // Basic validation
+    if (!tempEquipment.value.name) {
+        alert('Please select an Equipment Item.');
+        return;
+    }
+    if (tempEquipment.value.quantity <= 0 || !Number.isInteger(tempEquipment.value.quantity)) {
+        alert('Quantity must be a positive whole number.');
+        return;
+    }
+
+    // Ensure array exists
+    if (!Array.isArray(editableRoom.value.equipments)) {
+         editableRoom.value.equipments = [];
+    }
+    
+    // Check if the item already exists to avoid duplicates
+    const existingIndex = editableRoom.value.equipments.findIndex(
+        item => item.name === tempEquipment.value.name
+    );
+
+    if (existingIndex !== -1) {
+        alert(`Equipment "${tempEquipment.value.name}" is already listed. Please remove it first to modify the quantity.`);
+    } else {
+        // Add a clean copy of the equipment
+        editableRoom.value.equipments.push({ 
+            name: tempEquipment.value.name,
+            quantity: tempEquipment.value.quantity 
+        });
+        resetTempEquipment(); // Reset for next entry
+    }
+}
+
+/**
+ * Removes an equipment item by its index.
+ * @param {number} index - The index of the item to remove.
+ */
+const removeEquipment = (index) => {
+    editableRoom.value.equipments.splice(index, 1);
+}
+
 // LOGICAL FIX: Use 'watch' to update the local editableRoom state whenever the parent passes a new room (via props.roomData)
 watch(() => props.roomData, (newRoomData) => {
-    // Deep copy ensures we don't mutate the data in the parent component's roomList directly
-    // Also ensures 'schedules' array is present for the template
-    editableRoom.value = { ...newRoomData, schedules: newRoomData.schedules ? [...newRoomData.schedules] : [] }; 
+    // Deep copy for schedules and *equipments* to ensure we don't mutate parent data
+    editableRoom.value = { 
+        ...newRoomData, 
+        schedules: newRoomData.schedules ? [...newRoomData.schedules] : [],
+        equipments: newRoomData.equipments ? [...newRoomData.equipments] : [] // INITIALIZE equipments
+    }; 
     resetTempSchedule();
+    resetTempEquipment(); // Reset temp equipment state too
 }, { deep: true, immediate: true });
 
 
 // --- Action Handlers ---
 
 const handleSave = () => {
-    // Emit the updated data back to the parent component (handleRoomUpdate in the main file)
     // Basic validation before saving
     if (!editableRoom.value.room || !editableRoom.value.capacity || editableRoom.value.capacity <= 0) {
         alert('Please fill out the Room name and ensure Capacity is a positive number.');
@@ -84,8 +155,13 @@ const handleSave = () => {
 
 const handleReset = () => {
     // Revert changes by copying the original roomData again
-    editableRoom.value = { ...props.roomData, schedules: props.roomData.schedules ? [...props.roomData.schedules] : [] };
+    editableRoom.value = { 
+        ...props.roomData, 
+        schedules: props.roomData.schedules ? [...props.roomData.schedules] : [],
+        equipments: props.roomData.equipments ? [...props.roomData.equipments] : [] // Reset equipments
+    };
     resetTempSchedule();
+    resetTempEquipment();
     console.log("Form reset.");
 };
 const handleClose = () => {
@@ -161,6 +237,47 @@ const handleUpload = () => {
                             UPLOAD / PHOTO
                         </button>
                     </div>
+                </div>
+                
+                <div class="border-t pt-4 mt-8">
+                    <h4 class="text-xl font-semibold text-gray-800 mb-3">Manage Room Equipments 🛠️</h4>
+
+                    <div class="space-y-3 p-3 border border-dashed rounded-lg bg-white shadow-inner">
+                        <div class="flex space-x-2 items-end">
+                            <div class="w-2/3">
+                                <label for="tempEquipment" class="block text-xs font-medium text-gray-600">Select Item</label>
+                                <select id="tempEquipment" v-model="tempEquipment.name"
+                                        class="block w-full border-gray-300 rounded-md shadow-sm sm:text-sm p-2">
+                                    <option value="">Select Equipment</option>
+                                    <option v-for="item in equipmentOptions" :key="item" :value="item">{{ item }}</option>
+                                </select>
+                            </div>
+                            <div class="w-1/6">
+                                <label for="tempQuantity" class="block text-xs font-medium text-gray-600">Qty</label>
+                                <input type="number" id="tempQuantity" v-model.number="tempEquipment.quantity" min="1"
+                                        class="block w-full border-gray-300 rounded-md shadow-sm sm:text-sm p-2 text-center">
+                            </div>
+                            <button type="button" @click="addEquipment"
+                                    class="w-1/6 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2.5 px-3 rounded-md transition duration-150 text-sm h-[42px] flex items-center justify-center">
+                                + Add
+                            </button>
+                        </div>
+                    </div>
+
+                    <div v-if="editableRoom.equipments && editableRoom.equipments.length > 0" class="mt-4 space-y-2 max-h-40 overflow-y-auto">
+                        <div v-for="(item, index) in editableRoom.equipments" :key="index"
+                                class="flex items-center justify-between p-2 text-sm rounded-md bg-purple-100 text-purple-800">
+                            <span>
+                                <strong>{{ item.name }}</strong> 
+                                <span class="ml-2 px-2 py-0.5 text-xs font-bold bg-purple-500 text-white rounded-full">{{ item.quantity }} pc(s)</span>
+                            </span>
+                            <button type="button" @click="removeEquipment(index)"
+                                    class="text-red-500 hover:text-red-700 ml-3 transition">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div v-else class="mt-4 text-center text-gray-500 text-sm italic">No equipment added yet.</div>
                 </div>
 
                 <div class="border-t pt-4 mt-8">

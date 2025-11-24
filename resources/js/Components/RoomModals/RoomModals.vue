@@ -58,6 +58,9 @@ const mockNewRoomData = ref({
     capacity: 0,
     location: '',
     roomType: '',
+    // Note: The Equipment field in the mock form should probably be `equipments: []`
+    // but sticking to the provided structure for the mock:
+    Equipment: '', 
     description: '',
     department: '',
     floorNumber: 1,
@@ -66,12 +69,24 @@ const mockNewRoomData = ref({
 const saveNewRoom = () => {
     if (!mockNewRoomData.value.room || !mockNewRoomData.value.building) return;
 
-    emit('room-added', { ...mockNewRoomData.value });
+    // When a new room is added, we initialize schedules and equipments for consistency
+    emit('room-added', { 
+        ...mockNewRoomData.value, 
+        schedules: [], 
+        equipments: [] // Ensure new rooms start with an equipment array
+    });
     
     // Reset form and close it
-    mockNewRoomData.value = { room: '', building: '', college: '', capacity: 0, location: '', roomType: '', description: '', department: '', floorNumber: 1 };
+    mockNewRoomData.value = { room: '', building: '', college: '', capacity: 0, location: '', roomType: '', description: '', department: '', floorNumber: 1, Equipment: '' };
     showMockAddForm.value = false;
 };
+
+// --- NEW Equipment helper for viewing ---
+
+const totalEquipmentQuantity = computed(() => {
+    if (!selectedRoom.value?.equipments) return 0;
+    return selectedRoom.value.equipments.reduce((sum, item) => sum + (item.quantity || 0), 0);
+});
 
 </script>
 
@@ -164,6 +179,24 @@ const saveNewRoom = () => {
                                     <dt class="font-medium text-gray-500">Description</dt>
                                     <dd class="mt-1 text-gray-900">{{ selectedRoom.description || 'No description available.' }}</dd>
                                 </div>
+                                
+                                <div class="col-span-1 sm:col-span-2 mt-4 pt-4 border-t border-gray-100">
+                                    <dt class="font-bold text-gray-700 mb-2 flex justify-between items-center">
+                                        Room Equipment 🛠️
+                                        <span class="text-xs font-normal text-gray-500">Total Items: {{ totalEquipmentQuantity }}</span>
+                                    </dt>
+                                    <dd class="space-y-2">
+                                        <div v-if="!selectedRoom.equipments || selectedRoom.equipments.length === 0" class="text-gray-500 italic">
+                                            No major equipment listed.
+                                        </div>
+                                        <div v-for="(item, index) in selectedRoom.equipments" :key="'eq-'+index" 
+                                            class="p-2 rounded-lg bg-purple-50 flex justify-between items-center">
+                                            <p class="font-semibold text-gray-800">{{ item.name }}</p>
+                                            <p class="text-sm font-bold text-purple-700">{{ item.quantity }} pc(s)</p>
+                                        </div>
+                                    </dd>
+                                </div>
+                                
                                 <div class="col-span-1 sm:col-span-2 mt-4 pt-4 border-t border-gray-100">
                                     <dt class="font-bold text-gray-700 mb-2">Current Schedules ({{ selectedRoom.schedules?.length || 0 }})</dt>
                                     <dd class="space-y-2">
@@ -178,6 +211,7 @@ const saveNewRoom = () => {
                                         </div>
                                     </dd>
                                 </div>
+                                
                             </dl>
                         </div>
                         <div v-else-if="!selectedRoom && rooms.length > 0" class="text-center p-10 text-gray-500">

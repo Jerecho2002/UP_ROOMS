@@ -63,7 +63,7 @@ const handleView = building => emit('openModal', 'view', building)
     <div class="max-w-7xl mx-auto">
 
       <!-- ======================= Search & Add ======================= -->
-        <h6 class="font-bold text-l text-[#7A0C23] mt-4  ">TABLE LIST 📃</h6>
+        <h6 class="font-bold text-l text-[#7A0C23] mt-4  ">Building LIST 📃</h6>
        
       <div class="pt-7 mb-3 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         

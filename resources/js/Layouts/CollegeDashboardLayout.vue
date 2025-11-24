@@ -32,7 +32,7 @@ const toggleSidebar = () => {
                 :style="sidebarVisible ? 'margin-left: 14rem;' : 'margin-left: 0;'"
             >
 
-                <h1 class="text-3xl font-bold text-[#7A0C23] mt-3 ml-10 mb-3">College</h1>
+                <h1 class="text-xl font-bold text-[#7A0C23] mt-3 ml-10 mb-3">COLLEGE DASHBOARD</h1>
               
 
                 <div class="bg-white shadow-lg rounded-lg p-4 sm:p-6 mb-6 ml-8 mt-6">

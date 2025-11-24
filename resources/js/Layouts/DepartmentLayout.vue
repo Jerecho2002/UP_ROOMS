@@ -13,24 +13,24 @@ const toggleSidebar = () => {
     sidebarVisible.value = !sidebarVisible.value
 }
 
-// === DATA MOCKUP (Moved from DepartmentTable.vue to the parent) ===
-const users = ref(
+// === MAIN APPLICATION DATA STATE ===
+
+// 1. Departments Data (Main Table Focus)
+const departments = ref([
+    { id: 1, name: 'BS Information Technology', college: 'College of Information Technology', building: 'IT Building', head: 'Dr. Smith' },
+    { id: 2, name: 'BS Civil Engineering', college: 'College of Engineering', building: 'Eng Building', head: 'Engr. Jones' },
+    { id: 3, name: 'BS Psychology', college: 'College of Arts and Sciences', building: 'Arts Building', head: 'Prof. Garcia' },
+    { id: 4, name: 'BS Business Administration', college: 'College of Business', building: 'Business Building', head: 'Dean Lee' },
+]);
+
+// 2. Students Data (Kept for the second table example/modals)
+const students = ref(
     Array.from({ length: 25 }, (_, i) => ({
         id: i + 1,
-        name: `User ${i + 1}`,
-        email: `user${i + 1}@example.com`,
+        name: `Student ${i + 1}`,
+        email: `student${i + 1}@example.com`,
         phone: `09123456${(i + 1).toString().padStart(2, '0')}`,
         profession: (i + 1) % 2 === 0 ? 'Instructor' : 'Student',
-    }))
-);
-
-const lastMonthUsers = ref(
-    Array.from({ length: 25 }, (_, i) => ({
-        email: `user${i + 1}@example.com`,
-        userId: `UID${1000 + i + 1}`,
-        month: 'October',
-        yearStart: 2020 + ((i + 1) % 5),
-        yearEnd: 2025 + ((i + 1) % 3),
     }))
 );
 
@@ -49,18 +49,16 @@ const openDepartmentModal = (type, data, table) => {
 // 3. Handlers for modal events (Emitted from DepartmentModals.vue)
 const handleUpdateData = (payload) => {
     const { table, data } = payload;
-    const source = table === 'users' ? users.value : lastMonthUsers.value;
+    const sourceRef = table === 'departments' ? departments : students;
     
-    let index;
-    if (table === 'users') {
-        index = source.findIndex(item => item.id === data.id);
-    } else { // lastMonthUsers
-        index = source.findIndex(item => item.userId === data.userId);
-    }
+    // Determine the ID key based on the table
+    const idKey = table === 'departments' ? 'id' : 'id'; 
+    
+    const index = sourceRef.value.findIndex(item => item[idKey] === data[idKey]);
 
     if (index !== -1) {
         // Perform the update
-        Object.assign(source[index], data);
+        Object.assign(sourceRef.value[index], data);
         console.log(`[Layout Update Success] Data updated for ${table}.`);
     } else {
         console.error(`Item not found for update in ${table}.`);
@@ -69,16 +67,31 @@ const handleUpdateData = (payload) => {
 
 const handleDeleteData = (payload) => {
     const { table, data } = payload;
-    const sourceRef = table === 'users' ? users : lastMonthUsers;
+    const sourceRef = table === 'departments' ? departments : students;
+
+    // Determine the ID key based on the table
+    const idKey = table === 'departments' ? 'id' : 'id'; 
 
     // Filter the data source to remove the item
-    if (table === 'users') {
-        sourceRef.value = sourceRef.value.filter(item => item.id !== data.id);
-    } else { // lastMonthUsers
-        sourceRef.value = sourceRef.value.filter(item => item.userId !== data.userId);
-    }
+    sourceRef.value = sourceRef.value.filter(item => item[idKey] !== data[idKey]);
     
     console.log(`[Layout Delete Success] Item deleted from ${table}.`);
+};
+
+// 4. Handler for adding a new Department
+const handleAddDepartment = () => {
+    // Open the modal in 'add' mode with an empty object structure
+    openDepartmentModal('add', { name: '', college: '', building: '', head: '' }, 'departments');
+};
+
+const handleSaveNewDepartment = (newDepartment) => {
+    // Logic to add the new department to the array
+    const newId = departments.value.length ? Math.max(...departments.value.map(d => d.id)) + 1 : 1;
+    departments.value.push({
+        id: newId,
+        ...newDepartment
+    });
+    console.log(`[Layout Add Success] New department added with ID: ${newId}.`);
 };
 
 </script>
@@ -91,7 +104,7 @@ const handleDeleteData = (payload) => {
         
         <div :class="[
             'flex flex-1 h-full overflow-hidden relative mt-14', 
-            sidebarVisible ? 'lg:grid lg:grid-cols-[256px_1fr]' : 'flex' // 256px = w-64
+            sidebarVisible ? 'lg:grid lg:grid-cols-[256px_1fr]' : 'flex'
         ]">
             
             <Sidebar :sidebarOpen="sidebarVisible" @toggleSidebar="toggleSidebar" :class="[
@@ -101,17 +114,16 @@ const handleDeleteData = (payload) => {
 
             <main :class="[
                 'flex-1 p-6 overflow-y-auto transition-all duration-300',
-                // Removed ml-64/lg:ml-64. The grid now handles the spacing automatically,
-                // making the transition seamless and gap-free on desktop.
                 sidebarVisible ? '' : '' 
             ]">
-                <h1 class="text-3xl font-extrabold text-[#7A0C23] mt-3 mb-5">Department Dashboard</h1>
+                <h1 class="text-xl font-extrabold text-[#7A0C23] mt-3 mb-5">Department Dashboard</h1>
 
-               
+                
+                
 
                 <DepartmentTable 
-                    :users="users"
-                    :lastMonthUsers="lastMonthUsers"
+                    :departments="departments"
+                    :students="students"
                     :openModal="openDepartmentModal"
                 />
                 
@@ -119,6 +131,7 @@ const handleDeleteData = (payload) => {
                     ref="modalsRef" 
                     @updateData="handleUpdateData"
                     @deleteData="handleDeleteData"
+                    @saveNewData="handleSaveNewDepartment" 
                 />
             </main>
         </div>
