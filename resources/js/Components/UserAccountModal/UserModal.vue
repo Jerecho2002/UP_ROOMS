@@ -18,31 +18,88 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'dataUpdated']);
 
-// Local state for the form (used for edit/add)
-const formData = ref({});
+// --- CONSTANTS ---
 
-// Watch for changes in the 'user' prop and update local formData for editing
+// Available roles, including your new roles
+const roles = ['Admin', 'Staff', 'Faculty', 'DPTAPR', 'AO', 'ADPD', 'OCS', 'SYSADMIN', 'USER'];
+
+// Available permissions (checkbox options)
+const permissionsOptions = ['Can Approve', 'Can Edit', 'Can Book', 'Staff Work', 'User Type Only'];
+
+// List of available info fields (REMOVED: Contact, Age, Status, Schedule, Building, College)
+const infoFields = []; // Now empty as requested
+
+
+/**
+ * Defines the default permissions for each role.
+ */
+const defaultPermissionsMap = {
+    Admin: ['Can Approve', 'Can Edit', 'Can Book', 'Staff Work', 'User Type Only'], // Full access
+    Staff: ['Can Book', 'Staff Work'],
+    Faculty: ['Can Book', 'User Type Only'],
+    DPTAPR: ['Can Approve', 'Can Book', 'User Type Only'],
+    AO: ['Can Approve', 'Can Edit', 'Staff Work'],
+    ADPD: ['Can Approve', 'Can Edit'],
+    OCS: ['Can Approve', 'Can Edit', 'Can Book'],
+    SYSADMIN: ['Can Approve', 'Can Edit', 'Can Book', 'Staff Work', 'User Type Only'], // Full access
+    USER: ['Can Book', 'User Type Only'],
+};
+
+// --- REACTIVE STATE ---
+
+// Local state for the form (REMOVED: contact, age, status, schedule, building, college)
+const formData = ref({
+    username: '',
+    email: '',
+    first_name: '',
+    last_name: '',
+    role: 'Staff',
+    permissions: [], // Permissions are stored as an array of strings
+});
+
+
+// --- WATCHERS & LOGIC ---
+
+// 1. Watch for changes in the 'user' prop and 'type' and initialize formData
 watch(() => [props.user, props.type], ([newUser, newType]) => {
     if (newType === 'add') {
-        // Reset for a fresh 'add' form with initial values for the new schema
-        formData.value = { 
-            username: '', 
-            email: '', 
-            first_name: '', 
-            last_name: '', 
+        // Reset for a fresh 'add' form
+        formData.value = {
+            username: '',
+            email: '',
+            first_name: '',
+            last_name: '',
             role: 'Staff', // Default role
+            permissions: defaultPermissionsMap['Staff'], // Default Staff permissions
         };
     } else if (newUser) {
-        // Deep copy the user object to formData for modification
-        formData.value = { ...newUser };
+        // Deep copy the user object to formData for modification/view
+        formData.value = { 
+            username: newUser.username || '',
+            email: newUser.email || '',
+            first_name: newUser.first_name || '',
+            last_name: newUser.last_name || '',
+            role: newUser.role || 'Staff',
+            permissions: Array.isArray(newUser.permissions) ? newUser.permissions : (newUser.permissions ? [newUser.permissions] : []),
+            // Removed initialization for personal info fields
+        };
     } else {
         // Fallback reset
         formData.value = {};
     }
-}, { immediate: true });
+}, { immediate: true, deep: true });
+
+// 2. Watch for changes in 'role' and automatically update 'permissions'
+watch(() => formData.value.role, (newRole) => {
+    // Only apply default permissions if we are in 'add' or 'edit' mode.
+    if (props.type === 'add' || props.type === 'edit') {
+        formData.value.permissions = defaultPermissionsMap[newRole] || [];
+    }
+});
 
 
-// Computed properties for dynamic content
+// --- COMPUTED PROPERTIES ---
+
 const modalTitle = computed(() => {
     switch (props.type) {
         case 'add': return 'Add New User Account';
@@ -59,27 +116,35 @@ const isEditOrAdd = computed(() => props.type === 'edit' || props.type === 'add'
 const isDelete = computed(() => props.type === 'delete');
 
 
-// --- Action Handlers ---
+// --- ACTION HANDLERS ---
 
 const handleSubmit = () => {
     if (isAdd.value || props.type === 'edit') {
         // Validate basic fields
         if (!formData.value.username || !formData.value.email) {
             console.error('Username and Email are required.');
+            alert('Username and Email are required.'); // User-facing alert
             return;
         }
         // Notify parent with the modified data and the action type
         emit('dataUpdated', formData.value, props.type);
+        emit('close'); // Assuming you want to close the modal after a successful submission
     }
 };
 
 const handleDeleteConfirm = () => {
     // Notify parent with the user data and the delete action type
     emit('dataUpdated', props.user, 'delete');
+    emit('close'); // Close modal after action
 };
 
-// Available roles, matching the factory
-const roles = ['Admin', 'Staff', 'Faculty'];
+/**
+ * Removed getInfoValue since infoFields is empty and personal info is gone.
+ * If needed for existing fields like role, use direct access.
+ */
+// const getInfoValue = (key) => {
+//     return props.user[key.toLowerCase()] || 'N/A';
+// }
 
 </script>
 
@@ -87,7 +152,7 @@ const roles = ['Admin', 'Staff', 'Faculty'];
     <Transition name="modal-fade">
         <div v-if="isVisible" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" @click.self="emit('close')">
             
-            <div class="bg-white rounded-lg shadow-2xl p-6 w-full max-w-xl max-h-[90vh] overflow-y-auto transform transition-all duration-300 scale-100 opacity-100">
+            <div class="bg-white rounded-lg shadow-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto transform transition-all duration-300 scale-100 opacity-100">
                 
                 <div class="flex justify-between items-center border-b pb-3 mb-4">
                     <h3 class="text-2xl font-semibold text-gray-800">{{ modalTitle }}</h3>
@@ -96,58 +161,91 @@ const roles = ['Admin', 'Staff', 'Faculty'];
                     </button>
                 </div>
 
-                <!-- VIEW MODE -->
+                
+
                 <div v-if="isView && user" class="space-y-3 text-gray-700">
-                    <p><strong>ID:</strong> {{ user.id }}</p>
-                    <p><strong>Username:</strong> {{ user.username }}</p>
-                    <p><strong>Email:</strong> {{ user.email }}</p>
-                    <p><strong>First Name:</strong> {{ user.first_name || 'N/A' }}</p>
-                    <p><strong>Last Name:</strong> {{ user.last_name || 'N/A' }}</p>
-                    <p><strong>Role:</strong> {{ user.role }}</p>
+                    <div class="grid grid-cols-2 gap-4">
+                        <p v-if="user.id"><strong>ID:</strong> {{ user.id }}</p>
+                        <p><strong>Username:</strong> {{ user.username }}</p>
+                        <p><strong>Email:</strong> {{ user.email }}</p>
+                        <p><strong>Role:</strong> {{ user.role }}</p>
+                        <p><strong>First Name:</strong> {{ user.first_name || 'N/A' }}</p>
+                        <p><strong>Last Name:</strong> {{ user.last_name || 'N/A' }}</p>
+                    </div>
+
+                    <h4 class="font-semibold mt-4 pt-4 border-t">Permissions</h4>
+                    <ul class="list-disc list-inside ml-4">
+                        <li v-if="user.permissions && user.permissions.length > 0" v-for="p in user.permissions" :key="p">{{ p }}</li>
+                        <li v-else class="text-gray-500 italic">No specific permissions granted.</li>
+                    </ul>
+
                     <div class="mt-6 pt-4 border-t flex justify-end">
                         <button @click="emit('close')" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded transition">Close</button>
                     </div>
                 </div>
 
-                <!-- ADD/EDIT FORM -->
-                <form v-else-if="isEditOrAdd" @submit.prevent="handleSubmit" class="space-y-4">
+                
+
+                <form v-else-if="isEditOrAdd" @submit.prevent="handleSubmit" class="space-y-6">
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label for="first_name" class="block text-sm font-medium text-gray-700">First Name</label>
+                            <label for="first_name" class="block text-sm font-medium text-gray-700 text-left">First Name</label>
                             <input type="text" id="first_name" v-model="formData.first_name" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
                         </div>
                         <div>
-                            <label for="last_name" class="block text-sm font-medium text-gray-700">Last Name</label>
+                            <label for="last_name" class="block text-sm font-medium text-gray-700 text-left">Last Name</label>
                             <input type="text" id="last_name" v-model="formData.last_name" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="username" class="block text-sm font-medium text-gray-700 text-left">Username <span class="text-red-500">*</span></label>
+                            <input type="text" id="username" v-model="formData.username" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                        </div>
+
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-gray-700 text-left">Email <span class="text-red-500">*</span></label>
+                            <input type="email" id="email" v-model="formData.email" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
                         </div>
                     </div>
 
                     <div>
-                        <label for="username" class="block text-sm font-medium text-gray-700">Username <span class="text-red-500">*</span></label>
-                        <input type="text" id="username" v-model="formData.username" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
-                    </div>
-
-                    <div>
-                        <label for="email" class="block text-sm font-medium text-gray-700">Email <span class="text-red-500">*</span></label>
-                        <input type="email" id="email" v-model="formData.email" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
-                    </div>
-                    
-                    <div>
-                        <label for="role" class="block text-sm font-medium text-gray-700">Role</label>
+                        <label for="role" class="block text-sm font-medium text-gray-700 text-left">Role</label>
                         <select id="role" v-model="formData.role" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
                             <option v-for="role in roles" :key="role" :value="role">{{ role }}</option>
                         </select>
                     </div>
+
+                    <hr class="border-gray-200">
+
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2 text-left">Permissions</label>
+                        <div class="grid grid-cols-2 gap-2 p-3 border border-gray-300 rounded-md">
+                            <div v-for="permission in permissionsOptions" :key="permission" class="flex items-center">
+                                <input 
+                                    :id="permission" 
+                                    type="checkbox" 
+                                    :value="permission" 
+                                    v-model="formData.permissions" 
+                                    class="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                                >
+                                <label :for="permission" class="ml-2 block text-sm text-gray-900">{{ permission }}</label>
+                            </div>
+                        </div>
+                        <p class="mt-1 text-xs text-gray-500 text-left">Default permissions set for **{{ formData.role }}** role.</p>
+                    </div>
+
                     
                     <div class="pt-4 border-t flex justify-end space-x-3">
                         <button type="button" @click="emit('close')" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded transition">Cancel</button>
-                        <button type="submit" :class="isAdd ? 'bg-green-600 hover:bg-green-700' : 'bg-green-600 hover:bg-green-700'" class="text-white px-4 py-2 rounded transition">
+                        <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded transition">
                             {{ isAdd ? 'Add Account' : 'Save Changes' }}
                         </button>
                     </div>
                 </form>
 
-                <!-- DELETE CONFIRMATION -->
                 <div v-else-if="isDelete && user" class="space-y-4">
                     <p class="text-lg text-red-600">Are you sure you want to delete the account for **{{ user.username }}**?</p>
                     <p class="text-gray-600">This action cannot be undone.</p>

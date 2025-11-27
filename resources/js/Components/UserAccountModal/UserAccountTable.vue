@@ -58,6 +58,8 @@ const handleDelete = (user) => {
     emit('openModal', 'delete', user);
 };
 
+
+
 </script>
 
 <template>
@@ -79,7 +81,7 @@ const handleDelete = (user) => {
         <div class=" bg-white rounded-lg shadow-xl">
             <div class=" max-h-[80vh]">
                 <table class="min-w-full border border-gray-200 text-sm text-center">
-                    <thead class="bg-[#7A0C23] text-white sticky top-0 shadow">
+                    <thead class="bg-[#7A0C23] text-white  top-0 shadow">
                         <tr>
                              <th class="px-4 py-3 border border-gray-500 font-semibold text-left">NAME</th>
                             <th class="px-4 py-3 border border-gray-500 font-semibold text-left">USERNAME</th>

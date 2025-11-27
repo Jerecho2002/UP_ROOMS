@@ -5,7 +5,7 @@
     class="w-64 bg-white text-black h-screen p-4 flex flex-col transition-all duration-300 z-10"
   >
     <div class="text-center mb-6">
-      <p class="mt-3 font-semibold text-xl text-[#00b3ff]">Dashboard</p>
+      <p class="mt-3 font-semibold text-xl text-[#00b3ff] "><a href="/MainDashboard">Dashboard</a></p>
     </div>
 
     <nav class="space-y-1 text-sm overflow-y-auto">

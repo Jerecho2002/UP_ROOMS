@@ -16,7 +16,7 @@ const users = ref(
         email: `user${i + 1}@example.com`,
         first_name: i % 2 === 0 ? `Alice${i + 1}` : `Bob${i + 1}`,
         last_name: `Smith${i + 1}`,
-        role: ['Admin', 'Staff', 'Faculty'][i % 3],
+        role: ['ADMIN', 'Staff', 'Faculty','DPTAPR','AO','ADPD','OCS','SYSADMIN','USER TYPE NAME'][i % 3],
     }))
 );
 
@@ -98,7 +98,7 @@ const deleteUser = (userId) => {
             
             <Sidebar v-show="sidebarVisible" class="fixed top-5 left-0 h-full z-20 w-64 lg:relative" />
 
-            <main id="main" class="flex-1 transition-all">
+            <main id="main" class="flex-1 overflow-y-auto p-0 md:p-6 bg-gray-200">
                 <UserAccountTable :users="users" @openModal="handleOpenModal" />
             </main>
         </div>

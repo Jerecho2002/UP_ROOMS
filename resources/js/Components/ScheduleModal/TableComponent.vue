@@ -123,7 +123,7 @@ const tableEvents = computed(() => {
 });
 </script>
 <template>
-    <div class="bg-white shadow-lg rounded-xl overflow-x-auto">
+    <div class="bg-white shadow-lg rounded-xl ">
         <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-[#7A0C23] text-white">
                 <tr>

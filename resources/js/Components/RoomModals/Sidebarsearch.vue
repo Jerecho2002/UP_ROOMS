@@ -2,7 +2,7 @@
     <div class="h-full p-4 border-l border-gray-200 flex flex-col bg-white shadow-xl">
 
         <div class="flex justify-between items-center pb-4 mb-4 border-b">
-            <h3 class="text-xl font-semibold text-gray-800">Room Search & Details 🔍</h3>
+            <h3 class="text-xl font-semibold text-gray-800">Room Search & Details </h3>
             <button @click="$emit('close-search')" class="text-gray-500 hover:text-red-600 transition duration-150">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
@@ -25,7 +25,7 @@
             </div>
 
             <div class="mb-6 space-y-2">
-                <h4 class="text-md font-bold text-gray-700 border-b pb-1 mb-3">Room Details ℹ️</h4>
+                <h4 class="text-md font-bold text-gray-700 border-b pb-1 mb-3">Room Details </h4>
 
                 <div class="grid grid-cols-2 gap-y-2 text-sm">
                     <span class="font-semibold text-gray-600">College:</span> <span class="text-gray-900">{{ roomData.college }}</span>
