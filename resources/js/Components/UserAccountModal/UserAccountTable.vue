@@ -89,6 +89,7 @@ const handleDelete = (user) => {
                             
                             <th class="px-4 py-3 border border-gray-500 font-semibold">OFFICE</th>
                             <th class="px-4 py-3 border border-gray-500 font-semibold">ACTION</th>
+                          
                         </tr>
                     </thead>
                     <tbody>

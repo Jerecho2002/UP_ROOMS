@@ -20,41 +20,63 @@ const emit = defineEmits(['close', 'dataUpdated']);
 
 // --- CONSTANTS ---
 
-// Available roles, including your new roles
+// Available roles
 const roles = ['Admin', 'Staff', 'Faculty', 'DPTAPR', 'AO', 'ADPD', 'OCS', 'SYSADMIN', 'USER'];
 
 // Available permissions (checkbox options)
 const permissionsOptions = ['Can Approve', 'Can Edit', 'Can Book', 'Staff Work', 'User Type Only'];
 
-// List of available info fields (REMOVED: Contact, Age, Status, Schedule, Building, College)
-const infoFields = []; // Now empty as requested
+// --- NEW STATIC LISTS FOR DROPDOWNS ---
+const collegeOptions = [
+    'College of Engineering (CoE)',
+    'College of Arts and Sciences (CAS)',
+    'College of Business and Accountancy (CBA)',
+    'College of Education (CoEd)',
+    'College of Information Technology (CIT)',
+    'Graduate School (GS)',
+];
 
+const departmentOptions = [
+    'Computer Science',
+    'Electrical Engineering',
+    'Mechanical Engineering',
+    'Physics',
+    'Mathematics',
+    'English/Literature',
+    'Accounting',
+    'Management',
+    'N/A - Administration', // Option for non-academic staff
+];
 
 /**
  * Defines the default permissions for each role.
  */
 const defaultPermissionsMap = {
-    Admin: ['Can Approve', 'Can Edit', 'Can Book', 'Staff Work', 'User Type Only'], // Full access
+    Admin: ['Can Approve', 'Can Edit', 'Can Book', 'Staff Work', 'User Type Only'],
     Staff: ['Can Book', 'Staff Work'],
     Faculty: ['Can Book', 'User Type Only'],
     DPTAPR: ['Can Approve', 'Can Book', 'User Type Only'],
     AO: ['Can Approve', 'Can Edit', 'Staff Work'],
     ADPD: ['Can Approve', 'Can Edit'],
     OCS: ['Can Approve', 'Can Edit', 'Can Book'],
-    SYSADMIN: ['Can Approve', 'Can Edit', 'Can Book', 'Staff Work', 'User Type Only'], // Full access
+    SYSADMIN: ['Can Approve', 'Can Edit', 'Can Book', 'Staff Work', 'User Type Only'],
     USER: ['Can Book', 'User Type Only'],
 };
 
 // --- REACTIVE STATE ---
 
-// Local state for the form (REMOVED: contact, age, status, schedule, building, college)
+// Local state for the form - NOW INCLUDING DEPARTMENT AND COLLEGE
 const formData = ref({
     username: '',
     email: '',
     first_name: '',
     last_name: '',
     role: 'Staff',
-    permissions: [], // Permissions are stored as an array of strings
+    // --- NEW FIELDS ---
+    department: '', // Initialize new field
+    college: '',    // Initialize new field
+    // --- END NEW FIELDS ---
+    permissions: [],
 });
 
 
@@ -70,6 +92,8 @@ watch(() => [props.user, props.type], ([newUser, newType]) => {
             first_name: '',
             last_name: '',
             role: 'Staff', // Default role
+            department: '', // Reset department
+            college: '',    // Reset college
             permissions: defaultPermissionsMap['Staff'], // Default Staff permissions
         };
     } else if (newUser) {
@@ -80,8 +104,11 @@ watch(() => [props.user, props.type], ([newUser, newType]) => {
             first_name: newUser.first_name || '',
             last_name: newUser.last_name || '',
             role: newUser.role || 'Staff',
+            // --- INITIALIZE NEW FIELDS FROM USER PROP ---
+            department: newUser.department || '',
+            college: newUser.college || '',
+            // --- END INITIALIZE NEW FIELDS ---
             permissions: Array.isArray(newUser.permissions) ? newUser.permissions : (newUser.permissions ? [newUser.permissions] : []),
-            // Removed initialization for personal info fields
         };
     } else {
         // Fallback reset
@@ -93,6 +120,8 @@ watch(() => [props.user, props.type], ([newUser, newType]) => {
 watch(() => formData.value.role, (newRole) => {
     // Only apply default permissions if we are in 'add' or 'edit' mode.
     if (props.type === 'add' || props.type === 'edit') {
+        // Only update if the user hasn't started manually modifying permissions
+        // A simpler approach is just to apply the default map:
         formData.value.permissions = defaultPermissionsMap[newRole] || [];
     }
 });
@@ -120,34 +149,25 @@ const isDelete = computed(() => props.type === 'delete');
 
 const handleSubmit = () => {
     if (isAdd.value || props.type === 'edit') {
-        // Validate basic fields
-        if (!formData.value.username || !formData.value.email) {
-            console.error('Username and Email are required.');
-            alert('Username and Email are required.'); // User-facing alert
+        // Validate basic fields + new required fields
+        if (!formData.value.username || !formData.value.email || !formData.value.department || !formData.value.college) {
+            console.error('Username, Email, Department, and College are required.');
+            alert('Username, Email, Department, and College are required.'); // User-facing alert
             return;
         }
         // Notify parent with the modified data and the action type
         emit('dataUpdated', formData.value, props.type);
-        emit('close'); // Assuming you want to close the modal after a successful submission
+        emit('close');
     }
 };
 
 const handleDeleteConfirm = () => {
     // Notify parent with the user data and the delete action type
     emit('dataUpdated', props.user, 'delete');
-    emit('close'); // Close modal after action
+    emit('close');
 };
 
-/**
- * Removed getInfoValue since infoFields is empty and personal info is gone.
- * If needed for existing fields like role, use direct access.
- */
-// const getInfoValue = (key) => {
-//     return props.user[key.toLowerCase()] || 'N/A';
-// }
-
 </script>
-
 <template>
     <Transition name="modal-fade">
         <div v-if="isVisible" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" @click.self="emit('close')">
@@ -171,6 +191,8 @@ const handleDeleteConfirm = () => {
                         <p><strong>Role:</strong> {{ user.role }}</p>
                         <p><strong>First Name:</strong> {{ user.first_name || 'N/A' }}</p>
                         <p><strong>Last Name:</strong> {{ user.last_name || 'N/A' }}</p>
+                        <p><strong>Department:</strong> {{ user.department || 'N/A' }}</p>
+                        <p><strong>College:</strong> {{ user.college || 'N/A' }}</p>
                     </div>
 
                     <h4 class="font-semibold mt-4 pt-4 border-t">Permissions</h4>
@@ -210,6 +232,24 @@ const handleDeleteConfirm = () => {
                         </div>
                     </div>
 
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="department" class="block text-sm font-medium text-gray-700 text-left">Department <span class="text-red-500">*</span></label>
+                            <select id="department" v-model="formData.department" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                                <option value="" disabled>Select Department</option>
+                                <option v-for="dept in departmentOptions" :key="dept" :value="dept">{{ dept }}</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="college" class="block text-sm font-medium text-gray-700 text-left">College <span class="text-red-500">*</span></label>
+                            <select id="college" v-model="formData.college" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                                <option value="" disabled>Select College</option>
+                                <option v-for="col in collegeOptions" :key="col" :value="col">{{ col }}</option>
+                            </select>
+                        </div>
+                    </div>
+
                     <div>
                         <label for="role" class="block text-sm font-medium text-gray-700 text-left">Role</label>
                         <select id="role" v-model="formData.role" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
@@ -219,7 +259,6 @@ const handleDeleteConfirm = () => {
 
                     <hr class="border-gray-200">
 
-                    
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2 text-left">Permissions</label>
                         <div class="grid grid-cols-2 gap-2 p-3 border border-gray-300 rounded-md">
@@ -237,7 +276,6 @@ const handleDeleteConfirm = () => {
                         <p class="mt-1 text-xs text-gray-500 text-left">Default permissions set for **{{ formData.role }}** role.</p>
                     </div>
 
-                    
                     <div class="pt-4 border-t flex justify-end space-x-3">
                         <button type="button" @click="emit('close')" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded transition">Cancel</button>
                         <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded transition">
