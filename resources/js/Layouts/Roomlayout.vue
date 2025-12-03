@@ -9,6 +9,9 @@ import Sidebar from '@/Components/Sidebar.vue';
 import Sidebarsearch from '@/Components/RoomModals/Sidebarsearch.vue';
 import EditRoomModal from '@/Components/RoomModals/EditRoomModal.vue';
 import AddRoomModal from '@/Components/RoomModals/AddRoomModal.vue';
+// ⭐ FIXED IMPORT: Using 'ToastContainer' to match the template tag, pointing to Messagefunction.vue
+import ToastContainer from '@/Components/Messagefunction.vue'; 
+
 
 /* ------------------------------------------------------------------- */
 /* --- Icon Mapping --- */
@@ -37,12 +40,10 @@ const roomToViewInSidebar = ref(null); // The selected room object for the sideb
 // --- SEARCH STATE ---
 const searchQuery = ref('');
 
-// --- TOAST STATE ---
+// --- TOAST STATE (These states are now passed to ToastContainer) ---
 const showCreateSuccess = ref(false);
 const showEditSuccess = ref(false); 
-// ⭐ NEW: State for delete success toast
 const showDeleteSuccess = ref(false); 
-// ⭐ NEW: State to hold the name of the deleted room
 const deletedRoomName = ref(''); 
 
 
@@ -122,7 +123,7 @@ const handleEditRoom = (room) => {
     openEditModal(room);
 };
 
-// ⭐ UPDATED: Added toast message logic
+// **DELETE ROOM FUNCTIONALITY (Active & with Message)**
 const handleDeleteRoom = (id) => {
     // Find the room to get its name before deletion
     const roomToDelete = roomList.value.find(room => room.id === id);
@@ -142,7 +143,7 @@ const handleDeleteRoom = (id) => {
                 closeSearchSidebar();
             }
             
-            // Show delete success toast
+            // Show delete success toast (active)
             showDeleteSuccess.value = true;
             setTimeout(() => {
                 showDeleteSuccess.value = false;
@@ -153,6 +154,7 @@ const handleDeleteRoom = (id) => {
     }
 };
 
+// **CREATE ROOM FUNCTIONALITY (Active & with Message)**
 const handleAddRoom = (newRoomData) => {
     const newId = roomList.value.length > 0
         ? Math.max(...roomList.value.map(r => r.id)) + 1
@@ -172,7 +174,7 @@ const handleAddRoom = (newRoomData) => {
 
     roomList.value.push(newRoom);
 
-    // Show success toast
+    // Show success toast (active)
     showCreateSuccess.value = true;
     setTimeout(() => {
         showCreateSuccess.value = false;
@@ -184,6 +186,7 @@ const handleAddRoom = (newRoomData) => {
 
 /**
  * Handles the update of a room when the EditModal emits the 'save' event.
+ * **EDIT ROOM FUNCTIONALITY (Active & with Message)**
  * @param {Object} updatedRoomData - The data from the form, including the room's ID.
  */
 const handleRoomUpdate = (updatedRoomData) => { 
@@ -210,7 +213,7 @@ const handleRoomUpdate = (updatedRoomData) => {
              roomToViewInSidebar.value = dataToSave;
         }
 
-        // Show success toast for editing
+        // Show success toast for editing (active)
         showEditSuccess.value = true;
         setTimeout(() => {
             showEditSuccess.value = false;
@@ -259,32 +262,12 @@ const uniqueRoomTypesCount = computed(() => {
 <template>
     <div class="flex pt-14 min-h-screen transition-all duration-300 bg-gray-200">
         
-        <transition name="toast">
-            <div
-                v-if="showCreateSuccess"
-                class="fixed top-6 right-6 bg-green-600 text-white px-5 py-3 rounded-lg shadow-lg z-[9999] text-sm font-semibold"
-            >
-                ✅ Successfully created a room!
-            </div>
-        </transition>
-
-        <transition name="toast">
-            <div
-                v-if="showEditSuccess"
-                class="fixed top-6 right-6 bg-yellow-600 text-white px-5 py-3 rounded-lg shadow-lg z-[9999] text-sm font-semibold"
-            >
-                ✏️ Successfully edited the room data!
-            </div>
-        </transition>
-
-        <transition name="toast">
-            <div
-                v-if="showDeleteSuccess"
-                class="fixed top-6 right-6 bg-red-600 text-white px-5 py-3 rounded-lg shadow-lg z-[9999] text-sm font-semibold"
-            >
-                 Room '{{ deletedRoomName }}' successfully deleted!
-            </div>
-        </transition>
+        <ToastContainer
+            :showCreateSuccess="showCreateSuccess"
+            :showEditSuccess="showEditSuccess"
+            :showDeleteSuccess="showDeleteSuccess"
+            :deletedRoomName="deletedRoomName"
+        />
 
         <aside
             :class="{
@@ -404,14 +387,15 @@ const uniqueRoomTypesCount = computed(() => {
         <AddRoomModal
             :isVisible="addModalVisible"
             @close="closeAddModal"
-            @save="handleAddRoom"
+            @save="handleAddRoom" 
         />
 
         <EditRoomModal
             :isVisible="editModalVisible"
             :roomData="roomToEdit"
             @close="closeEditModal"
-            @save="handleRoomUpdate" @reset="console.log('Resetting form...')"
+            @save="handleRoomUpdate" 
+            @reset="console.log('Resetting form...')"
             @upload="console.log('Opening file dialog...')"
         />
     </div>
@@ -434,16 +418,6 @@ const uniqueRoomTypesCount = computed(() => {
 .flex-col .relative.z-30 {
     position: sticky;
     top: 0;
-}
-.toast-enter-active,
-.toast-leave-active {
-    transition: all 0.35s ease;
-}
-
-.toast-enter-from,
-.toast-leave-to {
-    opacity: 0;
-    transform: translateY(-15px);
 }
 
 </style>
