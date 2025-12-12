@@ -60,9 +60,9 @@ const handleAction = (eventName, eventObject) => {
 const formatTime = (date) => {
     if (!date) return '';
     // Safely convert to Date object
-    const d = date instanceof Date ? date : new Date(date); 
+    const d = date instanceof Date ? date : new Date(date);
     // Check if date is valid
-    if (isNaN(d)) return ''; 
+    if (isNaN(d)) return '';
     return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
 };
 
@@ -89,7 +89,7 @@ const formatDate = (date) => {
  */
 const tableEvents = computed(() => {
     // 1. Sort events by start date to ensure chronological order
-    const sortedEvents = [...props.events].sort((a, b) => 
+    const sortedEvents = [...props.events].sort((a, b) =>
         new Date(a.start).getTime() - new Date(b.start).getTime() // Use getTime() for safer comparison
     );
 
@@ -100,19 +100,19 @@ const tableEvents = computed(() => {
         if (event.allDay) {
             timeStr = 'All Day';
         } else {
-            const startTime = formatTime(event.start); 
+            const startTime = formatTime(event.start);
             const endTime = event.end ? formatTime(event.end) : '';
             timeStr = `${startTime} ${endTime ? '- ' + endTime : ''}`;
         }
-        
+
         // Extract extended properties safely
         const extendedProps = event.extendedProps || {};
 
         return {
             id: event.id,
             room: event.title, // Assuming event.title is the Room identifier
-            building: extendedProps.building || 'N/A', 
-            college: extendedProps.college || 'N/A', 
+            building: extendedProps.building || 'N/A',
+            college: extendedProps.college || 'N/A',
             subject: extendedProps.subject || extendedProps.title || event.title, // Fallback to title
             startDate: formatDate(event.start),
             timeSlot: timeStr,
@@ -153,11 +153,11 @@ const tableEvents = computed(() => {
                     </th>
                 </tr>
             </thead>
-            
+
             <tbody class="divide-y divide-gray-200">
                 <tr v-for="item in tableEvents" :key="item.id" class="hover:bg-gray-50 transition duration-150">
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {{ item.room }} 
+                        {{ item.room }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {{ item.building }}
@@ -166,7 +166,7 @@ const tableEvents = computed(() => {
                         {{ item.college }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {{ item.subject }} 
+                        {{ item.subject }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {{ item.startDate }}
@@ -177,7 +177,7 @@ const tableEvents = computed(() => {
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {{ item.isRecurring }}
                     </td>
-                    
+
                     <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
                         <div class="flex items-center justify-center space-x-2 divide-x divide-gray-200">
                             <button @click="handleAction('view-details', item.eventObject)" title="View Details"
@@ -195,7 +195,7 @@ const tableEvents = computed(() => {
                         </div>
                     </td>
                 </tr>
-                
+
                 <tr v-if="tableEvents.length === 0">
                     <td :colspan="8" class="px-6 py-4 text-center text-gray-500">
                         No scheduled appointments found.
@@ -208,10 +208,10 @@ const tableEvents = computed(() => {
 <style scoped>
 /* Ensure the custom color for the header is correctly applied */
 .bg-\[\#7A0C23\] {
-    background-color: #7A0C23; 
+    background-color: #7A0C23;
 }
 
-/* Tailwind CSS generally handles the rest of the styling. 
+/* Tailwind CSS generally handles the rest of the styling.
  Keep custom/utility colors defined here if necessary.
 */
 </style>

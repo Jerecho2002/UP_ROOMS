@@ -10,7 +10,7 @@ import Sidebarsearch from '@/Components/RoomModals/Sidebarsearch.vue';
 import EditRoomModal from '@/Components/RoomModals/EditRoomModal.vue';
 import AddRoomModal from '@/Components/RoomModals/AddRoomModal.vue';
 // ⭐ FIXED IMPORT: Using 'ToastContainer' to match the template tag, pointing to Messagefunction.vue
-import ToastContainer from '@/Components/Messagefunction.vue'; 
+import ToastContainer from '@/Components/Messagefunction.vue';
 
 
 /* ------------------------------------------------------------------- */
@@ -42,9 +42,9 @@ const searchQuery = ref('');
 
 // --- TOAST STATE (These states are now passed to ToastContainer) ---
 const showCreateSuccess = ref(false);
-const showEditSuccess = ref(false); 
-const showDeleteSuccess = ref(false); 
-const deletedRoomName = ref(''); 
+const showEditSuccess = ref(false);
+const showDeleteSuccess = ref(false);
+const deletedRoomName = ref('');
 
 
 // MOCK DATA (Extended to match Sidebarsearch template)
@@ -134,15 +134,15 @@ const handleDeleteRoom = (id) => {
         if (index !== -1) {
             // Store the name for the toast message
             deletedRoomName.value = roomToDelete.room;
-            
+
             // Delete the room
             roomList.value.splice(index, 1);
-            
+
             // If the deleted room was the one in the sidebar, close the sidebar
             if (roomToViewInSidebar.value && roomToViewInSidebar.value.id === id) {
                 closeSearchSidebar();
             }
-            
+
             // Show delete success toast (active)
             showDeleteSuccess.value = true;
             setTimeout(() => {
@@ -189,7 +189,7 @@ const handleAddRoom = (newRoomData) => {
  * **EDIT ROOM FUNCTIONALITY (Active & with Message)**
  * @param {Object} updatedRoomData - The data from the form, including the room's ID.
  */
-const handleRoomUpdate = (updatedRoomData) => { 
+const handleRoomUpdate = (updatedRoomData) => {
     // Find the index of the room to update
     const index = roomList.value.findIndex(r => r.id === updatedRoomData.id);
 
@@ -199,7 +199,7 @@ const handleRoomUpdate = (updatedRoomData) => {
             ...updatedRoomData,
             capacity: Number(updatedRoomData.capacity),
             // Ensure required fields exist, though EditModal usually passes full data
-            schedules: updatedRoomData.schedules || [], 
+            schedules: updatedRoomData.schedules || [],
             description: updatedRoomData.description || 'N/A',
             department: updatedRoomData.department || 'N/A',
             floorNumber: updatedRoomData.floorNumber || 'N/A',
@@ -221,7 +221,7 @@ const handleRoomUpdate = (updatedRoomData) => {
 
         // Close the modal
         closeEditModal();
-        
+
     } else {
         console.error(`Room with ID ${updatedRoomData.id} not found for update.`);
         closeEditModal();
@@ -261,7 +261,7 @@ const uniqueRoomTypesCount = computed(() => {
 
 <template>
     <div class="flex pt-14 min-h-screen transition-all duration-300 bg-gray-200">
-        
+
         <ToastContainer
             :showCreateSuccess="showCreateSuccess"
             :showEditSuccess="showEditSuccess"
@@ -387,14 +387,14 @@ const uniqueRoomTypesCount = computed(() => {
         <AddRoomModal
             :isVisible="addModalVisible"
             @close="closeAddModal"
-            @save="handleAddRoom" 
+            @save="handleAddRoom"
         />
 
         <EditRoomModal
             :isVisible="editModalVisible"
             :roomData="roomToEdit"
             @close="closeEditModal"
-            @save="handleRoomUpdate" 
+            @save="handleRoomUpdate"
             @reset="console.log('Resetting form...')"
             @upload="console.log('Opening file dialog...')"
         />

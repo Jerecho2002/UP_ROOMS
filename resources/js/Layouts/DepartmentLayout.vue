@@ -6,6 +6,7 @@ import { ref } from 'vue'
 // Import the new components
 import DepartmentTable from '@/Components/DepartmentModals/DepartmentTable.vue'
 import DepartmentModals from '@/Components/DepartmentModals/DepartmentModals.vue'
+import MessageFunction from '@/Components/Messagefunction.vue' // <-- Imported the toast component
 
 // Sidebar toggle state and method
 const sidebarVisible = ref(true)
@@ -13,7 +14,38 @@ const toggleSidebar = () => {
     sidebarVisible.value = !sidebarVisible.value
 }
 
+// === TOAST STATES ===
+const showCreateSuccess = ref(false)
+const showEditSuccess = ref(false)
+const showDeleteSuccess = ref(false)
+const deletedRoomName = ref("") // Used to hold the name of the deleted department
+
+// Show toast for 3 seconds and set its text
+const triggerToast = (type, name = "") => {
+    // Reset previous states
+    showCreateSuccess.value = false
+    showEditSuccess.value = false
+    showDeleteSuccess.value = false
+
+    // Set the state for the current toast
+    if (type === "create") showCreateSuccess.value = true
+    if (type === "edit") showEditSuccess.value = true
+    if (type === "delete") {
+        deletedRoomName.value = name
+        showDeleteSuccess.value = true
+    }
+
+    // Hide the toast after 3 seconds
+    setTimeout(() => {
+        showCreateSuccess.value = false
+        showEditSuccess.value = false
+        showDeleteSuccess.value = false
+        deletedRoomName.value = ""
+    }, 3000)
+}
+
 // === MAIN APPLICATION DATA STATE ===
+// ... (departments and students data are here)
 
 // 1. Departments Data (Main Table Focus)
 const departments = ref([
@@ -35,11 +67,9 @@ const students = ref(
 );
 
 // === MODAL COORDINATION LOGIC ===
-
-// 1. Template ref for DepartmentModals component
+// ... (modalsRef and openDepartmentModal are here)
 const modalsRef = ref(null);
 
-// 2. Function passed to DepartmentTable.vue to open the modal
 const openDepartmentModal = (type, data, table) => {
     if (modalsRef.value && modalsRef.value.openModal) {
         modalsRef.value.openModal(type, data, table);
@@ -50,16 +80,17 @@ const openDepartmentModal = (type, data, table) => {
 const handleUpdateData = (payload) => {
     const { table, data } = payload;
     const sourceRef = table === 'departments' ? departments : students;
-    
-    // Determine the ID key based on the table
-    const idKey = table === 'departments' ? 'id' : 'id'; 
-    
+
+    const idKey = table === 'departments' ? 'id' : 'id';
+
     const index = sourceRef.value.findIndex(item => item[idKey] === data[idKey]);
 
     if (index !== -1) {
         // Perform the update
         Object.assign(sourceRef.value[index], data);
         console.log(`[Layout Update Success] Data updated for ${table}.`);
+        // --- TOAST INTEGRATION: EDIT ---
+        triggerToast("edit"); // <-- Triggers the Edit Success Toast
     } else {
         console.error(`Item not found for update in ${table}.`);
     }
@@ -69,21 +100,25 @@ const handleDeleteData = (payload) => {
     const { table, data } = payload;
     const sourceRef = table === 'departments' ? departments : students;
 
-    // Determine the ID key based on the table
-    const idKey = table === 'departments' ? 'id' : 'id'; 
+    const idKey = table === 'departments' ? 'id' : 'id';
+    const deletedItem = sourceRef.value.find(item => item[idKey] === data[idKey]);
+    const name = deletedItem ? deletedItem.name : "Item"; // Get the name for the toast
 
     // Filter the data source to remove the item
     sourceRef.value = sourceRef.value.filter(item => item[idKey] !== data[idKey]);
-    
+
     console.log(`[Layout Delete Success] Item deleted from ${table}.`);
+    // --- TOAST INTEGRATION: DELETE ---
+    triggerToast("delete", name); // <-- Triggers the Delete Success Toast
 };
 
-// 4. Handler for adding a new Department
+// 4. Handler for adding a new Department (opens modal)
 const handleAddDepartment = () => {
     // Open the modal in 'add' mode with an empty object structure
     openDepartmentModal('add', { name: '', college: '', building: '', head: '' }, 'departments');
 };
 
+// 5. Handler for saving the new Department (called when modal emits 'saveNewData')
 const handleSaveNewDepartment = (newDepartment) => {
     // Logic to add the new department to the array
     const newId = departments.value.length ? Math.max(...departments.value.map(d => d.id)) + 1 : 1;
@@ -92,6 +127,8 @@ const handleSaveNewDepartment = (newDepartment) => {
         ...newDepartment
     });
     console.log(`[Layout Add Success] New department added with ID: ${newId}.`);
+    // --- TOAST INTEGRATION: CREATE ---
+    triggerToast("create"); // <-- Triggers the Create Success Toast
 };
 
 </script>
@@ -101,39 +138,58 @@ const handleSaveNewDepartment = (newDepartment) => {
     <div class="flex flex-col h-screen bg-gray-200">
 
         <Navbar @toggleSidebar="toggleSidebar" />
-        
+
         <div :class="[
-            'flex flex-1 h-full overflow-hidden relative mt-14', 
+            'flex flex-1 h-full overflow-hidden relative mt-14',
             sidebarVisible ? 'lg:grid lg:grid-cols-[256px_1fr]' : 'flex'
         ]">
-            
+
             <Sidebar :sidebarOpen="sidebarVisible" @toggleSidebar="toggleSidebar" :class="[
-                'lg:relative lg:translate-x-0 lg:h-full', 
+                'lg:relative lg:translate-x-0 lg:h-full',
                 sidebarVisible ? 'lg:block' : 'lg:hidden'
             ]" />
 
             <main :class="[
                 'flex-1 p-6 overflow-y-auto transition-all duration-300',
-                sidebarVisible ? '' : '' 
+                sidebarVisible ? '' : ''
             ]">
                 <h1 class="text-xl font-extrabold text-[#7A0C23] mt-3 mb-5">Department Dashboard</h1>
 
-                
-                
 
-                <DepartmentTable 
+                <DepartmentTable
                     :departments="departments"
                     :students="students"
                     :openModal="openDepartmentModal"
-                />
-                
-                <DepartmentModals 
-                    ref="modalsRef" 
+                    @addDepartment="handleAddDepartment" />
+
+                <DepartmentModals
+                    ref="modalsRef"
                     @updateData="handleUpdateData"
                     @deleteData="handleDeleteData"
-                    @saveNewData="handleSaveNewDepartment" 
+                    @saveNewData="handleSaveNewDepartment"
                 />
             </main>
         </div>
+
+        <MessageFunction
+            :showCreateSuccess="showCreateSuccess"
+            :showEditSuccess="showEditSuccess"
+            :showDeleteSuccess="showDeleteSuccess"
+            :deletedRoomName="deletedRoomName"
+        />
     </div>
 </template>
+
+<style>
+/* Add the necessary toast transition styles to a global style sheet or scoped style if you prefer */
+.toast-enter-active,
+.toast-leave-active {
+    transition: all 0.35s ease;
+}
+
+.toast-enter-from,
+.toast-leave-to {
+    opacity: 0;
+    transform: translateY(-15px);
+}
+</style>
