@@ -1,248 +1,125 @@
 <script setup>
-import { ref, watch, computed } from 'vue';
-import { InformationCircleIcon, XMarkIcon } from '@heroicons/vue/24/outline'; // Assuming you have Heroicons installed or similar
+import { reactive, computed, watch, defineProps, defineEmits } from 'vue';
 
+import ClassForm from './forms/ClassForm.vue';
+import MeetingForm from './forms/MeetingForm.vue';
+import EventForm from './forms/EventForm.vue';
+import OtherActivityForm from './forms/OtherActivityForm.vue';
+
+
+
+/* ================= PROPS & EMITS ================= */
 const props = defineProps({
-    isVisible: {
-        type: Boolean,
-        required: true,
-    },
-    // The list of all rooms from the parent component
-    rooms: {
-        type: Array,
-        default: () => [],
-    },
+    isVisible: Boolean,
+    selectedDate: String,
+    editingEvent: Object
 });
 
-const emit = defineEmits(['close', 'room-added']);
+const emit = defineEmits(['close', 'success']);
 
-// State for the currently selected room in the viewer
-const selectedRoom = ref(null);
+/* ================= FORM STATE ================= */
+const form = reactive({
+    type: 'Meeting',
+    room: 'UG 114',
 
-// When the modal opens, select the first room by default
-watch(() => props.isVisible, (newVal) => {
-    if (newVal && props.rooms.length > 0) {
-        // Automatically select the first room if none is selected
-        if (!selectedRoom.value || !props.rooms.some(r => r.id === selectedRoom.value.id)) {
-            selectedRoom.value = props.rooms[0];
-        }
-    } else if (!newVal) {
-        // Optionally clear selection when modal closes
-        // selectedRoom.value = null;
-    }
-});
-
-/**
- * Helper to get status based on schedules
- */
-const getRoomStatus = (room) => {
-    if (!room.schedules || room.schedules.length === 0) {
-        return { text: 'Available', class: 'bg-green-100 text-green-800' };
-    }
-    // Simple check: if there is any active schedule, it is occupied.
-    const isOccupied = room.schedules.some(s => !s.isAvailable); 
-    return isOccupied 
-        ? { text: 'Occupied', class: 'bg-red-100 text-red-800' }
-        : { text: 'Available Slot', class: 'bg-yellow-100 text-yellow-800' };
-};
-
-/* ------------------------------------------------------------------- */
-/* --- Mock "Add Room" Logic for Demonstration --- */
-/* ------------------------------------------------------------------- */
-
-const showMockAddForm = ref(false);
-const mockNewRoomData = ref({
-    room: '',
-    building: '',
-    college: '',
-    capacity: 0,
-    location: '',
-    roomType: '',
-    // Note: The Equipment field in the mock form should probably be `equipments: []`
-    // but sticking to the provided structure for the mock:
-    Equipment: '', 
+    // shared
+    requester: '',
     description: '',
-    department: '',
-    floorNumber: 1,
+    numberParticipants: null,
+
+    // date/time
+    startDate: new Date(),
+    durationHour: 0,
+    durationMinute: 30,
+
+    // class
+    subject: '',
+    section: '',
+    faculty: '',
+    numberOfStudents: null,
+
+    // meeting
+    agenda: '',
+
+    // event
+    title: '',
+    organizer: '',
+
+    // other
+    name: ''
 });
 
-const saveNewRoom = () => {
-    if (!mockNewRoomData.value.room || !mockNewRoomData.value.building) return;
+/* ================= WATCH DATE ================= */
+watch(() => props.selectedDate, (val) => {
+    if (val) {
+        const [y, m, d] = val.split('-').map(Number);
+        form.startDate = new Date(y, m - 1, d);
+    }
+}, { immediate: true });
 
-    // When a new room is added, we initialize schedules and equipments for consistency
-    emit('room-added', { 
-        ...mockNewRoomData.value, 
-        schedules: [], 
-        equipments: [] // Ensure new rooms start with an equipment array
+/* ================= COMPUTED ================= */
+const startISO = computed(() => form.startDate.toISOString());
+const endISO = computed(() =>
+    new Date(form.startDate.getTime() +
+        (form.durationHour * 60 + form.durationMinute) * 60000
+    ).toISOString()
+);
+
+/* ================= SUBMIT ================= */
+const submitForm = () => {
+    emit('success', {
+        ...form,
+        startDateTime: startISO.value,
+        endDateTime: endISO.value
     });
-    
-    // Reset form and close it
-    mockNewRoomData.value = { room: '', building: '', college: '', capacity: 0, location: '', roomType: '', description: '', department: '', floorNumber: 1, Equipment: '' };
-    showMockAddForm.value = false;
+    emit('close');
 };
-
-// --- NEW Equipment helper for viewing ---
-
-const totalEquipmentQuantity = computed(() => {
-    if (!selectedRoom.value?.equipments) return 0;
-    return selectedRoom.value.equipments.reduce((sum, item) => sum + (item.quantity || 0), 0);
-});
-
 </script>
 
 <template>
-    <Transition name="modal">
-        <div v-if="isVisible" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900 bg-opacity-70 backdrop-blur-sm" @click.self="$emit('close')">
-            
-            <div class="bg-white rounded-xl shadow-2xl w-full max-w-7xl h-[90vh] flex flex-col transform transition-all duration-300 scale-100" @click.stop>
-                
-                <div class="flex justify-between items-center p-5 border-b border-gray-200">
-                    <h3 class="text-2xl font-bold text-gray-800 flex items-center">
-                        <InformationCircleIcon class="w-6 h-6 mr-2 text-blue-600" />
-                        Room Inventory Viewer
-                    </h3>
-                    <button @click="$emit('close')" class="text-gray-400 hover:text-gray-600 transition">
-                        <XMarkIcon class="w-6 h-6" />
-                    </button>
-                </div>
+<div v-if="isVisible" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div class="bg-white w-full max-w-lg rounded-lg shadow-lg">
 
-                <div class="flex-1 grid grid-cols-1 md:grid-cols-4 overflow-hidden">
-                    
-                    <div class="md:col-span-1 border-r border-gray-200 bg-gray-50 overflow-y-auto">
-                        <div class="p-4">
-                            <h4 class="text-lg font-semibold text-gray-700 mb-3">All Rooms ({{ rooms.length }})</h4>
-                            
-                            <ul class="space-y-2">
-                                <li v-for="room in rooms" :key="room.id" 
-                                    @click="selectedRoom = room" 
-                                    :class="{ 'bg-blue-100 border-blue-500': selectedRoom && selectedRoom.id === room.id, 'hover:bg-gray-100 border-gray-200': selectedRoom && selectedRoom.id !== room.id }"
-                                    class="p-3 border-l-4 cursor-pointer rounded-lg transition duration-150 shadow-sm"
-                                >
-                                    <p class="font-bold text-gray-900">{{ room.room }} (ID: {{ room.id }})</p>
-                                    <p class="text-sm text-gray-600">{{ room.building }} - {{ room.college }}</p>
-                                </li>
-                            </ul>
-                            
-                            <button @click="showMockAddForm = !showMockAddForm" 
-                                class="w-full mt-4 py-2 text-sm rounded-lg transition duration-150"
-                                :class="{'bg-green-600 hover:bg-green-700 text-white': !showMockAddForm, 'bg-gray-400 hover:bg-gray-500 text-white': showMockAddForm}">
-                                {{ showMockAddForm ? 'Cancel Add' : 'Add New Room' }}
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div class="md:col-span-3 p-6 overflow-y-auto">
-                        
-                        <div v-if="showMockAddForm" class="bg-yellow-50 border-l-4 border-yellow-500 p-4 mb-6 rounded-lg">
-                            <h4 class="text-xl font-bold text-yellow-800 mb-4">Add New Room</h4>
-                            <div class="grid grid-cols-2 gap-4">
-                                <input v-model="mockNewRoomData.room" placeholder="Room Name (e.g., A101)" class="p-2 border rounded" required />
-                                <input v-model="mockNewRoomData.building" placeholder="Building" class="p-2 border rounded" required />
-                                <input v-model.number="mockNewRoomData.capacity" type="number" placeholder="Capacity" class="p-2 border rounded" required />
-                                <input v-model="mockNewRoomData.roomType" placeholder="Room Type" class="p-2 border rounded" />
-                                <input v-model="mockNewRoomData.college" placeholder="College" class="p-2 border rounded" />
-                                <input v-model.number="mockNewRoomData.floorNumber" type="number" placeholder="Floor Number" class="p-2 border rounded" />
-                            </div>
-                            <textarea v-model="mockNewRoomData.description" placeholder="Description" rows="2" class="w-full mt-4 p-2 border rounded"></textarea>
-                            <button @click="saveNewRoom" :disabled="!mockNewRoomData.room || !mockNewRoomData.building"
-                                class="mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition duration-150 disabled:opacity-50">
-                                Save New Room
-                            </button>
-                        </div>
-
-
-                        <div v-else-if="selectedRoom">
-                            <h4 class="text-3xl font-extrabold text-gray-900 mb-4">{{ selectedRoom.room }}</h4>
-                            
-                            <span :class="getRoomStatus(selectedRoom).class" class="inline-block px-3 py-1 text-sm font-semibold rounded-full mb-4">
-                                {{ getRoomStatus(selectedRoom).text }}
-                            </span>
-
-                            <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-sm">
-                                <div class="col-span-1">
-                                    <dt class="font-medium text-gray-500">Building / Floor</dt>
-                                    <dd class="mt-1 text-gray-900">{{ selectedRoom.building }} (Fl. {{ selectedRoom.floorNumber }})</dd>
-                                </div>
-                                <div class="col-span-1">
-                                    <dt class="font-medium text-gray-500">College</dt>
-                                    <dd class="mt-1 text-gray-900">{{ selectedRoom.college }}</dd>
-                                </div>
-                                <div class="col-span-1">
-                                    <dt class="font-medium text-gray-500">Capacity</dt>
-                                    <dd class="mt-1 text-gray-900 font-bold">{{ selectedRoom.capacity }}</dd>
-                                </div>
-                                <div class="col-span-1">
-                                    <dt class="font-medium text-gray-500">Room Type</dt>
-                                    <dd class="mt-1 text-gray-900">{{ selectedRoom.roomType }}</dd>
-                                </div>
-                                <div class="col-span-1 sm:col-span-2">
-                                    <dt class="font-medium text-gray-500">Description</dt>
-                                    <dd class="mt-1 text-gray-900">{{ selectedRoom.description || 'No description available.' }}</dd>
-                                </div>
-                                
-                                <div class="col-span-1 sm:col-span-2 mt-4 pt-4 border-t border-gray-100">
-                                    <dt class="font-bold text-gray-700 mb-2 flex justify-between items-center">
-                                        Room Equipment 🛠️
-                                        <span class="text-xs font-normal text-gray-500">Total Items: {{ totalEquipmentQuantity }}</span>
-                                    </dt>
-                                    <dd class="space-y-2">
-                                        <div v-if="!selectedRoom.equipments || selectedRoom.equipments.length === 0" class="text-gray-500 italic">
-                                            No major equipment listed.
-                                        </div>
-                                        <div v-for="(item, index) in selectedRoom.equipments" :key="'eq-'+index" 
-                                            class="p-2 rounded-lg bg-purple-50 flex justify-between items-center">
-                                            <p class="font-semibold text-gray-800">{{ item.name }}</p>
-                                            <p class="text-sm font-bold text-purple-700">{{ item.quantity }} pc(s)</p>
-                                        </div>
-                                    </dd>
-                                </div>
-                                
-                                <div class="col-span-1 sm:col-span-2 mt-4 pt-4 border-t border-gray-100">
-                                    <dt class="font-bold text-gray-700 mb-2">Current Schedules ({{ selectedRoom.schedules?.length || 0 }})</dt>
-                                    <dd class="space-y-2">
-                                        <div v-if="!selectedRoom.schedules || selectedRoom.schedules.length === 0" class="text-gray-500 italic">
-                                            No classes currently scheduled.
-                                        </div>
-                                        <div v-for="(schedule, index) in selectedRoom.schedules" :key="index" 
-                                            class="p-2 rounded-lg"
-                                            :class="schedule.isAvailable ? 'bg-green-50' : 'bg-red-50'">
-                                            <p class="font-semibold">{{ schedule.name }}</p>
-                                            <p class="text-xs text-gray-600">{{ schedule.time }} ({{ schedule.college }})</p>
-                                        </div>
-                                    </dd>
-                                </div>
-                                
-                            </dl>
-                        </div>
-                        <div v-else-if="!selectedRoom && rooms.length > 0" class="text-center p-10 text-gray-500">
-                            Select a room from the list on the left to view details.
-                        </div>
-                        <div v-else class="text-center p-10 text-gray-500">
-                            No rooms are available in the system. Use the "Add New Room" button to create one.
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <!-- HEADER -->
+        <div class="flex justify-between p-4 border-b">
+            <h2 class="font-bold text-lg">{{ form.room }}</h2>
+            <button @click="$emit('close')">✕</button>
         </div>
-    </Transition>
+
+        <!-- BODY -->
+        <form @submit.prevent="submitForm" class="p-6 space-y-4">
+
+            <!-- TYPE -->
+            <select v-model="form.type" class="border p-2 w-full">
+                <option>Class</option>
+                <option>Meeting</option>
+                <option>Event</option>
+                <option>Other type of activity</option>
+            </select>
+
+            <!-- DYNAMIC FORMS -->
+            <ClassForm v-if="form.type === 'Class'" v-model="form" />
+            <MeetingForm v-else-if="form.type === 'Meeting'" v-model="form" />
+            <EventForm v-else-if="form.type === 'Event'" v-model="form" />
+            <OtherActivityForm v-else v-model="form" />
+
+            <!-- DURATION -->
+            <div class="flex gap-2">
+                <input type="number" v-model.number="form.durationHour" placeholder="Hr" class="border p-2 w-20">
+                <input type="number" v-model.number="form.durationMinute" placeholder="Min" class="border p-2 w-20">
+            </div>
+
+            <!-- ACTIONS -->
+            <div class="flex justify-end gap-2 pt-4">
+                <button type="button" @click="$emit('close')" class="border px-4 py-2">
+                    Cancel
+                </button>
+                <button type="submit" class="bg-red-600 text-white px-4 py-2">
+                    Save
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
 </template>
 
-<style scoped>
-/* Modal Transition Styles */
-.modal-enter-active,
-.modal-leave-active {
-    transition: all 0.3s ease;
-}
-
-.modal-enter-from,
-.modal-leave-to {
-    opacity: 0;
-}
-
-/* Ensure the modal content scales up on enter */
-.modal-enter-from .scale-100,
-.modal-leave-to .scale-100 {
-    transform: scale(0.95);
-    opacity: 0;
-}
-</style>

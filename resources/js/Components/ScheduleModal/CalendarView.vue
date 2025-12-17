@@ -1,425 +1,487 @@
 <script setup>
-import { ref, computed, reactive, watch } from 'vue';
-// 1. Import the new child components
-// resources/js/Components/ScheduleModal/CalendarView.vue
+import { ref, computed, watchEffect } from 'vue';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import {
+    faChevronLeft,
+    faChevronRight,
+    faCalendarDay,
+    faCalendarWeek,
+    faCalendar,
+    faListUl,
+    faPenToSquare,
+    faTrash,
+    faPlusCircle
+} from '@fortawesome/free-solid-svg-icons';
 
-
-// ... existing imports ...
-// 1. Import the new child components
-import ListView from './ListView.vue'; // Correct relative path
-import MonthGridView from './MonthGridView.vue'; // Correct relative path
-import TimeGridView from './TimeGridView.vue'; // Correct relative path
-// ... rest of the script ...
-
-// ... rest of the template ...
-
-// Define the props that this view will accept
 const props = defineProps({
+    data: {
+        type: Array,
+        default: () => []
+    },
     initialDate: {
-        type: [Date, String],
-        default: () => new Date(),
+        type: Date,
+        default: () => new Date()
     },
     initialMode: {
         type: String,
-        default: 'list',
+        default: 'month'
     },
-    // Expected data structure: [{id: 1, title: '...', allDay: true/false, start: Date, end: Date|null}]
-    data: {
-        type: Array,
-        default: () => [],
-    },
+    MonthGridViewComponent: { type: Object, required: true },
+    TimeGridViewComponent: { type: Object, required: true },
+    ListViewComponent: { type: Object },
 });
 
-// Define the events this component can emit to its parent
 const emit = defineEmits([
     'update:date',
     'update:mode',
-    'eventSelected',
     'dateClicked',
+    'selectEvent',
+    'editEvent',
+    'deleteEvent',
+    'addAppointment',
 ]);
 
+// --- Core State ---
+const currentReferenceDate = ref(props.initialDate);
+const currentMode = ref(props.initialMode);
 
-// --- GLOBAL CONSTANTS & HELPERS ---
-
-const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-
-// Time Slot Configuration for Week/Day View (6:00 AM to 10:00 PM)
-const START_HOUR = 6;
-const END_HOUR = 22;
-const SLOT_DURATION_MINUTES = 30;
-const SLOT_HEIGHT_REM = 2.5; // Corresponds to the height of one 30-minute slot (h-10 class in Tailwind)
-
-const HOUR_SLOTS = Array.from({ length: (END_HOUR - START_HOUR) * (60 / SLOT_DURATION_MINUTES) }, (_, i) => {
-    const hour = START_HOUR + Math.floor(i / (60 / SLOT_DURATION_MINUTES));
-    const minute = (i % (60 / SLOT_DURATION_MINUTES)) * SLOT_DURATION_MINUTES;
-    const displayHour = hour % 12 || 12;
-    const ampm = hour < 12 || hour === 24 ? 'AM' : 'PM';
-
-    return {
-        hour,
-        minute,
-        label: `${displayHour}:${String(minute).padStart(2, '0')} ${ampm}`
-    };
+// Sync initial props
+watchEffect(() => {
+    currentReferenceDate.value = props.initialDate;
+    currentMode.value = props.initialMode;
 });
 
-// Helper functions (isToday, dateToDayString, dateToTimeString)
-const isToday = (date) => {
-    const today = new Date();
-    return date.toDateString() === today.toDateString();
+// --- Icons for List View ---
+const listIcons = {
+    edit: faPenToSquare,
+    delete: faTrash,
+    add: faPlusCircle,
+};
+
+// --- Utilities ---
+const dateToTimeString = (date) => {
+    if (!date || isNaN(date)) return '';
+    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
 };
 
 const dateToDayString = (date) => {
-    return date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + date.getDate();
+    if (!date || isNaN(date)) return '';
+    const d = new Date(date);
+    return d.toISOString().split('T')[0];
 };
 
-const dateToTimeString = (date) => {
-    const hours = date.getHours();
-    const minutes = date.getMinutes();
-    const hour = (hours % 12) || 12;
-    const ampm = (hours >= 12) ? ' PM' : ' AM';
-    return hour + ':' + String(minutes).padStart(2, '0') + ampm;
-};
-
-
-// --- EVENT STYLING AND CALCULATION (KEPT HERE) ---
-
-/**
- * Calculates the CSS style for timed events in Day/Week view.
- */
-const getEventStyle = (event, slotHour, slotMinute) => {
-    // 1. Check if the event starts at this specific time slot
-    if (event.start.getHours() !== slotHour || event.start.getMinutes() !== slotMinute) {
-        return { display: 'none' };
-    }
-
-    // 2. Calculate duration in minutes
-    let startMinutes = event.start.getHours() * 60 + event.start.getMinutes();
-    let endMinutes = event.end ? event.end.getHours() * 60 + event.end.getMinutes() : startMinutes + SLOT_DURATION_MINUTES;
-
-    // Handle events that start and end on the same day but span the 24:00 boundary (optional, but good practice)
-    if (event.end && event.end < event.start) {
-        endMinutes += 24 * 60;
-    }
-
-    // Clip events that start before the calendar's START_HOUR
-    if (startMinutes < START_HOUR * 60) {
-        startMinutes = START_HOUR * 60;
-    }
-
-    // Clip events that end after the calendar's END_HOUR
-    if (endMinutes > END_HOUR * 60) {
-        endMinutes = END_HOUR * 60;
-    }
-
-    // 3. Calculate total duration in minutes
-    const durationMinutes = endMinutes - startMinutes;
-
-    // 4. Calculate height in 'rem' based on the duration (e.g., 30 min = 2.5rem)
-    const heightInRem = (durationMinutes / SLOT_DURATION_MINUTES) * SLOT_HEIGHT_REM;
-
-    return {
-        height: `${heightInRem}rem`,
-        // Start position is always top-0 because we only render it in the starting slot
-        top: '0',
-    };
-};
-
-
-// --- STATE MANAGEMENT ---
-
-const currentConfig = reactive({
-    date: props.initialDate instanceof Date ? props.initialDate : new Date(props.initialDate),
-    mode: props.initialMode,
-});
-
-// Watch for initialDate prop changes... (unchanged)
-watch(() => props.initialDate, (newDate) => {
-    const incomingDate = newDate instanceof Date ? newDate : new Date(newDate);
-    if (dateToDayString(currentConfig.date) !== dateToDayString(incomingDate)) {
-        currentConfig.date = incomingDate;
-        currentConfig.mode = 'day';
-        emit('update:date', currentConfig.date);
-        emit('update:mode', 'day');
-    }
-}, { immediate: true });
-
-// Watch for initialMode prop changes... (unchanged)
-watch(() => props.initialMode, (newMode) => {
-    currentConfig.mode = newMode;
-});
-
-
-// --- CALENDAR INTERACTION FUNCTIONS (KEPT HERE) ---
-
-/**
- * Changes the `currentConfig.date` by a specified amount and unit.
- */
-const changeDate = (amount, unit) => {
-    const newDate = new Date(currentConfig.date);
-    const effectiveUnit = (unit === 'list' || unit === 'month') ? 'month' : unit;
-
-    switch (effectiveUnit) {
-        case 'month': newDate.setMonth(newDate.getMonth() + amount); break;
-        case 'week': newDate.setDate(newDate.getDate() + amount * 7); break;
-        case 'day': newDate.setDate(newDate.getDate() + amount); break;
-    }
-    currentConfig.date = newDate;
-    emit('update:date', newDate);
-};
-
-/**
- * Sets the current view mode of the calendar and notifies the parent.
- */
-const setMode = (mode) => {
-    currentConfig.mode = mode;
-    emit('update:mode', mode);
-};
-
-/**
- * Sets the current view mode to 'day' and updates the date to the selected day.
- * Used by ListView and MonthGridView.
- */
-const selectDate = (date) => {
-    currentConfig.date = date;
-    currentConfig.mode = 'day';
-    emit('update:date', date);
-    emit('update:mode', 'day');
-};
-
-/**
- * Sets the current view mode to 'day' and updates the date to the event's start day, then notifies parent.
- * Used by all child components.
- */
-const selectEvent = (event) => {
-    // We navigate to the event's start date
-    currentConfig.date = event.start;
-    currentConfig.mode = 'day';
-    emit('update:date', event.start);
-    emit('update:mode', 'day');
-    emit('eventSelected', event.id); // Notify parent of the event ID
-};
-
-/**
- * Resets the calendar to the current date and sets the view to 'list'.
- */
-const goToToday = () => {
-    const today = new Date();
-    currentConfig.date = today;
-    currentConfig.mode = 'list';
-    emit('update:date', today);
-    emit('update:mode', 'list');
-};
-
-/**
- * Emits a request to create an appointment at a specific date/time.
- * Used by MonthGridView and TimeGridView.
- */
-const emitDateClick = (date, hour = null, minute = null) => {
-    const newDate = new Date(date);
-    emit('dateClicked', newDate, hour, minute);
-};
-
-
-/**
- * Filters the global event data to find events relevant to a specific day.
- */
-const getEventsForDay = (date) => {
-    const targetDate = dateToDayString(date);
-
-    return props.data.filter(event => {
-        const eventStart = event.start;
-        const eventEnd = event.end || eventStart;
-
-        const startDateString = dateToDayString(eventStart);
-        const endDateString = dateToDayString(eventEnd);
-
-        return targetDate >= startDateString && targetDate <= endDateString;
+const formatDay = (date) => {
+    const d = new Date(date);
+    if (isNaN(d)) return '';
+    return d.toLocaleDateString('en-US', {
+        weekday: 'long',
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
     });
 };
 
+const getRequestType = (event) => {
+    const type = event.extendedProps?.type?.toLowerCase() || event.list?.toLowerCase() || '';
+    if (type.includes('event')) return 'Event';
+    if (type.includes('class')) return 'Class';
+    if (type.includes('meeting')) return 'Meeting';
+    return 'Other Activity';
+};
 
-// --- COMPUTED PROPERTIES FOR VIEWS (KEPT HERE) ---
+// --- Event Handlers ---
+const changeView = (mode) => {
+    currentMode.value = mode;
+    emit('update:mode', mode);
+};
 
-const getDaysInMonth = (date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+const handleNavigation = (unit, direction) => {
+    const newDate = new Date(currentReferenceDate.value);
+    const navigationUnit = currentMode.value === 'list' ? 'day' : unit;
 
-const sortedEvents = computed(() => {
-    const monthEvents = [];
-    const currentDay = currentConfig.date;
-    const year = currentDay.getFullYear();
-    const month = currentDay.getMonth();
-    const daysInMonth = getDaysInMonth(currentDay);
-
-    for (let dayNum = 1; dayNum <= daysInMonth; dayNum++) {
-        const date = new Date(year, month, dayNum);
-        const eventsForDay = getEventsForDay(date);
-
-        if (eventsForDay.length > 0) {
-            eventsForDay.sort((a, b) => {
-                if (a.allDay && !b.allDay) return -1;
-                if (!a.allDay && b.allDay) return 1;
-                return (+a.start) - (+b.start);
-            });
-
-            monthEvents.push({
-                date: date,
-                events: eventsForDay,
-            });
-        }
+    if (navigationUnit === 'day') {
+        newDate.setDate(newDate.getDate() + direction);
+    } else if (navigationUnit === 'week') {
+        newDate.setDate(newDate.getDate() + direction * 7);
+    } else if (navigationUnit === 'month') {
+        newDate.setMonth(newDate.getMonth() + direction);
     }
-    return monthEvents;
+
+    currentReferenceDate.value = newDate;
+    emit('update:date', newDate);
+};
+
+const goToToday = () => {
+    currentReferenceDate.value = new Date();
+    emit('update:date', currentReferenceDate.value);
+    if (currentMode.value === 'list') {
+        currentMode.value = 'day';
+        emit('update:mode', 'day');
+    }
+};
+
+const handleDateClick = (date, hour = null, minute = null) => {
+    emit('dateClicked', date, hour, minute);
+};
+
+const handleEventSelected = (event) => {
+    emit('selectEvent', event);
+};
+
+const handleEditEvent = (event, e = null) => {
+    if (e) e.stopPropagation();
+    emit('editEvent', event);
+};
+
+const handleDeleteEvent = (event, e = null) => {
+    if (e) e.stopPropagation();
+    emit('deleteEvent', event);
+};
+
+const handleAddRowClick = () => {
+    emit('addAppointment');
+};
+
+// --- Computed Properties ---
+const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+const formattedTitle = computed(() => {
+    const date = currentReferenceDate.value;
+    const options = { year: 'numeric', month: 'long' };
+
+    if (currentMode.value === 'day' || currentMode.value === 'list') {
+        options.day = 'numeric';
+        return date.toLocaleDateString('en-US', options);
+    } else if (currentMode.value === 'week') {
+        const dayOfWeek = date.getDay();
+        const startOfWeek = new Date(date);
+        startOfWeek.setDate(date.getDate() - dayOfWeek);
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 6);
+
+        return `${startOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${endOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+    }
+
+    return date.toLocaleDateString('en-US', options);
 });
 
+const monthGrid = computed(() => {
+    const date = currentReferenceDate.value;
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const today = dateToDayString(new Date());
 
-const dateGrid = computed(() => {
-    const first = new Date(currentConfig.date.getFullYear(), currentConfig.date.getMonth(), 1);
-    const startingDayIndex = first.getDay();
-    const grid = [];
+    const preparedEvents = props.data.map(event => ({
+        ...event,
+        startDayString: dateToDayString(event.start),
+        endDayString: event.end ? dateToDayString(event.end) : dateToDayString(event.start),
+    }));
 
-    let currentDate = new Date(first);
-    currentDate.setDate(currentDate.getDate() - startingDayIndex);
+    const firstDayOfMonth = new Date(year, month, 1);
+    const startingDay = firstDayOfMonth.getDay();
 
-    for (let j = 0; j < 6; j++) {
+    const dateGrid = [];
+    let dayCounter = 1 - startingDay;
+
+    for (let i = 0; i < 6; i++) {
         const week = [];
-        let hasDatesInCurrentMonth = false;
+        for (let j = 0; j < 7; j++) {
+            const currentDate = new Date(year, month, dayCounter);
+            const dayString = dateToDayString(currentDate);
 
-        for (let i = 0; i < 7; i++) {
-            const day = new Date(currentDate);
-
-            if (day.getMonth() === currentConfig.date.getMonth()) {
-                hasDatesInCurrentMonth = true;
-            }
-
-            const allEvents = getEventsForDay(day);
-            const allDayEvents = allEvents.filter(e => e.allDay).sort((a, b) => (+a.start) - (+b.start));
-            const timeEvents = allEvents.filter(e => !e.allDay).sort((a, b) => (+a.start) - (+b.start));
+            const dayEvents = preparedEvents.filter(event => {
+                return dayString >= event.startDayString && dayString <= event.endDayString;
+            });
 
             week.push({
-                date: day,
-                dayClass: day.getMonth() !== currentConfig.date.getMonth() ? 'text-gray-400' : 'text-gray-900',
-                isToday: isToday(day),
-                events: timeEvents,
-                allDayEvents: allDayEvents,
+                date: currentDate,
+                isToday: dayString === today,
+                dayClass: currentDate.getMonth() === month ? '' : 'text-gray-400',
+                allDayEvents: dayEvents.filter(e => e.allDay),
+                events: dayEvents.filter(e => !e.allDay),
             });
-            currentDate.setDate(currentDate.getDate() + 1);
+            dayCounter++;
         }
-
-        if (j > 0 && !hasDatesInCurrentMonth && grid.length > 0) break;
-
-        grid.push(week);
+        dateGrid.push(week);
     }
-    return grid;
+    return dateGrid;
 });
 
-const weekDays = computed(() => {
-    const days = [];
-    const startOfWeek = new Date(currentConfig.date);
-    // Find Sunday of the current week
-    startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+const timeGridData = computed(() => {
+    const date = currentReferenceDate.value;
+    const today = dateToDayString(new Date());
 
-    for (let i = 0; i < 7; i++) {
-        const day = new Date(startOfWeek);
-        day.setDate(startOfWeek.getDate() + i);
+    let datesToRender = [];
 
-        const dayEvents = getEventsForDay(day);
+    if (currentMode.value === 'day') {
+        datesToRender.push(date);
+    } else if (currentMode.value === 'week') {
+        const dayOfWeek = date.getDay();
+        const startOfWeek = new Date(date);
+        startOfWeek.setDate(date.getDate() - dayOfWeek);
 
-        days.push({
-            date: day,
-            label: `${DAYS[i].substring(0, 3)} ${day.getDate()}`,
-            isToday: isToday(day),
-            events: dayEvents.filter(e => !e.allDay).sort((a, b) => (+a.start) - (+b.start)),
-            allDayEvents: dayEvents.filter(e => e.allDay).sort((a, b) => (+a.start) - (+b.start)),
+        for (let i = 0; i < 7; i++) {
+            const day = new Date(startOfWeek);
+            day.setDate(startOfWeek.getDate() + i);
+            datesToRender.push(day);
+        }
+    }
+
+    const preparedEvents = props.data.map(event => ({
+        ...event,
+        startDayString: dateToDayString(event.start),
+        endDayString: event.end ? dateToDayString(event.end) : dateToDayString(event.start),
+    }));
+
+    return datesToRender.map(currentDate => {
+        const dayString = dateToDayString(currentDate);
+
+        const dayEvents = preparedEvents.filter(event => {
+            return dayString >= event.startDayString && dayString <= event.endDayString;
         });
-    }
-    return days;
+
+        const dayLabel = currentDate.toLocaleDateString('en-US', {
+            weekday: 'short',
+            day: 'numeric',
+            month: 'short'
+        });
+
+        return {
+            date: currentDate,
+            label: dayLabel,
+            isToday: dayString === today,
+            allDayEvents: dayEvents.filter(e => e.allDay),
+            events: dayEvents.filter(e => !e.allDay).map(event => ({
+                ...event,
+                style: getTimeEventStyle(event)
+            })),
+        };
+    });
 });
 
-const singleDay = computed(() => {
-    const day = new Date(currentConfig.date);
-    const allEvents = getEventsForDay(day);
+const hourSlots = computed(() => {
+    const slots = [];
+    for (let h = 0; h < 24; h++) {
+        for (let m = 0; m < 60; m += 30) {
+            const time = new Date(0, 0, 0, h, m);
+            slots.push({
+                hour: h,
+                minute: m,
+                label: m === 0 ? time.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true }) : '',
+            });
+        }
+    }
+    return slots;
+});
+
+const getTimeEventStyle = (event) => {
+    const start = event.start;
+    const end = event.end || new Date(start.getTime() + 30 * 60000);
+    const startMinutes = start.getHours() * 60 + start.getMinutes();
+    const endMinutes = end.getHours() * 60 + end.getMinutes();
+    const durationMinutes = endMinutes - startMinutes;
+    const pxPerMinute = 20 / 15;
+
+    const topPositionPx = startMinutes * pxPerMinute;
+    const heightPx = durationMinutes * pxPerMinute;
 
     return {
-        date: day,
-        label: `${DAYS[day.getDay()]}, ${MONTHS[day.getMonth()]} ${day.getDate()}, ${day.getFullYear()}`,
-        isToday: isToday(day),
-        allDayEvents: allEvents.filter(e => e.allDay).sort((a, b) => (+a.start) - (+b.start)),
-        timedEvents: allEvents.filter(e => !e.allDay).sort((a, b) => (+a.start) - (+b.start)),
+        top: `${topPositionPx}px`,
+        height: `${heightPx}px`,
+        minHeight: `${Math.max(20, heightPx)}px`,
+        zIndex: 20,
     };
+};
+
+const tableEvents = computed(() => {
+    return [...props.data]
+        .sort((a, b) => new Date(a.start) - new Date(b.start))
+        .map(event => {
+            const start = new Date(event.start);
+            const end = event.end ? new Date(event.end) : null;
+            const defaultEnd = new Date(start.getTime() + 30 * 60000);
+
+            return {
+                id: event.id,
+                appointment: event.title || 'Untitled Appointment',
+                day: formatDay(event.start),
+                time: event.allDay
+                    ? 'All Day'
+                    : `${dateToTimeString(start)} - ${dateToTimeString(end || defaultEnd)}`,
+                requestType: getRequestType(event),
+                eventObject: event,
+                // Add extended props for display
+                room: event.extendedProps?.room || 'N/A',
+                building: event.extendedProps?.building || 'N/A',
+                college: event.extendedProps?.college || 'N/A',
+                subject: event.extendedProps?.subject || event.title,
+            };
+        });
 });
 </script>
 
 <template>
-    <div class="p-4 bg-white shadow rounded-lg">
-        <div class="flex flex-col md:flex-row justify-between items-center mb-4 space-y-3 md:space-y-0">
+    <div class="flex flex-col bg-white rounded-xl shadow-lg">
+        <div class="p-4 flex items-center justify-between border-b border-gray-200">
+            <div class="flex items-center space-x-2">
+                <button @click="handleNavigation(currentMode, -1)"
+                    class="p-2 text-gray-700 bg-gray-100 rounded-full hover:bg-gray-200 transition">
+                    <FontAwesomeIcon :icon="faChevronLeft" />
+                </button>
+                <button @click="handleNavigation(currentMode, 1)"
+                    class="p-2 text-gray-700 bg-gray-100 rounded-full hover:bg-gray-200 transition">
+                    <FontAwesomeIcon :icon="faChevronRight" />
+                </button>
 
-            <div class="flex space-x-2">
-                <div class="flex space-x-1">
-                    <button @click="changeDate(-1, currentConfig.mode)" class="p-2 border rounded-md text-gray-700 hover:bg-gray-100" aria-label="Previous Period">&lt;</button>
-                    <button @click="changeDate(1, currentConfig.mode)" class="p-2 border rounded-md text-gray-700 hover:bg-gray-100" aria-label="Next Period">&gt;</button>
-                </div>
-                <button
-                    @click="goToToday"
-                    :class="['p-2 border rounded-md text-sm transition', isToday(currentConfig.date) && currentConfig.mode === 'day' ? 'bg-[#7A0C23] text-white' : 'text-gray-700 hover:bg-gray-100']"
-                >
+                <button @click="goToToday"
+                    class="px-3 py-1 text-sm font-semibold border rounded-lg bg-[#7A0C23] text-white hover:bg-red-800 transition">
                     Today
                 </button>
             </div>
 
-            <h3 class="text-xl font-semibold text-gray-800">
-                <template v-if="currentConfig.mode === 'day'">
-                    {{ singleDay.label }}
-                </template>
-                <template v-else-if="currentConfig.mode === 'week'">
-                    {{ MONTHS[weekDays[0].date.getMonth()] }} {{ weekDays[0].date.getDate() }} - {{ MONTHS[weekDays[6].date.getMonth()] }} {{ weekDays[6].date.getDate() }}, {{ currentConfig.date.getFullYear() }}
-                </template>
-                <template v-else>
-                    {{ MONTHS[currentConfig.date.getMonth()] }} {{ currentConfig.date.getFullYear() }}
-                </template>
-            </h3>
+            <h2 class="text-xl font-bold text-gray-800">
+                {{ formattedTitle }}
+            </h2>
 
-            <div class="flex space-x-1 border rounded-md p-0.5 bg-gray-100">
-                <button @click="setMode('list')" :class="['py-1 px-3 text-sm rounded-md transition', currentConfig.mode === 'list' ? 'bg-[#7A0C23] shadow text-white' : 'text-gray-700 hover:bg-gray-200']">List</button>
-                <button @click="setMode('month')" :class="['py-1 px-3 text-sm rounded-md transition', currentConfig.mode === 'month' ? 'bg-[#7A0C23] shadow text-white' : 'text-gray-700 hover:bg-gray-200']">Month Grid</button>
-                <button @click="setMode('week')" :class="['py-1 px-3 text-sm rounded-md transition', currentConfig.mode === 'week' ? 'bg-[#7A0C23] shadow text-white' : 'text-gray-700 hover:bg-gray-200']">Week</button>
-                <button @click="setMode('day')" :class="['py-1 px-3 text-sm rounded-md transition', currentConfig.mode === 'day' ? 'bg-[#7A0C23] shadow text-white' : 'text-gray-700 hover:bg-gray-200']">Day</button>
+            <div class="flex space-x-1 p-1 bg-gray-100 rounded-lg">
+                <button @click="changeView('list')"
+                    :class="['p-2 rounded-lg text-sm font-medium transition', currentMode === 'list' ? 'bg-white text-[#7A0C23] shadow' : 'text-gray-600 hover:bg-white']"
+                    title="List View">
+                    <FontAwesomeIcon :icon="faListUl" class="w-4 h-4" />
+                </button>
+
+                <button @click="changeView('day')"
+                    :class="['p-2 rounded-lg text-sm font-medium transition', currentMode === 'day' ? 'bg-white text-[#7A0C23] shadow' : 'text-gray-600 hover:bg-white']"
+                    title="Day View">
+                    <FontAwesomeIcon :icon="faCalendarDay" class="w-4 h-4" />
+                </button>
+
+                <button @click="changeView('week')"
+                    :class="['p-2 rounded-lg text-sm font-medium transition', currentMode === 'week' ? 'bg-white text-[#7A0C23] shadow' : 'text-gray-600 hover:bg-white']"
+                    title="Week View">
+                    <FontAwesomeIcon :icon="faCalendarWeek" class="w-4 h-4" />
+                </button>
+
+                <button @click="changeView('month')"
+                    :class="['p-2 rounded-lg text-sm font-medium transition', currentMode === 'month' ? 'bg-white text-[#7A0C23] shadow' : 'text-gray-600 hover:bg-white']"
+                    title="Month View">
+                    <FontAwesomeIcon :icon="faCalendar" class="w-4 h-4" />
+                </button>
             </div>
         </div>
 
-        <ListView
-            v-if="currentConfig.mode === 'list'"
-            :sorted-events="sortedEvents"
-            :is-today="isToday"
-            :date-to-day-string="dateToDayString"
-            :date-to-time-string="dateToTimeString"
-            @select-date="selectDate"
-            @select-event="selectEvent"
-        />
+        <div class="flex-grow p-4">
+            <!-- List View -->
+            <div v-if="currentMode === 'list'" class="bg-white rounded-xl overflow-hidden border border-gray-200">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-[#7A0C23] text-white">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">APPOINTMENT</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">ROOM</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">BUILDING</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">DAY</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">TIME</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">TYPE</th>
+                            <th class="px-6 py-3 text-center text-xs font-semibold uppercase tracking-wider w-32">ACTIONS</th>
+                        </tr>
+                    </thead>
 
-        <MonthGridView
-            v-else-if="currentConfig.mode === 'month'"
-            :date-grid="dateGrid"
-            :days="DAYS"
-            @emit-date-click="emitDateClick"
-            @select-event="selectEvent"
-            @select-date="selectDate"
-        />
+                    <tbody class="divide-y divide-gray-200">
+                        <tr
+                            v-for="item in tableEvents"
+                            :key="item.id"
+                            class="transition hover:bg-blue-50 cursor-pointer"
+                            @click="handleEditEvent(item.eventObject)"
+                        >
+                            <td class="px-6 py-4 text-sm font-bold text-[#7A0C23]">
+                                {{ item.appointment }}
+                            </td>
+                            <td class="px-6 py-4 text-sm text-gray-700">
+                                {{ item.room }}
+                            </td>
+                            <td class="px-6 py-4 text-sm text-gray-700">
+                                {{ item.building }}
+                            </td>
+                            <td class="px-6 py-4 text-sm text-gray-700">
+                                {{ item.day }}
+                            </td>
+                            <td class="px-6 py-4 text-sm text-gray-700">
+                                {{ item.time }}
+                            </td>
+                            <td class="px-6 py-4 text-sm text-gray-700">
+                                <span :class="[
+                                    'px-2 py-1 rounded-full text-xs font-medium',
+                                    item.requestType === 'Class' ? 'bg-blue-100 text-blue-800' :
+                                    item.requestType === 'Meeting' ? 'bg-green-100 text-green-800' :
+                                    item.requestType === 'Event' ? 'bg-purple-100 text-purple-800' :
+                                    'bg-yellow-100 text-yellow-800'
+                                ]">
+                                    {{ item.requestType }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-sm font-medium text-center space-x-2" @click.stop>
+                                <button
+                                    @click="handleEditEvent(item.eventObject, $event)"
+                                    class="text-green-600 hover:text-green-800 px-2"
+                                    title="Edit"
+                                >
+                                    <FontAwesomeIcon :icon="listIcons.edit" />
+                                </button>
+                                <button
+                                    @click="handleDeleteEvent(item.eventObject, $event)"
+                                    class="text-red-600 hover:text-red-800 px-2"
+                                    title="Delete"
+                                >
+                                    <FontAwesomeIcon :icon="listIcons.delete" />
+                                </button>
+                            </td>
+                        </tr>
 
-        <TimeGridView
-            v-else-if="currentConfig.mode === 'week' || currentConfig.mode === 'day'"
-            :view-mode="currentConfig.mode"
-            :week-days="weekDays"
-            :single-day="singleDay"
-            :hour-slots="HOUR_SLOTS"
-            :get-event-style="getEventStyle"
-            :date-to-day-string="dateToDayString"
-            :date-to-time-string="dateToTimeString"
-            :days="DAYS"
-            @emit-date-click="emitDateClick"
-            @select-event="selectEvent"
-        />
+                        <tr @click="handleAddRowClick"
+                            class="bg-green-50/50 hover:bg-green-100 cursor-pointer transition">
+                            <td colspan="7" class="px-6 py-4 text-center text-green-700 font-semibold text-base">
+                                <FontAwesomeIcon :icon="listIcons.add" class="mr-2" />
+                                Click here to schedule a new appointment...
+                            </td>
+                        </tr>
 
-        <div v-else class="text-center py-12 text-gray-500">
-            <p>The current view mode ({{ currentConfig.mode.toUpperCase() }}) is not recognized.</p>
+                        <tr v-if="tableEvents.length === 0">
+                            <td colspan="7" class="px-6 py-4 text-center text-gray-500">
+                                No appointments found. Click above to add one!
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Month Grid View -->
+            <component
+                v-else-if="currentMode === 'month'"
+                :is="MonthGridViewComponent"
+                :dateGrid="monthGrid"
+                :days="days"
+                :dateToDayString="dateToDayString"
+                @selectEvent="handleEventSelected"
+                @selectDate="(date) => {
+                    currentReferenceDate = date;
+                    changeView('day');
+                }"
+                @emitDateClick="handleDateClick"
+            />
+
+            <!-- Time Grid View (Day/Week) -->
+            <component
+                v-else-if="currentMode === 'day' || currentMode === 'week'"
+                :is="TimeGridViewComponent"
+                :viewMode="currentMode"
+                :weekDays="timeGridData"
+                :singleDay="timeGridData[0]"
+                :hourSlots="hourSlots"
+                :getEventStyle="getTimeEventStyle"
+                :dateToTimeString="dateToTimeString"
+                @selectEvent="handleEventSelected"
+                @emitDateClick="handleDateClick"
+            />
         </div>
     </div>
 </template>
