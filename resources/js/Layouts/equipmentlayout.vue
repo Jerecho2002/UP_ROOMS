@@ -1,120 +1,200 @@
 <script setup>
+import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import Navbar from '@/Components/Navbar.vue'
 import Sidebar from '@/Components/Sidebar.vue'
 import EquipmentTable from '@/Components/EquipmentModals/EquipmentTable.vue'
-import EquipmentModals from '@/Components/EquipmentModals/EquipmentModal.vue'
-import { ref, onMounted, onBeforeUnmount } from 'vue'
 import Chart from 'chart.js/auto'
 
+// Sidebar state
 const sidebarOpen = ref(true)
 const toggleSidebar = () => {
     sidebarOpen.value = !sidebarOpen.value
 }
 
+// Chart references and instances
 const pieChartRef = ref(null)
-const lineChartRef = ref(null)
+const barChartRef = ref(null)
 
 let pieChartInstance = null
-let lineChartInstance = null
+let barChartInstance = null
 
-onMounted(() => {
+// Chart data from EquipmentTable
+const chartData = ref({
+    pieData: { labels: [], datasets: [] },
+    barData: { labels: [], datasets: [] }
+})
+
+// Handle chart data updates from EquipmentTable
+const handleChartDataUpdate = (data) => {
+    chartData.value = data
+    updateCharts()
+}
+
+// Update charts with new data
+const updateCharts = () => {
+    if (pieChartInstance && chartData.value.pieData.labels.length > 0) {
+        pieChartInstance.data = chartData.value.pieData
+        pieChartInstance.update()
+    }
+
+    if (barChartInstance && chartData.value.barData.labels.length > 0) {
+        barChartInstance.data = chartData.value.barData
+        barChartInstance.update()
+    }
+}
+
+// Initialize charts
+const initializeCharts = () => {
     // Destroy previous instances if they exist
     if (pieChartInstance) pieChartInstance.destroy()
-    if (lineChartInstance) lineChartInstance.destroy()
+    if (barChartInstance) barChartInstance.destroy()
 
-    // --- Pie Chart Initialization ---
-    // Note: The Chart.js options already hide the built-in legend (plugins: { legend: { display: false } })
+    // --- Pie Chart: Equipment Distribution by Person ---
     pieChartInstance = new Chart(pieChartRef.value, {
         type: 'pie',
-        data: {
-            labels: ['Student', 'Room', 'Building'],
+        data: chartData.value.pieData.labels.length > 0 ? chartData.value.pieData : {
+            labels: ['Loading...'],
+            datasets: [{ data: [100], backgroundColor: ['#CCCCCC'] }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        boxWidth: 12,
+                        padding: 15,
+                        font: { size: 10 }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return `${context.label}: ${context.raw} equipment items`
+                        }
+                    }
+                }
+            }
+        }
+    })
+
+    // --- Bar Chart: Equipment Count by Building ---
+    barChartInstance = new Chart(barChartRef.value, {
+        type: 'bar',
+        data: chartData.value.barData.labels.length > 0 ? chartData.value.barData : {
+            labels: ['Loading...'],
             datasets: [{
-                data: [100, 80, 40],
-                backgroundColor: ['#4CAF50', '#FF9800', '#2196F3'],
+                label: 'Equipment Count',
+                data: [0],
+                backgroundColor: '#7A0C23',
+                borderColor: '#7A0C23',
+                borderWidth: 1
             }]
         },
         options: {
             responsive: true,
-            maintainAspectRatio: false, // Allows chart to respect the max-height
-            plugins: { legend: { display: false } }
-        }
-    })
-
-    // --- Line Chart Initialization ---
-    lineChartInstance = new Chart(lineChartRef.value, {
-        type: 'line',
-        data: {
-            labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
-            datasets: [{
-                label: 'Usage',
-                data: [20,40,35,50,70,60,65,55,45,50,40,35],
-                borderColor: '#800000',
-                backgroundColor: 'rgba(128,0,0,0.25)',
-                fill: true,
-                tension: 0.4
-            }]
-        },
-        options: {
-            aspectRatio: 3,
-            plugins: { legend: { display: false } },
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
             scales: {
-                y: { beginAtZero: true },
-                x: {}
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
             }
         }
     })
+}
+
+// Lifecycle hooks
+onMounted(() => {
+    setTimeout(initializeCharts, 100)
 })
 
 onBeforeUnmount(() => {
     if (pieChartInstance) pieChartInstance.destroy()
-    if (lineChartInstance) lineChartInstance.destroy()
+    if (barChartInstance) barChartInstance.destroy()
 })
+
+// Watch for chart data updates
+watch(chartData, updateCharts, { deep: true })
 </script>
 
 <template>
-  <div class="flex pt-14 h-full">
-    <Sidebar :sidebarOpen="sidebarOpen" />
+    <div class="flex pt-14 h-screen">
+        <Sidebar :sidebarOpen="sidebarOpen" />
 
-    <div class="flex-1 flex flex-col h-screen">
-      <Navbar @toggleSidebar="toggleSidebar" />
+        <div class="flex-1 flex flex-col">
+            <Navbar @toggleSidebar="toggleSidebar" />
 
-      <main class="flex-1 bg-gray-300 p-3 max-h ">
+            <main class="flex-1 bg-gray-100 p-4 overflow-y-auto">
+                <div class="space-y-4">
+                    <!-- Main Equipment Table -->
+                    <div>
+                        <EquipmentTable @chart-data-update="handleChartDataUpdate" />
+                    </div>
 
-        <div class="grid grid-cols-1 gap-3">
+                    <!-- Charts Section - Side by Side -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <!-- Pie Chart Container -->
+                        <div class="bg-white shadow-lg rounded-xl p-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <h2 class="text-lg font-bold text-gray-800">Equipment Distribution by Person</h2>
+                                <div class="flex items-center text-sm text-gray-500">
+                                    <div class="w-3 h-3 bg-blue-500 rounded-full mr-1"></div>
+                                    <span>Total: {{ chartData.pieData.datasets[0]?.data?.reduce((a, b) => a + b, 0) || 0 }} items</span>
+                                </div>
+                            </div>
+                            <div class="h-[320px] relative">
+                                <canvas id="pieChart" ref="pieChartRef" class="w-full h-full"></canvas>
+                            </div>
+                        </div>
 
-          <div class="col-span-12">
-            <EquipmentTable />
-          </div>
+                        <!-- Bar Chart Container -->
+                        <div class="bg-white shadow-lg rounded-xl p-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <h2 class="text-lg font-bold text-gray-800">Equipment Count by Building</h2>
+                                <div class="flex items-center text-sm text-gray-500">
+                                    <div class="w-3 h-3 bg-[#7A0C23] rounded-full mr-1"></div>
+                                    <span>Buildings: {{ chartData.barData.labels?.length || 0 }}</span>
+                                </div>
+                            </div>
+                            <div class="h-[320px] relative">
+                                <canvas id="barChart" ref="barChartRef" class="w-full h-full"></canvas>
+                            </div>
+                        </div>
+                    </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 col-span-12">
 
-           <div class="bg-white shadow rounded-lg p-3 flex flex-col justify-start items-center h-[500px]">
-    <h2 class="text-lg font-bold text-gray-700 w-full text-center mb-4">Equipment Usage Percentage</h2>
 
-    <div class="flex justify-center items-center h-[350px]"> 
-        <canvas id="pieChart" ref="pieChartRef" class="w-full "></canvas>
-    </div>
-
-<div class="mt-4 pt-2 border-t border-gray-100 text-sm flex flex-row items-center justify-center space-x-6 w-full">
-    <p class="text-green-600 font-medium">■ Student: 100%</p>
-    <p class="text-orange-500 font-medium">■ Room: 80%</p>
-    <p class="text-yellow-500 font-medium">■ Building: 40%</p>
-</div>
-</div>
-            
-<div class="bg-white shadow rounded-lg p-3 flex flex-col justify-center items-center h-[500px]">
-             <h2 class="text-lg font-bold text-gray-700 h-full text-left ">Accountability (Monthly)</h2>
-              <canvas id="lineChart" ref="lineChartRef" class="w-full mb-[150px]"></canvas>
-            </div>
-          </div>
+                </div>
+            </main>
         </div>
-
-        <EquipmentModals />
-      </main>
     </div>
-  </div>
 </template>
 
 <style scoped>
-/* Scoped styles are no longer needed for chart dimensions as they are handled by Tailwind classes inline */
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #a1a1a1;
+}
 </style>

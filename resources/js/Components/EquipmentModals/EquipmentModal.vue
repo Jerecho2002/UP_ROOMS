@@ -27,9 +27,9 @@ const equipmentList = computed(() => props.selectedUsage?.equipmentUsed || []);
     <transition name="fade">
         <div v-if="isVisible" class="fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center p-4">
             <div class="bg-white rounded-lg shadow-2xl w-full max-w-3xl p-6 relative">
-                
+
                 <h3 class="text-xl font-bold text-[#800020] mb-2 pb-2 border-b">
-                    Equipment Used by: {{ selectedUsage?.name }} 
+                    Equipment Used by: {{ selectedUsage?.name }}
                 </h3>
                 <p class="text-sm text-gray-600 mb-4">
                     Room: {{ selectedUsage?.room }} | Building: {{ selectedUsage?.building }} | College: {{ selectedUsage?.college }}
@@ -63,9 +63,9 @@ const equipmentList = computed(() => props.selectedUsage?.equipmentUsed || []);
                         </tbody>
                     </table>
                 </div>
-                
+
                 <div class="mt-6 flex justify-end">
-                    <button 
+                    <button
                         @click="close"
                         class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition duration-150"
                     >

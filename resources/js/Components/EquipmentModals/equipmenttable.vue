@@ -1,244 +1,347 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, defineEmits } from 'vue'
+import EquipmentModal from '@/Components/EquipmentModals/EquipmentModal.vue'
 
-// --- Simulated User Equipment Usage Data (Matching Screenshot Headers) ---
+// --- Props & Emits ---
+const emit = defineEmits(['chart-data-update'])
+
+// --- Real-time Date & Time ---
+const currentDate = ref('')
+const currentTime = ref('')
+let timerInterval = null
+
+const updateDateTime = () => {
+    const now = new Date()
+    currentDate.value = now.toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric'
+    })
+    currentTime.value = now.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+    })
+}
+
+// --- Equipment Data ---
 const usageList = ref([
-    { 
-        id: 1, 
-        room: '1234', 
-        name: 'Russell Evan Loquinario', 
-        building: 'Admin Block A', 
-        college: 'CAS', 
-        capacity: 50, // Not strictly needed here, but kept for context
-        location: '1st Floor', // Not strictly needed here, but kept for context
-        roomType: 'Lecture Hall', // Not strictly needed here, but kept for context
-        status: 'Completed', 
+    {
+        id: 1,
+        room: '1234',
+        name: 'Russell Evan Loquinario',
+        building: 'Admin Block A',
+        college: 'CAS',
         equipmentUsed: [
-            { inventory_id: 'LAP-001', name: 'Laptop (i7)', cfic: 'CFIC-A1', property_id: 'PID-1001', status: 'Returned' },
-            { inventory_id: 'PRO-005', name: 'Projector', cfic: 'CFIC-B2', property_id: 'PID-1005', status: 'Returned' },
+            { inventory_id: 'LAP-001', name: 'Laptop (i7)', cfic: 'CFIC-A1', property_id: 'PID-1001' },
+            { inventory_id: 'PRO-005', name: 'Projector', cfic: 'CFIC-B2', property_id: 'PID-1005' },
         ]
     },
-    { 
-        id: 2, 
-        room: '1234', 
-        name: 'Russell Evan Loquinario', 
-        building: 'Science & Tech Annex', 
-        college: 'CCPS', 
-        status: 'Cancel', 
+    {
+        id: 2,
+        room: '5678',
+        name: 'Maria Garcia Santos',
+        building: 'Science & Tech Annex',
+        college: 'CCPS',
         equipmentUsed: [
-            { inventory_id: 'CMP-12A', name: 'Desktop PC (i5)', cfic: 'CFIC-D4', property_id: 'PID-1012', status: 'Cancelled' },
+            { inventory_id: 'CMP-12A', name: 'Desktop PC (i5)', cfic: 'CFIC-D4', property_id: 'PID-1012' },
+            { inventory_id: 'PRT-003', name: '3D Printer', cfic: 'CFIC-E5', property_id: 'PID-1013' },
         ]
     },
-    { 
-        id: 3, 
-        room: '1234', 
-        name: 'Russell Evan Loquinario', 
-        building: 'Library Hub', 
-        college: 'GSO', 
-        status: 'Completed', 
+    {
+        id: 3,
+        room: '9012',
+        name: 'John Michael Reyes',
+        building: 'Library Hub',
+        college: 'GSO',
         equipmentUsed: [
-            { inventory_id: 'TV-002', name: 'Smart TV 65"', cfic: 'CFIC-F7', property_id: 'PID-1020', status: 'Returned' },
+            { inventory_id: 'TV-002', name: 'Smart TV 65"', cfic: 'CFIC-F7', property_id: 'PID-1020' },
+            { inventory_id: 'SPK-008', name: 'Speaker System', cfic: 'CFIC-G8', property_id: 'PID-1021' },
+            { inventory_id: 'MIC-009', name: 'Wireless Microphone', cfic: 'CFIC-H9', property_id: 'PID-1022' },
         ]
     },
-    { 
-        id: 4, 
-        room: '1234', 
-        name: 'Russell Evan Loquinario', 
-        building: 'Admin Block A', 
-        college: 'CAS', 
-        status: 'Pending', 
+    {
+        id: 4,
+        room: '3456',
+        name: 'Sarah Lee Tan',
+        building: 'Admin Block A',
+        college: 'CAS',
         equipmentUsed: [
-            { inventory_id: 'LAP-002', name: 'Laptop (i5)', cfic: 'CFIC-A2', property_id: 'PID-1002', status: 'Out' },
-            { inventory_id: 'WBD-011', name: 'White Board', cfic: 'CFIC-C4', property_id: 'PID-1011', status: 'Out' },
+            { inventory_id: 'LAP-002', name: 'Laptop (i5)', cfic: 'CFIC-A2', property_id: 'PID-1002' },
+            { inventory_id: 'WBD-011', name: 'White Board', cfic: 'CFIC-C4', property_id: 'PID-1011' },
+            { inventory_id: 'TAB-015', name: 'Tablet', cfic: 'CFIC-J1', property_id: 'PID-1015' },
         ]
     },
-]);
-
-// --- Filtering/Search State ---
-const searchTerm = ref('');
-const filterStatus = ref('All'); 
-const currentStatusFilter = ref(null); // Used to filter by 'Student', 'Room', 'Building' status
-
-const filteredUsageList = computed(() => {
-    let list = usageList.value;
-    const lowerSearch = searchTerm.value.toLowerCase();
-
-    if (lowerSearch) {
-        list = list.filter(item => 
-            String(item.room).includes(lowerSearch) ||
-            item.name.toLowerCase().includes(lowerSearch) ||
-            item.building.toLowerCase().includes(lowerSearch) ||
-            item.college.toLowerCase().includes(lowerSearch)
-        );
+    {
+        id: 5,
+        room: '7890',
+        name: 'Carlos Miguel Cruz',
+        building: 'Engineering Wing',
+        college: 'COE',
+        equipmentUsed: [
+            { inventory_id: 'DRN-020', name: '3D Scanner', cfic: 'CFIC-K2', property_id: 'PID-1023' },
+            { inventory_id: 'CAM-025', name: 'Document Camera', cfic: 'CFIC-L3', property_id: 'PID-1025' },
+        ]
+    },
+    {
+        id: 6,
+        room: '1122',
+        name: 'Anna Marie Lopez',
+        building: 'Science & Tech Annex',
+        college: 'CCPS',
+        equipmentUsed: [
+            { inventory_id: 'MIC-010', name: 'Conference Microphone', cfic: 'CFIC-M4', property_id: 'PID-1030' },
+        ]
+    },
+    {
+        id: 7,
+        room: '3344',
+        name: 'Robert James Wilson',
+        building: 'Library Hub',
+        college: 'GSO',
+        equipmentUsed: [
+            { inventory_id: 'LAP-003', name: 'Laptop (i9)', cfic: 'CFIC-O6', property_id: 'PID-1032' },
+            { inventory_id: 'PRO-006', name: 'HD Projector', cfic: 'CFIC-P7', property_id: 'PID-1033' },
+        ]
     }
-    
-    // Add logic for 'Checked' button filter if needed (using currentStatusFilter as the model)
-    // if (currentStatusFilter.value && item.status !== currentStatusFilter.value) { ... }
-    
-    return list;
-});
+])
 
-// --- Modal State for Equipment Details ---
-const isDetailsModalVisible = ref(false);
-const selectedUserUsage = ref(null);
+// --- Search State ---
+const searchTerm = ref('')
+
+// --- Filtered List ---
+const filteredUsageList = computed(() => {
+    const term = searchTerm.value.trim().toLowerCase()
+    if (!term) return usageList.value
+
+    return usageList.value.filter(item =>
+        String(item.room).toLowerCase().includes(term) ||
+        item.name.toLowerCase().includes(term) ||
+        item.building.toLowerCase().includes(term) ||
+        item.college.toLowerCase().includes(term)
+    )
+})
+
+// --- Statistics (Based on Filtered List for dynamic charts) ---
+const personStats = computed(() => {
+    const stats = {}
+    filteredUsageList.value.forEach(room => {
+        if (!stats[room.name]) {
+            stats[room.name] = { name: room.name, equipmentCount: 0 }
+        }
+        stats[room.name].equipmentCount += room.equipmentUsed.length
+    })
+    return Object.values(stats).sort((a, b) => b.equipmentCount - a.equipmentCount)
+})
+
+const buildingStats = computed(() => {
+    const stats = {}
+    filteredUsageList.value.forEach(room => {
+        if (!stats[room.building]) {
+            stats[room.building] = { building: room.building, equipmentCount: 0 }
+        }
+        stats[room.building].equipmentCount += room.equipmentUsed.length
+    })
+    return Object.values(stats).sort((a, b) => b.equipmentCount - a.equipmentCount)
+})
+
+const statistics = computed(() => {
+    const totalEquipment = filteredUsageList.value.reduce((acc, curr) => acc + curr.equipmentUsed.length, 0)
+    const totalRooms = filteredUsageList.value.length
+    const buildings = new Set(filteredUsageList.value.map(r => r.building))
+
+    return {
+        totalEquipment,
+        totalRooms,
+        totalBuildings: buildings.size,
+        avgEquipmentPerRoom: totalRooms > 0 ? (totalEquipment / totalRooms).toFixed(1) : 0
+    }
+})
+
+// --- Modal State ---
+const isDetailsModalVisible = ref(false)
+const selectedUserUsage = ref(null)
 
 const handleViewDetails = (usage) => {
-    selectedUserUsage.value = usage;
-    isDetailsModalVisible.value = true;
-};
+    selectedUserUsage.value = usage
+    isDetailsModalVisible.value = true
+}
 
 const closeDetailsModal = () => {
-    isDetailsModalVisible.value = false;
-    selectedUserUsage.value = null;
-};
+    isDetailsModalVisible.value = false
+    selectedUserUsage.value = null
+}
+
+// --- Chart Data Exports ---
+const getChartData = () => {
+    return {
+        pieData: {
+            labels: personStats.value.map(p => p.name),
+            datasets: [{
+                data: personStats.value.map(p => p.equipmentCount),
+                backgroundColor: ['#4CAF50', '#FF9800', '#2196F3', '#9C27B0', '#FF5722', '#795548', '#607D8B']
+            }]
+        },
+        barData: {
+            labels: buildingStats.value.map(b => b.building),
+            datasets: [{
+                label: 'Equipment Count',
+                data: buildingStats.value.map(b => b.equipmentCount),
+                backgroundColor: '#7A0C23'
+            }]
+        }
+    }
+}
+
+// --- Lifecycle & Watchers ---
+onMounted(() => {
+    updateDateTime()
+    timerInterval = setInterval(updateDateTime, 1000)
+    // Initial emit
+    emit('chart-data-update', getChartData())
+})
+
+onUnmounted(() => {
+    if (timerInterval) clearInterval(timerInterval)
+})
+
+// Watch the filtered list—if the search or the data changes, update the parent charts
+watch(filteredUsageList, () => {
+    emit('chart-data-update', getChartData())
+}, { deep: true })
+
 </script>
 
 <template>
-    <div class="space-y-3">
-        <div class="bg-white shadow rounded-lg p-3">
-            <div class="flex flex-wrap items-center justify-between gap-3">
-                <h2 class="text-lg font-bold text-[#7A0C23]">Equipment </h2>
+    <div class="space-y-4 p-4">
+        <div class="bg-white shadow-lg rounded-xl p-6">
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                <div>
+                    <h1 class="text-2xl font-bold text-[#7A0C23]">Equipment Management</h1>
 
-                <div class="flex flex-wrap items-center gap-2">
-                    <div class="flex items-center rounded-lg bg-purple-600 p-2 text-white cursor-pointer hover:bg-purple-700 transition">
-                        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zM8 11a2 2 0 100-4 2 2 0 000 4zM12 11a2 2 0 100-4 2 2 0 000 4zM14 13a6 6 0 00-12 0v2h12v-2z"></path></svg>
-                        <span class="font-semibold text-sm">Account</span>
-                        <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                    </div>
+                </div>
 
-                    <div class="flex items-center rounded-lg bg-orange-500 p-2 text-white cursor-pointer hover:bg-orange-600 transition">
-                        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20"><path d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2H6zm0 2h8v12H6V4zm2 2h4v2H8V6zm0 4h4v2H8v-2zm0 4h4v2H8v-2z"></path></svg>
-                        <span class="font-semibold text-sm">Oct 5, 2025</span>
-                    </div>
+                <div class="flex flex-wrap items-center gap-4">
+                    <div class="flex gap-2">
+    <div class="flex items-center px-4 py-2 bg-yellow-400 border rounded-lg text-sm font-semibold text-white">
+        📅 {{ currentDate }}
+    </div>
+    <div class="flex items-center px-4 py-2 bg-green-400 border rounded-lg text-sm font-semibold text-white">
+        {{ currentTime }}
+    </div>
+</div>
 
-                    <div class="flex items-center rounded-lg bg-red-500 p-2 text-white cursor-pointer hover:bg-red-600 transition">
-                        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm-1-8V7h2v3h-2zm0 2v2h2v-2h-2z"></path></svg>
-                        <span class="font-semibold text-sm">10:50 PM</span>
-                    </div>
 
-                    <div class="relative bg-gray-200 rounded-lg flex items-center shadow-inner h-9">
-                        <input 
-                            type="text" 
+                    <div class="relative w-full lg:w-72">
+                        <input
+                            type="text"
                             v-model="searchTerm"
-                            placeholder="Search" 
-                            class="w-40 bg-transparent border-none focus:ring-0 focus:outline-none text-gray-700 placeholder-gray-500 pl-3 pr-8 text-sm"
+                            placeholder="Search records..."
+                            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7A0C23] focus:border-transparent outline-none transition-all"
                         />
-                        <button class="absolute right-0 top-0 bottom-0 flex items-center p-2 text-gray-700 hover:text-gray-900 transition">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                        </button>
+                        <div class="absolute left-3 top-2.5 text-gray-400">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </div>
                     </div>
-
-                    <button class="rounded-lg bg-cyan-400 font-bold p-2 text-gray-800 text-sm hover:bg-cyan-500 transition shadow">Checked</button>
                 </div>
             </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+
+    <div class="p-3 bg-[#7A0C23] rounded-lg border border-red-100">
+        <p class="text-xs text-white font-bold uppercase">Total Items</p>
+        <p class="text-xl font-bold text-white">{{ statistics.totalEquipment }}</p>
+    </div>
+
+    <div class="p-3 bg-[#7A0C23] rounded-lg border border-blue-100">
+        <p class="text-xs text-white font-bold uppercase">Active Rooms</p>
+        <p class="text-xl font-bold text-white">{{ statistics.totalRooms }}</p>
+    </div>
+
+    <div class="p-3 bg-[#7A0C23] rounded-lg border border-green-100">
+        <p class="text-xs text-white font-bold uppercase">Buildings</p>
+        <p class="text-xl font-bold text-white">{{ statistics.totalBuildings }}</p>
+    </div>
+
+    <div class="p-3 bg-[#7A0C23] rounded-lg border border-yellow-100">
+        <p class="text-xs text-white font-bold uppercase">Density</p>
+        <p class="text-xl font-bold text-white">
+            {{ statistics.avgEquipmentPerRoom }}
+            <span class="text-sm font-normal text-white">/room</span>
+        </p>
+    </div>
+</div>
+
         </div>
 
-        <div class="bg-white shadow rounded-lg p-3 overflow-x-auto">
-            <h2 class="text-lg font-bold mb-2 text-gray-700">Rooms have Equipment</h2>
-
-            <div class="max-h-[300px] overflow-y-auto border border-gray-200 rounded-lg">
-                <table class="table-auto w-full border-collapse text-sm">
-                    <thead class="bg-maroon text-white sticky top-0 shadow-md">
+        <div class="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-200">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="bg-[#7A0C23] text-white">
                         <tr>
-                           
-                            <th class="px-3 py-2 border-b-2 border-r border-maroon-dark">Name</th>
-                            <th class="px-3 py-2 border-b-2 border-r border-maroon-dark">Room</th>
-                            <th class="px-3 py-2 border-b-2 border-r border-maroon-dark">Building</th>
-                            <th class="px-3 py-2 border-b-2 border-r border-maroon-dark">Location</th>
-                            <th class="px-3 py-2 border-b-2 border-r border-maroon-dark">College</th>
-                            
-                            <th class="px-3 py-2 border-b-2 text-center">Action</th>
+                            <th class="px-6 py-4 text-sm font-bold uppercase tracking-wider">Accountable Person</th>
+                            <th class="px-6 py-4 text-sm font-bold uppercase tracking-wider">Location</th>
+                            <th class="px-6 py-4 text-sm font-bold uppercase tracking-wider">College</th>
+                            <th class="px-6 py-4 text-sm font-bold uppercase tracking-wider">Items</th>
+                            <th class="px-6 py-4 text-sm font-bold uppercase tracking-wider text-center">Action</th>
                         </tr>
                     </thead>
-
-                    <tbody class="text-gray-700 divide-y divide-gray-100">
-                        <tr v-for="(item, index) in filteredUsageList" :key="item.id" :class="{'bg-white': index % 2 === 0, 'bg-gray-50': index % 2 !== 0}">
-                            <td class="border-r px-3 py-2 text-center">{{ item.name }}</td>
-                            <td class="border-r px-3 py-2 font-medium">{{ item.building }}</td>
-                            <td class="border-r px-3 py-2 text-center">{{ item.room }}</td>
-                            <td class="border-r px-3 py-2 text-center">{{ item.college }}</td>
-                           <td class="border-r px-3 py-2 text-center">{{ item.college }}</td>
-                            <td class="px-3 py-2 text-center">
-                                <button 
+                    <tbody class="divide-y divide-gray-100">
+                        <tr v-for="item in filteredUsageList" :key="item.id" class="hover:bg-gray-50 transition-colors">
+                            <td class="px-6 py-4">
+                                <div class="font-bold text-gray-900">{{ item.name }}</div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="text-sm font-semibold text-green-700">Room {{ item.room }}</div>
+                                <div class="text-xs text-gray-500">{{ item.building }}</div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="px-2 py-1 text-xs font-bold bg-gray-100 text-gray-600 rounded">
+                                    {{ item.college }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-8 h-8 flex items-center justify-center bg-green-100 text-green-700 rounded-full font-bold text-xs">
+                                        {{ item.equipmentUsed.length }}
+                                    </span>
+                                    <span class="text-xs text-gray-500 font-medium">Equipments</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                <button
                                     @click="handleViewDetails(item)"
-                                    class="bg-blue-500 hover:bg-blue-600 text-white text-xs px-2 py-1 rounded shadow-md transition"
+                                    class="px-4 py-2 bg-green-600 text-white rounded-lg text-xs font-bold hover:bg-green-700 transition-all shadow-sm"
                                 >
-                                    Details
+                                    View Details
                                 </button>
                             </td>
                         </tr>
                         <tr v-if="filteredUsageList.length === 0">
-                            <td colspan="6" class="text-center py-4 text-gray-500">No user data matches your search.</td>
+                            <td colspan="5" class="px-6 py-12 text-center text-gray-400">
+                                <p class="text-lg font-bold">No results found</p>
+                                <p class="text-sm">Try searching for a different name or room number.</p>
+                            </td>
                         </tr>
                     </tbody>
                 </table>
             </div>
         </div>
 
-        <transition name="fade">
-            <div v-if="isDetailsModalVisible" class="fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center p-4">
-                <div class="bg-white rounded-lg shadow-2xl w-full max-w-3xl p-6 relative">
-                    
-                    <h3 class="text-xl font-bold text-[#800020] mb-2 pb-2 border-b">
-                        Equipment Used by: {{ selectedUserUsage?.name }} 
-                    </h3>
-                    <p class="text-sm text-gray-600 mb-4">Room: {{ selectedUserUsage?.room }} | College: {{ selectedUserUsage?.college }}</p>
-
-                    <div class="max-h-96 overflow-y-auto border border-gray-200 rounded-lg">
-                        <table class="min-w-full text-sm">
-                            <thead class="bg-gray-100 sticky top-0">
-                                <tr>
-                                    <th class="px-4 py-2 text-left text-gray-600">Inventory ID</th>
-                                    <th class="px-4 py-2 text-left text-gray-600">Property ID</th>
-                                    <th class="px-4 py-2 text-left text-gray-600">Name</th>
-                                    <th class="px-4 py-2 text-left text-gray-600">CFIC</th>
-                                    <th class="px-4 py-2 text-center text-gray-600">Item Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="item in selectedUserUsage?.equipmentUsed" :key="item.property_id" class="border-t hover:bg-gray-50">
-                                    <td class="px-4 py-3 font-mono text-gray-700">{{ item.inventory_id }}</td>
-                                    <td class="px-4 py-3 font-mono text-gray-700">{{ item.property_id }}</td>
-                                    <td class="px-4 py-3 font-medium">{{ item.name }}</td>
-                                    <td class="px-4 py-3 text-gray-600">{{ item.cfic }}</td>
-                                    <td class="px-4 py-3 text-center">
-                                        <span :class="{'bg-green-100 text-green-700': item.status === 'Returned', 'bg-red-100 text-red-700': item.status === 'Out' || item.status === 'Cancelled'}"
-                                            class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
-                                        >
-                                            {{ item.status }}
-                                        </span>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    
-                    <div class="mt-6 flex justify-end">
-                        <button 
-                            @click="closeDetailsModal"
-                            class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition duration-150"
-                        >
-                            Close
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </transition>
+        <EquipmentModal
+            :is-visible="isDetailsModalVisible"
+            :selected-usage="selectedUserUsage"
+            @close="closeDetailsModal"
+        />
     </div>
 </template>
 
 <style scoped>
-.bg-maroon {
-    background-color: #800000;
-}
-.bg-maroon-dark {
-    background-color: #7A0C23;
-}
-/* Fade transition for the details modal */
-.fade-enter-active, .fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-.fade-enter-from, .fade-leave-to {
-  opacity: 0;
+thead th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
 }
 </style>

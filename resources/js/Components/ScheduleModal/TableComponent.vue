@@ -106,7 +106,7 @@ const tableEvents = computed(() => {
 </script>
 
 <template>
-    <div class="bg-white shadow-lg rounded-xl overflow-hidden">
+    <div class="bg-white shadow-lg rounded-xl overflow-auto">
         <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-[#7A0C23] text-white">
                 <tr>
