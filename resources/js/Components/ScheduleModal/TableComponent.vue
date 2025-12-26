@@ -107,7 +107,7 @@ const tableEvents = computed(() => {
 
 <template>
     <div class="bg-white shadow-lg rounded-xl overflow-auto">
-        <table class="min-w-full divide-y divide-gray-200">
+        <table class="min-w-full divide-y divide-gray-500">
             <thead class="bg-[#7A0C23] text-white">
                 <tr>
                     <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">ROOM</th>
@@ -116,18 +116,18 @@ const tableEvents = computed(() => {
                     <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">SUBJECT</th>
                     <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">START DATE</th>
                     <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">END DATE</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">TIME</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">TYPE</th>
+
+                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">RECURRING</th>
                     <th class="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider w-32">ACTION</th>
                 </tr>
             </thead>
 
-            <tbody class="divide-y divide-gray-200 bg-white">
+            <tbody class="divide-y divide-gray-300 bg-white">
                 <tr
                     v-for="item in tableEvents"
                     :key="item.id"
                     @click="handleRowClick(item.eventObject)"
-                    class="hover:bg-blue-50 transition duration-150 cursor-pointer"
+                    class=" transition duration-150 cursor-pointer"
                 >
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-[#7A0C23]">
                         {{ item.room }}
@@ -147,9 +147,7 @@ const tableEvents = computed(() => {
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                         {{ item.endDate }}
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                        {{ item.timeSlot }}
-                    </td>
+
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                         <span :class="[
                             'px-2 py-1 rounded-full text-xs font-medium',

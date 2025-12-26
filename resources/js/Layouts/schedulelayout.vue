@@ -363,15 +363,7 @@ const handleAddAppointment = () => {
                         </button>
                     </div>
 
-                    <button
-                        @click="handleAddAppointment"
-                        class="px-4 py-2 bg-[#7A0C23] text-white rounded-lg hover:bg-red-800 transition font-medium flex items-center"
-                    >
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                        </svg>
-                        New Appointment
-                    </button>
+
                 </div>
 
                 <!-- Table View -->

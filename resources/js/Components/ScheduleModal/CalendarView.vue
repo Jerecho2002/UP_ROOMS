@@ -322,7 +322,7 @@ const tableEvents = computed(() => {
 
 <template>
     <div class="flex flex-col bg-white rounded-xl shadow-lg">
-        <div class="p-4 flex items-center justify-between border-b border-gray-200">
+        <div class="p-4 flex items-center justify-between border-b border-yellow-200">
             <div class="flex items-center space-x-2">
                 <button @click="handleNavigation(currentMode, -1)"
                     class="p-2 text-gray-700 bg-gray-100 rounded-full hover:bg-gray-200 transition">
@@ -343,27 +343,27 @@ const tableEvents = computed(() => {
                 {{ formattedTitle }}
             </h2>
 
-            <div class="flex space-x-1 p-1 bg-gray-100 rounded-lg">
+            <div class="flex space-x-1 p-1 bg-yellow-400 rounded-lg">
                 <button @click="changeView('list')"
-                    :class="['p-2 rounded-lg text-sm font-medium transition', currentMode === 'list' ? 'bg-white text-[#7A0C23] shadow' : 'text-gray-600 hover:bg-white']"
+                    :class="['p-2 rounded-lg text-sm font-medium transition', currentMode === 'list' ? 'bg-white text-[#7A0C23] shadow' : 'text-white hover:bg-yellow']"
                     title="List View">
                     <FontAwesomeIcon :icon="faListUl" class="w-4 h-4" />
                 </button>
 
                 <button @click="changeView('day')"
-                    :class="['p-2 rounded-lg text-sm font-medium transition', currentMode === 'day' ? 'bg-white text-[#7A0C23] shadow' : 'text-gray-600 hover:bg-white']"
+                    :class="['p-2 rounded-lg text-sm font-medium transition', currentMode === 'day' ? 'bg-white text-[#7A0C23] shadow' : 'text-white hover:bg-yellow']"
                     title="Day View">
                     <FontAwesomeIcon :icon="faCalendarDay" class="w-4 h-4" />
                 </button>
 
                 <button @click="changeView('week')"
-                    :class="['p-2 rounded-lg text-sm font-medium transition', currentMode === 'week' ? 'bg-white text-[#7A0C23] shadow' : 'text-gray-600 hover:bg-white']"
+                    :class="['p-2 rounded-lg text-sm font-medium transition', currentMode === 'week' ? 'bg-white text-[#7A0C23] shadow' : 'text-white hover:bg-yellow']"
                     title="Week View">
                     <FontAwesomeIcon :icon="faCalendarWeek" class="w-4 h-4" />
                 </button>
 
                 <button @click="changeView('month')"
-                    :class="['p-2 rounded-lg text-sm font-medium transition', currentMode === 'month' ? 'bg-white text-[#7A0C23] shadow' : 'text-gray-600 hover:bg-white']"
+                    :class="['p-2 rounded-lg text-sm font-medium transition', currentMode === 'month' ? 'bg-white text-[#7A0C23] shadow' : 'text-white hover:bg-yellow']"
                     title="Month View">
                     <FontAwesomeIcon :icon="faCalendar" class="w-4 h-4" />
                 </button>
@@ -372,7 +372,7 @@ const tableEvents = computed(() => {
 
         <div class="flex-grow p-4">
             <!-- List View -->
-            <div v-if="currentMode === 'list'" class="bg-white rounded-xl overflow-hidden border border-gray-200">
+            <div v-if="currentMode === 'list'" class="bg-white rounded-xl overflow-hidden border border-yellow-600">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-[#7A0C23] text-white">
                         <tr>
@@ -386,11 +386,11 @@ const tableEvents = computed(() => {
                         </tr>
                     </thead>
 
-                    <tbody class="divide-y divide-gray-200">
+                    <tbody class="divide-y divide-gray-300">
                         <tr
                             v-for="item in tableEvents"
                             :key="item.id"
-                            class="transition hover:bg-blue-50 cursor-pointer"
+                            class="transition hover:bg-blue-100 cursor-pointer"
                             @click="handleEditEvent(item.eventObject)"
                         >
                             <td class="px-6 py-4 text-sm font-bold text-[#7A0C23]">

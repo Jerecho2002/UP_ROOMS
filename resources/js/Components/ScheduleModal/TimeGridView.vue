@@ -43,10 +43,10 @@ const isTodayHeader = (day) => {
 </script>
 
 <template>
-    <div class="time-grid-view border border-gray-200 rounded-lg shadow-lg bg-white">
+    <div class="time-grid-view border border-yellow-300 rounded-lg shadow-lg bg-white">
 
-        <div class="flex border-b border-gray-200">
-            <div class="w-16 shrink-0 bg-gray-50 border-r"></div> <div class="flex-grow grid" :style="`grid-template-columns: repeat(${daysToRender.length}, minmax(0, 1fr))`">
+        <div class="bg-[#7A0C23] flex border-b  border-yellow-600">
+            <div class="w-16 shrink-0 bg-[#7A0C23] "></div> <div class="flex-grow grid" :style="`grid-template-columns: repeat(${daysToRender.length}, minmax(0, 1fr))`">
                 <div v-for="(day, index) in daysToRender" :key="index"
                      @click="viewMode === 'week' ? emit('selectDate', day.date) : null"
                      :class="['p-2 text-center text-sm font-semibold border-r last:border-r-0 cursor-pointer transition duration-150', isTodayHeader(day)]"
@@ -56,13 +56,13 @@ const isTodayHeader = (day) => {
             </div>
         </div>
 
-        <div class="flex border-b border-gray-200">
-            <div class="w-16 shrink-0 border-r py-2 px-1 text-xs font-medium text-gray-500 flex items-center justify-center bg-gray-50">
+        <div class="bg-[#7A0C23] flex border-b border-yellow-600">
+            <div class="w-16 shrink-0 border-r py-2 px-1 text-xs font-medium text-white flex items-center justify-center bg-[#7A0C23]">
                 All Day
             </div>
 
             <div class="flex-grow grid" :style="`grid-template-columns: repeat(${daysToRender.length}, minmax(0, 1fr))`">
-                <div v-for="(day, index) in daysToRender" :key="index" class="p-1 border-r last:border-r-0 border-gray-200">
+                <div v-for="(day, index) in daysToRender" :key="index" class=" p-1 border-r last:border-r-0 border-gray-300">
                     <div v-for="event in day.allDayEvents" :key="event.id"
                          @click="emit('selectEvent', event)"
                          class="text-xs p-1 mb-0.5 rounded-md cursor-pointer bg-indigo-100 text-indigo-800 hover:bg-indigo-200 transition truncate border-l-2 border-indigo-600"
@@ -71,17 +71,17 @@ const isTodayHeader = (day) => {
                         <FontAwesomeIcon :icon="faTag" class="w-3 h-3 mr-1" />
                         {{ event.title || event.extendedProps?.subject }}
                     </div>
-                    <p v-if="day.allDayEvents.length === 0" class="text-xs text-gray-400 italic py-1 text-center">None</p>
+                    <p v-if="day.allDayEvents.length === 0" class="text-xs text-white italic py-1 text-center">List</p>
                 </div>
             </div>
         </div>
 
         <div class="flex h-full max-h-[70vh] overflow-y-auto relative">
 
-            <div class="w-16 shrink-0 border-r bg-gray-50 sticky left-0 z-30">
+            <div class="w-16 shrink-0 border-r bg-gray-100 sticky left-0 z-30">
                 <div class="relative w-full">
                     <div v-for="(slot, index) in hourSlots" :key="index"
-                        class="absolute w-full text-xs text-gray-500 text-right pr-2"
+                        class="absolute w-full text-xs text-gray-900 text-right pr-2"
                         :style="`top: ${index * 1.25}rem; height: 1.25rem;`"
                     >
                         <span v-if="slot.minute === 0" class="absolute top-[-0.5em] right-0 block w-full">{{ slot.label }}</span>
@@ -97,7 +97,7 @@ const isTodayHeader = (day) => {
                 >
                     <div v-for="(slot, slotIndex) in hourSlots" :key="slotIndex"
                          @click="emit('emitDateClick', day.date, slot.hour, slot.minute)"
-                         :class="['h-5 border-b border-dashed border-gray-100 hover:bg-blue-50/50 transition duration-100']"
+                         :class="['h-5 border-b border-dashed border-gray-100 hover:bg-blue-100/100 transition duration-100']"
                     >
                     </div>
 

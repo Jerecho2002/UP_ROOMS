@@ -19,8 +19,8 @@ const emit = defineEmits(['emitDateClick', 'selectEvent']);
     <div class="w-full">
         <table class="min-w-full divide-y divide-gray-200 border border-gray-200 table-fixed">
             <thead>
-                <tr class="bg-gray-50">
-                    <th v-for="day in days" :key="day" scope="col" class="w-1/7 px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <tr class="bg-[#7A0C23]">
+                    <th v-for="day in days" :key="day" scope="col" class="w-1/7 px-2 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">
                         {{ day }}
                     </th>
                 </tr>
@@ -29,9 +29,9 @@ const emit = defineEmits(['emitDateClick', 'selectEvent']);
                 <tr v-for="(week, index) in dateGrid" :key="index">
                     <td v-for="day in week" :key="day.date.toString()"
                         @click="emit('emitDateClick', day.date)" :class="[
-                            'p-2 align-top h-24 border border-gray-200 text-sm cursor-pointer transition duration-150',
+                            'p-2 align-top h-24 border border-yellow-500 text-sm cursor-pointer transition duration-150',
                             day.dayClass,
-                            day.isToday ? 'bg-yellow-100 ring-2 ring-yellow-500/50' : 'hover:bg-blue-50',
+                            day.isToday ? 'bg-yellow-400 ring-2 ring-red-500/50' : 'hover:bg-blue-50',
                         ]">
 
                         <div class="font-bold mb-1 text-right">{{ day.date.getDate() }}</div>
