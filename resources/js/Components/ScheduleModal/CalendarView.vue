@@ -10,22 +10,15 @@ import {
     faListUl,
     faPenToSquare,
     faTrash,
-    faPlusCircle
+    faPlusCircle,
+    faEye,
+    faClock
 } from '@fortawesome/free-solid-svg-icons';
 
 const props = defineProps({
-    data: {
-        type: Array,
-        default: () => []
-    },
-    initialDate: {
-        type: Date,
-        default: () => new Date()
-    },
-    initialMode: {
-        type: String,
-        default: 'month'
-    },
+    data: { type: Array, default: () => [] },
+    initialDate: { type: Date, default: () => new Date() },
+    initialMode: { type: String, default: 'month' },
     MonthGridViewComponent: { type: Object, required: true },
     TimeGridViewComponent: { type: Object, required: true },
     ListViewComponent: { type: Object },
@@ -39,29 +32,37 @@ const emit = defineEmits([
     'editEvent',
     'deleteEvent',
     'addAppointment',
+    'dayClick'
 ]);
 
 // --- Core State ---
 const currentReferenceDate = ref(props.initialDate);
 const currentMode = ref(props.initialMode);
 
-// Sync initial props
+// Sync with props when they change externally
 watchEffect(() => {
     currentReferenceDate.value = props.initialDate;
     currentMode.value = props.initialMode;
 });
 
-// --- Icons for List View ---
+// Icons
 const listIcons = {
     edit: faPenToSquare,
     delete: faTrash,
     add: faPlusCircle,
+    view: faEye,
+    clock: faClock
 };
 
 // --- Utilities ---
 const dateToTimeString = (date) => {
     if (!date || isNaN(date)) return '';
-    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+    const d = new Date(date);
+    return d.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+    });
 };
 
 const dateToDayString = (date) => {
@@ -75,7 +76,7 @@ const formatDay = (date) => {
     if (isNaN(d)) return '';
     return d.toLocaleDateString('en-US', {
         weekday: 'long',
-        month: 'short',
+        month: 'long',
         day: 'numeric',
         year: 'numeric',
     });
@@ -83,10 +84,10 @@ const formatDay = (date) => {
 
 const getRequestType = (event) => {
     const type = event.extendedProps?.type?.toLowerCase() || event.list?.toLowerCase() || '';
-    if (type.includes('event')) return 'Event';
     if (type.includes('class')) return 'Class';
     if (type.includes('meeting')) return 'Meeting';
-    return 'Other Activity';
+    if (type.includes('event')) return 'Event';
+    return 'Appointment';
 };
 
 // --- Event Handlers ---
@@ -97,13 +98,12 @@ const changeView = (mode) => {
 
 const handleNavigation = (unit, direction) => {
     const newDate = new Date(currentReferenceDate.value);
-    const navigationUnit = currentMode.value === 'list' ? 'day' : unit;
 
-    if (navigationUnit === 'day') {
+    if (currentMode.value === 'day' || unit === 'day') {
         newDate.setDate(newDate.getDate() + direction);
-    } else if (navigationUnit === 'week') {
+    } else if (currentMode.value === 'week' || unit === 'week') {
         newDate.setDate(newDate.getDate() + direction * 7);
-    } else if (navigationUnit === 'month') {
+    } else if (currentMode.value === 'month' || unit === 'month') {
         newDate.setMonth(newDate.getMonth() + direction);
     }
 
@@ -112,16 +112,25 @@ const handleNavigation = (unit, direction) => {
 };
 
 const goToToday = () => {
-    currentReferenceDate.value = new Date();
-    emit('update:date', currentReferenceDate.value);
-    if (currentMode.value === 'list') {
-        currentMode.value = 'day';
-        emit('update:mode', 'day');
-    }
+    const today = new Date();
+    currentReferenceDate.value = today;
+    emit('update:date', today);
 };
 
 const handleDateClick = (date, hour = null, minute = null) => {
-    emit('dateClicked', date, hour, minute);
+    let exactDate = new Date(date);
+
+    if (hour !== null && minute !== null) {
+        exactDate.setHours(hour, minute, 0, 0);
+    } else {
+        exactDate.setHours(9, 0, 0, 0);
+    }
+
+    emit('dateClicked', exactDate, hour, minute);
+};
+
+const handleDayClick = (date) => {
+    emit('dayClick', date);
 };
 
 const handleEventSelected = (event) => {
@@ -139,7 +148,9 @@ const handleDeleteEvent = (event, e = null) => {
 };
 
 const handleAddRowClick = () => {
-    emit('addAppointment');
+    const defaultDate = new Date();
+    defaultDate.setHours(9, 0, 0, 0);
+    emit('addAppointment', defaultDate);
 };
 
 // --- Computed Properties ---
@@ -147,79 +158,82 @@ const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 
 
 const formattedTitle = computed(() => {
     const date = currentReferenceDate.value;
-    const options = { year: 'numeric', month: 'long' };
 
     if (currentMode.value === 'day' || currentMode.value === 'list') {
-        options.day = 'numeric';
-        return date.toLocaleDateString('en-US', options);
+        return date.toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
     } else if (currentMode.value === 'week') {
-        const dayOfWeek = date.getDay();
         const startOfWeek = new Date(date);
-        startOfWeek.setDate(date.getDate() - dayOfWeek);
+        startOfWeek.setDate(date.getDate() - date.getDay());
         const endOfWeek = new Date(startOfWeek);
         endOfWeek.setDate(startOfWeek.getDate() + 6);
 
-        return `${startOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${endOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+        return `${startOfWeek.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} - ${endOfWeek.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
+    } else {
+        return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
     }
-
-    return date.toLocaleDateString('en-US', options);
 });
 
 const monthGrid = computed(() => {
     const date = currentReferenceDate.value;
     const year = date.getFullYear();
     const month = date.getMonth();
-    const today = dateToDayString(new Date());
-
-    const preparedEvents = props.data.map(event => ({
-        ...event,
-        startDayString: dateToDayString(event.start),
-        endDayString: event.end ? dateToDayString(event.end) : dateToDayString(event.start),
-    }));
+    const today = new Date();
+    const todayStr = dateToDayString(today);
 
     const firstDayOfMonth = new Date(year, month, 1);
     const startingDay = firstDayOfMonth.getDay();
-
     const dateGrid = [];
     let dayCounter = 1 - startingDay;
 
-    for (let i = 0; i < 6; i++) {
-        const week = [];
-        for (let j = 0; j < 7; j++) {
+    for (let week = 0; week < 6; week++) {
+        const weekDays = [];
+        for (let day = 0; day < 7; day++) {
             const currentDate = new Date(year, month, dayCounter);
-            const dayString = dateToDayString(currentDate);
+            const dayStr = dateToDayString(currentDate);
 
-            const dayEvents = preparedEvents.filter(event => {
-                return dayString >= event.startDayString && dayString <= event.endDayString;
+            const dayEvents = props.data.filter(event => {
+                const eventStart = new Date(event.start);
+                const eventEnd = event.end ? new Date(event.end) : new Date(eventStart.getTime() + 60 * 60000);
+                const current = new Date(currentDate);
+                eventStart.setHours(0, 0, 0, 0);
+                eventEnd.setHours(0, 0, 0, 0);
+                current.setHours(0, 0, 0, 0);
+                return current >= eventStart && current <= eventEnd;
             });
 
-            week.push({
+            weekDays.push({
                 date: currentDate,
-                isToday: dayString === today,
+                isToday: dayStr === todayStr,
                 dayClass: currentDate.getMonth() === month ? '' : 'text-gray-400',
                 allDayEvents: dayEvents.filter(e => e.allDay),
                 events: dayEvents.filter(e => !e.allDay),
+                hasMultipleEvents: dayEvents.length > 3,
+                eventCount: dayEvents.length,
+                isOccupied: dayEvents.length > 0
             });
             dayCounter++;
         }
-        dateGrid.push(week);
+        dateGrid.push(weekDays);
     }
     return dateGrid;
 });
 
 const timeGridData = computed(() => {
     const date = currentReferenceDate.value;
-    const today = dateToDayString(new Date());
-
+    const today = new Date();
+    const todayStr = dateToDayString(today);
     let datesToRender = [];
 
     if (currentMode.value === 'day') {
         datesToRender.push(date);
-    } else if (currentMode.value === 'week') {
-        const dayOfWeek = date.getDay();
+    } else {
         const startOfWeek = new Date(date);
-        startOfWeek.setDate(date.getDate() - dayOfWeek);
-
+        startOfWeek.setDate(date.getDate() - date.getDay());
         for (let i = 0; i < 7; i++) {
             const day = new Date(startOfWeek);
             day.setDate(startOfWeek.getDate() + i);
@@ -227,47 +241,47 @@ const timeGridData = computed(() => {
         }
     }
 
-    const preparedEvents = props.data.map(event => ({
-        ...event,
-        startDayString: dateToDayString(event.start),
-        endDayString: event.end ? dateToDayString(event.end) : dateToDayString(event.start),
-    }));
-
     return datesToRender.map(currentDate => {
-        const dayString = dateToDayString(currentDate);
-
-        const dayEvents = preparedEvents.filter(event => {
-            return dayString >= event.startDayString && dayString <= event.endDayString;
-        });
-
-        const dayLabel = currentDate.toLocaleDateString('en-US', {
-            weekday: 'short',
-            day: 'numeric',
-            month: 'short'
+        const dayStr = dateToDayString(currentDate);
+        const dayEvents = props.data.filter(event => {
+            const eventDate = new Date(event.start);
+            return dateToDayString(eventDate) === dayStr;
         });
 
         return {
             date: currentDate,
-            label: dayLabel,
-            isToday: dayString === today,
+            label: currentDate.toLocaleDateString('en-US', {
+                weekday: 'short',
+                month: 'short',
+                day: 'numeric'
+            }),
+            fullDate: currentDate.toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            }),
+            isToday: dayStr === todayStr,
             allDayEvents: dayEvents.filter(e => e.allDay),
-            events: dayEvents.filter(e => !e.allDay).map(event => ({
-                ...event,
-                style: getTimeEventStyle(event)
-            })),
+            events: dayEvents.filter(e => !e.allDay),
+            isOccupied: dayEvents.length > 0
         };
     });
 });
 
 const hourSlots = computed(() => {
     const slots = [];
-    for (let h = 0; h < 24; h++) {
+    for (let h = 6; h < 22; h++) {
         for (let m = 0; m < 60; m += 30) {
             const time = new Date(0, 0, 0, h, m);
             slots.push({
                 hour: h,
                 minute: m,
-                label: m === 0 ? time.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true }) : '',
+                label: time.toLocaleTimeString('en-US', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true
+                }),
             });
         }
     }
@@ -275,46 +289,56 @@ const hourSlots = computed(() => {
 });
 
 const getTimeEventStyle = (event) => {
-    const start = event.start;
-    const end = event.end || new Date(start.getTime() + 30 * 60000);
-    const startMinutes = start.getHours() * 60 + start.getMinutes();
-    const endMinutes = end.getHours() * 60 + end.getMinutes();
-    const durationMinutes = endMinutes - startMinutes;
-    const pxPerMinute = 20 / 15;
+    const start = new Date(event.start);
+    const end = event.end ? new Date(event.end) : new Date(start.getTime() + 60 * 60000);
 
-    const topPositionPx = startMinutes * pxPerMinute;
-    const heightPx = durationMinutes * pxPerMinute;
+    const startHour = start.getHours();
+    const startMinute = start.getMinutes();
+    const endHour = end.getHours();
+    const endMinute = end.getMinutes();
+
+    const startMinutesFrom6AM = (startHour - 6) * 60 + startMinute;
+    const endMinutesFrom6AM = (endHour - 6) * 60 + endMinute;
+    const durationMinutes = Math.max(0, endMinutesFrom6AM - startMinutesFrom6AM);
+
+    const pxPerMinute = 40 / 30;
+
+    const topPx = startMinutesFrom6AM * pxPerMinute;
+    const heightPx = Math.max(25, durationMinutes * pxPerMinute);
 
     return {
-        top: `${topPositionPx}px`,
+        top: `${topPx}px`,
         height: `${heightPx}px`,
-        minHeight: `${Math.max(20, heightPx)}px`,
-        zIndex: 20,
+        left: '4px',
+        right: '4px',
+        zIndex: '20',
     };
+};
+
+const formatEventTimeForDisplay = (event) => {
+    const start = new Date(event.start);
+    const end = event.end ? new Date(event.end) : new Date(start.getTime() + 60 * 60000);
+    return `${dateToTimeString(start)} - ${dateToTimeString(end)}`;
 };
 
 const tableEvents = computed(() => {
     return [...props.data]
-        .sort((a, b) => new Date(a.start) - new Date(b.start))
+        .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime())
         .map(event => {
             const start = new Date(event.start);
-            const end = event.end ? new Date(event.end) : null;
-            const defaultEnd = new Date(start.getTime() + 30 * 60000);
+            const end = event.end ? new Date(event.end) : new Date(start.getTime() + 60 * 60000);
 
             return {
                 id: event.id,
                 appointment: event.title || 'Untitled Appointment',
                 day: formatDay(event.start),
-                time: event.allDay
-                    ? 'All Day'
-                    : `${dateToTimeString(start)} - ${dateToTimeString(end || defaultEnd)}`,
+                time: event.allDay ? 'All Day' : formatEventTimeForDisplay(event),
                 requestType: getRequestType(event),
                 eventObject: event,
-                // Add extended props for display
                 room: event.extendedProps?.room || 'N/A',
                 building: event.extendedProps?.building || 'N/A',
                 college: event.extendedProps?.college || 'N/A',
-                subject: event.extendedProps?.subject || event.title,
+                isOccupied: true
             };
         });
 });
@@ -324,152 +348,110 @@ const tableEvents = computed(() => {
     <div class="flex flex-col bg-white rounded-xl shadow-lg">
         <div class="p-4 flex items-center justify-between border-b border-yellow-200">
             <div class="flex items-center space-x-2">
-                <button @click="handleNavigation(currentMode, -1)"
-                    class="p-2 text-gray-700 bg-gray-100 rounded-full hover:bg-gray-200 transition">
+                <button @click="handleNavigation(currentMode, -1)" class="p-2 text-gray-700 bg-gray-100 rounded-full hover:bg-gray-200 transition">
                     <FontAwesomeIcon :icon="faChevronLeft" />
                 </button>
-                <button @click="handleNavigation(currentMode, 1)"
-                    class="p-2 text-gray-700 bg-gray-100 rounded-full hover:bg-gray-200 transition">
+                <button @click="handleNavigation(currentMode, 1)" class="p-2 text-gray-700 bg-gray-100 rounded-full hover:bg-gray-200 transition">
                     <FontAwesomeIcon :icon="faChevronRight" />
                 </button>
-
-                <button @click="goToToday"
-                    class="px-3 py-1 text-sm font-semibold border rounded-lg bg-[#7A0C23] text-white hover:bg-red-800 transition">
+                <button @click="goToToday" class="px-3 py-1 text-sm font-semibold border rounded-lg bg-[#7A0C23] text-white hover:bg-red-800 transition">
                     Today
                 </button>
             </div>
 
-            <h2 class="text-xl font-bold text-gray-800">
-                {{ formattedTitle }}
-            </h2>
+            <h2 class="text-xl font-bold text-gray-800">{{ formattedTitle }}</h2>
 
             <div class="flex space-x-1 p-1 bg-yellow-400 rounded-lg">
-                <button @click="changeView('list')"
-                    :class="['p-2 rounded-lg text-sm font-medium transition', currentMode === 'list' ? 'bg-white text-[#7A0C23] shadow' : 'text-white hover:bg-yellow']"
-                    title="List View">
-                    <FontAwesomeIcon :icon="faListUl" class="w-4 h-4" />
-                </button>
-
-                <button @click="changeView('day')"
-                    :class="['p-2 rounded-lg text-sm font-medium transition', currentMode === 'day' ? 'bg-white text-[#7A0C23] shadow' : 'text-white hover:bg-yellow']"
-                    title="Day View">
-                    <FontAwesomeIcon :icon="faCalendarDay" class="w-4 h-4" />
-                </button>
-
-                <button @click="changeView('week')"
-                    :class="['p-2 rounded-lg text-sm font-medium transition', currentMode === 'week' ? 'bg-white text-[#7A0C23] shadow' : 'text-white hover:bg-yellow']"
-                    title="Week View">
-                    <FontAwesomeIcon :icon="faCalendarWeek" class="w-4 h-4" />
-                </button>
-
-                <button @click="changeView('month')"
-                    :class="['p-2 rounded-lg text-sm font-medium transition', currentMode === 'month' ? 'bg-white text-[#7A0C23] shadow' : 'text-white hover:bg-yellow']"
-                    title="Month View">
-                    <FontAwesomeIcon :icon="faCalendar" class="w-4 h-4" />
+                <button v-for="mode in ['list', 'day', 'week', 'month']" :key="mode"
+                    @click="changeView(mode)"
+                    :class="[
+                        'p-2 rounded-lg text-sm font-medium transition',
+                        currentMode === mode ? 'bg-white text-[#7A0C23] shadow' : 'text-white hover:bg-yellow-500'
+                    ]">
+                    <FontAwesomeIcon :icon="mode === 'list' ? faListUl : mode === 'day' ? faCalendarDay : mode === 'week' ? faCalendarWeek : faCalendar" class="w-4 h-4" />
                 </button>
             </div>
         </div>
 
         <div class="flex-grow p-4">
-            <!-- List View -->
             <div v-if="currentMode === 'list'" class="bg-white rounded-xl overflow-hidden border border-yellow-600">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-[#7A0C23] text-white">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">APPOINTMENT</th>
-                            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">ROOM</th>
-                            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">BUILDING</th>
-                            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">DAY</th>
-                            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">TIME</th>
-                            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">TYPE</th>
-                            <th class="px-6 py-3 text-center text-xs font-semibold uppercase tracking-wider w-32">ACTIONS</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold uppercase">APPOINTMENT</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold uppercase">ROOM</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold uppercase">BUILDING</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold uppercase">DAY</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold uppercase">TIME</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold uppercase">TYPE</th>
+                            <th class="px-6 py-3 text-center text-xs font-semibold uppercase w-40">ACTIONS</th>
                         </tr>
                     </thead>
-
                     <tbody class="divide-y divide-gray-300">
-                        <tr
-                            v-for="item in tableEvents"
-                            :key="item.id"
-                            class="transition hover:bg-blue-100 cursor-pointer"
-                            @click="handleEditEvent(item.eventObject)"
-                        >
-                            <td class="px-6 py-4 text-sm font-bold text-[#7A0C23]">
-                                {{ item.appointment }}
+                        <tr v-for="item in tableEvents" :key="item.id" @click="handleEventSelected(item.eventObject)" class="transition hover:bg-blue-50 cursor-pointer">
+                            <td class="px-6 py-4 text-sm font-bold text-[#7A0C23]">{{ item.appointment }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-700">{{ item.room }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-700">{{ item.building }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-700">{{ item.day }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-700">
+                                <div class="flex items-center">
+                                    <span>{{ item.time }}</span>
+                                    <span v-if="item.isOccupied" class="ml-2 text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">
+                                        <FontAwesomeIcon :icon="listIcons.clock" class="w-3 h-3 mr-1" />
+                                        Occupied
+                                    </span>
+                                </div>
                             </td>
                             <td class="px-6 py-4 text-sm text-gray-700">
-                                {{ item.room }}
-                            </td>
-                            <td class="px-6 py-4 text-sm text-gray-700">
-                                {{ item.building }}
-                            </td>
-                            <td class="px-6 py-4 text-sm text-gray-700">
-                                {{ item.day }}
-                            </td>
-                            <td class="px-6 py-4 text-sm text-gray-700">
-                                {{ item.time }}
-                            </td>
-                            <td class="px-6 py-4 text-sm text-gray-700">
-                                <span :class="[
-                                    'px-2 py-1 rounded-full text-xs font-medium',
-                                    item.requestType === 'Class' ? 'bg-blue-100 text-blue-800' :
-                                    item.requestType === 'Meeting' ? 'bg-green-100 text-green-800' :
-                                    item.requestType === 'Event' ? 'bg-purple-100 text-purple-800' :
-                                    'bg-yellow-100 text-yellow-800'
-                                ]">
+                                <span :class="['px-2 py-1 rounded-full text-xs font-medium', item.requestType === 'Class' ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800']">
                                     {{ item.requestType }}
                                 </span>
                             </td>
-                            <td class="px-6 py-4 text-sm font-medium text-center space-x-2" @click.stop>
-                                <button
-                                    @click="handleEditEvent(item.eventObject, $event)"
-                                    class="text-green-600 hover:text-green-800 px-2"
-                                    title="Edit"
-                                >
-                                    <FontAwesomeIcon :icon="listIcons.edit" />
-                                </button>
-                                <button
-                                    @click="handleDeleteEvent(item.eventObject, $event)"
-                                    class="text-red-600 hover:text-red-800 px-2"
-                                    title="Delete"
-                                >
-                                    <FontAwesomeIcon :icon="listIcons.delete" />
-                                </button>
+                            <td class="px-6 py-4 text-sm font-medium text-center">
+                                <div class="flex items-center justify-center space-x-3" @click.stop>
+                                    <button
+                                        @click="handleEventSelected(item.eventObject)"
+                                        class="text-blue-600 hover:text-blue-800 transition-transform hover:scale-110"
+                                        title="View Details"
+                                    >
+                                        <FontAwesomeIcon :icon="listIcons.view" class="w-4 h-4" />
+                                    </button>
+                                    <button
+                                        @click="handleEditEvent(item.eventObject, $event)"
+                                        class="text-green-600 hover:text-green-800 transition-transform hover:scale-110"
+                                        title="Edit"
+                                    >
+                                        <FontAwesomeIcon :icon="listIcons.edit" class="w-4 h-4" />
+                                    </button>
+                                    <button
+                                        @click="handleDeleteEvent(item.eventObject, $event)"
+                                        class="text-red-600 hover:text-red-800 transition-transform hover:scale-110"
+                                        title="Delete"
+                                    >
+                                        <FontAwesomeIcon :icon="listIcons.delete" class="w-4 h-4" />
+                                    </button>
+                                </div>
                             </td>
                         </tr>
-
-                        <tr @click="handleAddRowClick"
-                            class="bg-green-50/50 hover:bg-green-100 cursor-pointer transition">
+                        <tr @click="handleAddRowClick" class="bg-green-50/50 hover:bg-green-100 cursor-pointer transition">
                             <td colspan="7" class="px-6 py-4 text-center text-green-700 font-semibold text-base">
-                                <FontAwesomeIcon :icon="listIcons.add" class="mr-2" />
-                                Click here to schedule a new appointment...
-                            </td>
-                        </tr>
-
-                        <tr v-if="tableEvents.length === 0">
-                            <td colspan="7" class="px-6 py-4 text-center text-gray-500">
-                                No appointments found. Click above to add one!
+                                <FontAwesomeIcon :icon="listIcons.add" class="mr-2" /> Schedule new appointment...
                             </td>
                         </tr>
                     </tbody>
                 </table>
             </div>
 
-            <!-- Month Grid View -->
             <component
                 v-else-if="currentMode === 'month'"
                 :is="MonthGridViewComponent"
                 :dateGrid="monthGrid"
                 :days="days"
-                :dateToDayString="dateToDayString"
-                @selectEvent="handleEventSelected"
-                @selectDate="(date) => {
-                    currentReferenceDate = date;
-                    changeView('day');
-                }"
                 @emitDateClick="handleDateClick"
+                @selectEvent="handleEventSelected"
+                @dayClick="handleDayClick"
             />
 
-            <!-- Time Grid View (Day/Week) -->
             <component
                 v-else-if="currentMode === 'day' || currentMode === 'week'"
                 :is="TimeGridViewComponent"
@@ -479,9 +461,47 @@ const tableEvents = computed(() => {
                 :hourSlots="hourSlots"
                 :getEventStyle="getTimeEventStyle"
                 :dateToTimeString="dateToTimeString"
+                :formatEventTime="formatEventTimeForDisplay"
+                :events="data"
                 @selectEvent="handleEventSelected"
                 @emitDateClick="handleDateClick"
+                @selectDate="(date) => {
+                    currentReferenceDate = date;
+                    changeView('day');
+                }"
             />
         </div>
     </div>
 </template>
+
+<style scoped>
+/* Custom styles for better alignment */
+table {
+    table-layout: fixed;
+}
+
+td {
+    vertical-align: middle;
+}
+
+/* Action buttons container */
+.flex.items-center.justify-center.space-x-3 {
+    min-width: 120px;
+}
+
+/* Ensure icons are properly sized */
+.w-4.h-4 {
+    width: 1rem;
+    height: 1rem;
+}
+
+/* Hover effects for buttons */
+button.transition-transform:hover {
+    transform: scale(1.1);
+}
+
+/* Prevent text selection on buttons */
+button {
+    user-select: none;
+}
+</style>
