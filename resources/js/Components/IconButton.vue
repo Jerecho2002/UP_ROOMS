@@ -74,10 +74,37 @@ const autoColors = {
   exclamation: 'orange'
 };
 
-// Get the color - handle special case for "white"
-const getColor = () => {
-  if (props.color === 'white') return 'white';
-  return props.color || autoColors[props.icon] || 'gray';
+// Get the color - using specific color classes instead of dynamic ones
+const getColorClass = () => {
+  const color = props.color || autoColors[props.icon] || 'gray';
+
+  // Return specific Tailwind classes for each color
+  const colorMap = {
+    blue: 'text-blue-500 hover:bg-blue-50 border-blue-300',
+    green: 'text-green-500 hover:bg-green-50 border-green-300',
+    red: 'text-red-500 hover:bg-red-50 border-red-300',
+    gray: 'text-gray-500 hover:bg-gray-50 border-gray-300',
+    orange: 'text-orange-500 hover:bg-orange-50 border-orange-300',
+    white: 'text-white hover:bg-white/10 border-white'
+  };
+
+  return colorMap[color] || colorMap.gray;
+};
+
+// Get text color class for outlined variant
+const getOutlinedTextColor = () => {
+  const color = props.color || autoColors[props.icon] || 'gray';
+
+  const colorMap = {
+    blue: 'text-blue-600',
+    green: 'text-green-600',
+    red: 'text-red-600',
+    gray: 'text-gray-600',
+    orange: 'text-orange-600',
+    white: 'text-white'
+  };
+
+  return colorMap[color] || colorMap.gray;
 };
 
 // Size mapping with more options
@@ -100,7 +127,8 @@ const paddingMap = {
 
 // Determine button classes based on color and variant
 const buttonClasses = computed(() => {
-  const color = getColor();
+  const colorClass = getColorClass();
+  const textColorClass = getOutlinedTextColor();
   const classes = [
     'inline-flex items-center justify-center',
     'transition-all duration-200',
@@ -115,10 +143,10 @@ const buttonClasses = computed(() => {
     );
 
     // Handle special white color for outlined
-    if (color === 'white') {
+    if (props.color === 'white') {
       classes.push('border-white text-white hover:bg-white/10');
     } else {
-      classes.push(`border-${color}-300 text-${color}-600`);
+      classes.push(`border-gray-300 ${textColorClass}`);
     }
 
     // Size-specific padding
@@ -127,14 +155,7 @@ const buttonClasses = computed(() => {
     else if (props.size === 'md') classes.push('px-4 py-2');
     else classes.push('px-5 py-2.5');
   } else {
-    classes.push('rounded-full', paddingMap[props.size]);
-
-    // Handle special white color for regular button
-    if (color === 'white') {
-      classes.push('text-white hover:bg-white/10');
-    } else {
-      classes.push(`text-${color}-500 hover:bg-gray-100`);
-    }
+    classes.push('rounded-full', paddingMap[props.size], colorClass);
   }
 
   return classes;
@@ -142,8 +163,7 @@ const buttonClasses = computed(() => {
 
 // Focus ring color based on button type
 const focusRingColor = computed(() => {
-  const color = getColor();
-  if (color === 'white') return 'focus:ring-white/50';
+  if (props.color === 'white') return 'focus:ring-white/50';
   return 'focus:ring-gray-200';
 });
 </script>
