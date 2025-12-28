@@ -387,7 +387,7 @@ const tableEvents = computed(() => {
                             <th class="px-6 py-3 text-center text-xs font-semibold uppercase w-40">ACTIONS</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-300">
+                    <tbody class="divide-y divide-yellow-400">
                         <tr v-for="item in tableEvents" :key="item.id" @click="handleEventSelected(item.eventObject)" class="transition hover:bg-blue-50 cursor-pointer">
                             <td class="px-6 py-4 text-sm font-bold text-[#7A0C23]">{{ item.appointment }}</td>
                             <td class="px-6 py-4 text-sm text-gray-700">{{ item.room }}</td>

@@ -164,8 +164,8 @@ const resetPagination = () => {
 <template>
     <div class="bg-white shadow-lg rounded-xl overflow-auto">
         <!-- Table Header with Pagination Controls -->
-        <div class="flex flex-col sm:flex-row justify-between items-center p-4 border-b border-gray-200">
-            <div class="text-lg font-semibold text-[#7A0C23] mb-2 sm:mb-0">
+        <div class=" flex flex-col sm:flex-row justify-between items-center p-4 border-b border-yellow-400">
+            <div class=" text-lg font-semibold text-[#7A0C23] mb-2 sm:mb-0">
                 Appointments ({{ processedEvents.length }})
             </div>
             <div class="flex items-center space-x-4">
@@ -184,7 +184,7 @@ const resetPagination = () => {
         </div>
 
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-500" style="table-layout: fixed; width: 100%;">
+            <table class="min-w-full divide-y divide-yellow-500" style="table-layout: fixed; width: 100%;">
                 <colgroup>
                     <col style="width: 20%;"> <!-- APPOINTMENT -->
                     <col style="width: 12%;"> <!-- ROOM -->
@@ -208,7 +208,7 @@ const resetPagination = () => {
                     </tr>
                 </thead>
 
-                <tbody class="divide-y divide-gray-300 bg-white">
+                <tbody class="divide-y divide-yellow-400 bg-white">
                     <tr
                         v-for="item in paginatedEvents"
                         :key="item.id"

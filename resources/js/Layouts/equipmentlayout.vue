@@ -125,14 +125,14 @@ watch(chartData, updateCharts, { deep: true })
 </script>
 
 <template>
-    <div class="flex pt-14 h-screen">
+    <div class="flex pt-14 h-screen ">
         <Sidebar :sidebarOpen="sidebarOpen" />
 
-        <div class="flex-1 flex flex-col">
+        <div class="flex-1 flex flex-col ">
             <Navbar @toggleSidebar="toggleSidebar" />
 
-            <main class="flex-1 bg-gray-100 p-4 overflow-y-auto">
-                <div class="space-y-4">
+            <main class="flex-1 bg-gray-200 p-4 overflow-y-auto">
+                <div class="space-y-4 ">
                     <!-- Main Equipment Table -->
                     <div>
                         <EquipmentTable @chart-data-update="handleChartDataUpdate" />
@@ -143,7 +143,7 @@ watch(chartData, updateCharts, { deep: true })
                         <!-- Pie Chart Container -->
                         <div class="bg-white shadow-lg rounded-xl p-4">
                             <div class="flex items-center justify-between mb-3">
-                                <h2 class="text-lg font-bold text-gray-800">Equipment Distribution by Person</h2>
+                                <h2 class=" text-lg font-bold text-gray-800">Equipment Distribution by Person</h2>
                                 <div class="flex items-center text-sm text-gray-500">
                                     <div class="w-3 h-3 bg-blue-500 rounded-full mr-1"></div>
                                     <span>Total: {{ chartData.pieData.datasets[0]?.data?.reduce((a, b) => a + b, 0) || 0 }} items</span>

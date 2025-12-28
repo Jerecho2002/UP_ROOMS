@@ -466,20 +466,7 @@ watchEffect(() => {
           </div>
 
           <!-- Quick Add Buttons -->
-          <div v-if="currentView === 'table'" class="flex space-x-2">
-            <button
-              @click="handleDirectAppointment('UG 114')"
-              class="px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition"
-            >
-              + New for UG 114
-            </button>
-            <button
-              @click="handleDirectAppointment('AVR 201')"
-              class="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition"
-            >
-              + New for AVR 201
-            </button>
-          </div>
+
         </div>
 
         <!-- Main Content -->

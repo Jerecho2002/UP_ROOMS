@@ -1,6 +1,6 @@
 <!-- Layouts/RoomTypeLayout.vue -->
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import Navbar from '@/Components/Navbar.vue';
 import Sidebar from '@/Components/Sidebar.vue';
 import AddRoomTypeModal from '@/Components/RoomTypeModal/AddRoom.vue';
@@ -43,7 +43,27 @@ const roomTypes = ref([
   { id: 7, name: 'Conference Room', slug: 'conference-room' },
   { id: 8, name: 'Consultation Room', slug: 'consultation-room' },
   { id: 9, name: 'Deans Office', slug: 'deans-office' },
-  { id: 10, name: 'Drawing Room', slug: 'drawing-room' }
+  { id: 10, name: 'Drawing Room', slug: 'drawing-room' },
+  { id: 11, name: 'Faculty Room', slug: 'faculty-room' },
+  { id: 12, name: 'Film Room', slug: 'film-room' },
+  { id: 13, name: 'Laboratory', slug: 'laboratory' },
+  { id: 14, name: 'Lecture Room', slug: 'lecture-room' },
+  { id: 15, name: 'Lounge Room', slug: 'lounge-room' },
+  { id: 16, name: 'Meeting Room', slug: 'meeting-room' },
+  { id: 17, name: 'Microbiology Laboratory', slug: 'microbiology-laboratory' },
+  { id: 18, name: 'Music Room', slug: 'music-room' },
+  { id: 19, name: 'Office', slug: 'office' },
+  { id: 20, name: 'Physics Laboratory', slug: 'physics-laboratory' },
+  { id: 21, name: 'Prayer Room', slug: 'prayer-room' },
+  { id: 22, name: 'Science Laboratory', slug: 'science-laboratory' },
+  { id: 23, name: 'Seminar Room', slug: 'seminar-room' },
+  { id: 24, name: 'Sound Room', slug: 'sound-room' },
+  { id: 25, name: 'Special Room', slug: 'special-room' },
+  { id: 26, name: 'Speech Laboratory', slug: 'speech-laboratory' },
+  { id: 27, name: 'Store Room', slug: 'store-room' },
+  { id: 28, name: 'Theatre', slug: 'theatre' },
+  { id: 29, name: 'Training Room', slug: 'training-room' },
+  { id: 30, name: 'Zoology Laboratory', slug: 'zoology-laboratory' }
 ]);
 
 // Search functionality
@@ -63,23 +83,31 @@ const filteredRoomTypes = computed(() => {
   );
 });
 
-// Pagination
-const itemsPerPage = 10;
+// === PAGINATION STATE ===
+const itemsPerPage = ref(10);
 const currentPage = ref(1);
 
 // Paginated room types
 const paginatedRoomTypes = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage;
-  const end = start + itemsPerPage;
+  const start = (currentPage.value - 1) * itemsPerPage.value;
+  const end = start + itemsPerPage.value;
   return filteredRoomTypes.value.slice(start, end);
 });
 
 // Total pages
 const totalPages = computed(() => {
-  return Math.ceil(filteredRoomTypes.value.length / itemsPerPage);
+  return Math.ceil(filteredRoomTypes.value.length / itemsPerPage.value);
 });
 
-// Navigation functions
+// Showing range
+const showingRange = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage.value + 1;
+  const end = Math.min(currentPage.value * itemsPerPage.value, filteredRoomTypes.value.length);
+  const total = filteredRoomTypes.value.length;
+  return { start, end, total };
+});
+
+// === PAGINATION METHODS ===
 const nextPage = () => {
   if (currentPage.value < totalPages.value) {
     currentPage.value++;
@@ -91,6 +119,67 @@ const prevPage = () => {
     currentPage.value--;
   }
 };
+
+const goToPage = (page) => {
+  if (page >= 1 && page <= totalPages.value) {
+    currentPage.value = page;
+  }
+};
+
+const resetPagination = () => {
+  currentPage.value = 1;
+};
+
+// Generate page numbers for pagination
+const pageNumbers = computed(() => {
+  const pages = [];
+  const maxVisiblePages = 5;
+
+  if (totalPages.value <= maxVisiblePages) {
+    // Show all pages
+    for (let i = 1; i <= totalPages.value; i++) {
+      pages.push(i);
+    }
+  } else {
+    // Show limited pages with ellipsis
+    if (currentPage.value <= 3) {
+      // Near the beginning
+      for (let i = 1; i <= 4; i++) {
+        pages.push(i);
+      }
+      pages.push('...');
+      pages.push(totalPages.value);
+    } else if (currentPage.value >= totalPages.value - 2) {
+      // Near the end
+      pages.push(1);
+      pages.push('...');
+      for (let i = totalPages.value - 3; i <= totalPages.value; i++) {
+        pages.push(i);
+      }
+    } else {
+      // In the middle
+      pages.push(1);
+      pages.push('...');
+      for (let i = currentPage.value - 1; i <= currentPage.value + 1; i++) {
+        pages.push(i);
+      }
+      pages.push('...');
+      pages.push(totalPages.value);
+    }
+  }
+
+  return pages;
+});
+
+// Watch for search changes to reset pagination
+watch(searchQuery, () => {
+  resetPagination();
+});
+
+// Watch for items per page changes
+watch(itemsPerPage, () => {
+  resetPagination();
+});
 
 // Open add modal
 const openAddModal = () => {
@@ -132,6 +221,7 @@ const handleAddRoomType = (newRoom) => {
 
     isAddModalOpen.value = false;
     showCreateSuccess.value = true;
+    resetPagination(); // Reset to page 1 to show new item
   } catch (error) {
     errorMessage.value = error.message || 'Failed to create room type';
     showError.value = true;
@@ -175,6 +265,11 @@ const handleDeleteRoomType = () => {
         isDeleteModalOpen.value = false;
         roomToDelete.value = null;
         showDeleteSuccess.value = true;
+
+        // Reset pagination if needed
+        if (paginatedRoomTypes.value.length === 0 && currentPage.value > 1) {
+          prevPage();
+        }
       } else {
         throw new Error('Room not found');
       }
@@ -297,7 +392,6 @@ onMounted(() => {
           <!-- Header -->
           <div class="mb-6">
             <h1 class="text-2xl md:text-3xl font-bold text-[#7A0C23] mb-1">Room Types Dashboard</h1>
-
           </div>
 
           <!-- Controls -->
@@ -434,41 +528,104 @@ onMounted(() => {
               </table>
             </div>
 
-            <!-- Pagination -->
-            <div v-if="filteredRoomTypes.length > itemsPerPage" class="px-4 py-3 border-t border-gray-200 bg-gray-50 flex flex-col sm:flex-row justify-between items-center">
-              <div class="text-sm text-gray-600 mb-2 sm:mb-0">
-                Showing {{ Math.min((currentPage - 1) * itemsPerPage + 1, filteredRoomTypes.length) }} to
-                {{ Math.min(currentPage * itemsPerPage, filteredRoomTypes.length) }} of
-                {{ filteredRoomTypes.length }} results
-              </div>
-              <div class="flex items-center space-x-1">
-                <button
-                  @click="prevPage"
-                  :disabled="currentPage === 1"
-                  :class="[
-                    'px-3 py-1 rounded border',
-                    currentPage === 1
-                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                      : 'bg-white text-gray-700 hover:bg-gray-50'
-                  ]"
-                >
-                  Previous
-                </button>
-                <span class="px-3 py-1 text-sm text-gray-700">
+            <!-- Enhanced Pagination Controls -->
+            <div v-if="filteredRoomTypes.length > 0" class="bg-gray-50 px-6 py-4 border-t border-gray-200">
+              <div class="flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
+
+                <!-- Showing range -->
+                <div class="text-sm text-gray-600">
+                  Showing {{ showingRange.start }} to {{ showingRange.end }} of {{ showingRange.total }} entries
+                </div>
+
+                <!-- Items per page selector -->
+                <div class="flex items-center space-x-2">
+                  <span class="text-sm text-gray-600">Show:</span>
+                  <select
+                    v-model="itemsPerPage"
+                    class="text-sm border border-gray-300 rounded px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-[#7A0C23] focus:border-transparent"
+                  >
+                    <option value="5">5</option>
+                    <option value="10">10</option>
+                    <option value="15">15</option>
+                    <option value="20">20</option>
+                    <option value="30">30</option>
+                  </select>
+                  <span class="text-sm text-gray-600">per page</span>
+                </div>
+
+                <!-- Page navigation -->
+                <div class="flex items-center space-x-2">
+                  <!-- Previous button -->
+                  <IconButton
+                    @click="prevPage"
+                    :disabled="currentPage === 1"
+                    icon="chevronLeft"
+                    title="Previous Page"
+                    size="sm"
+                    color="gray"
+                    outlined
+                    :class="[
+                      'px-3 py-1.5 rounded text-sm font-medium transition-colors duration-150',
+                      currentPage === 1
+                        ? 'bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed'
+                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
+                    ]"
+                  >
+                    Previous
+                  </IconButton>
+
+                  <!-- Page numbers -->
+                  <div class="flex items-center space-x-1">
+                    <button
+                      v-for="(page, index) in pageNumbers"
+                      :key="index"
+                      @click="typeof page === 'number' ? goToPage(page) : null"
+                      :disabled="page === '...'"
+                      :class="[
+                        'px-3 py-1.5 rounded border text-sm font-medium min-w-[36px] transition-colors duration-150',
+                        page === '...'
+                          ? 'bg-white text-gray-400 border-gray-300 cursor-default'
+                          : currentPage === page
+                            ? 'bg-[#7A0C23] text-white border-[#7A0C23]'
+                            : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                      ]"
+                    >
+                      {{ page }}
+                    </button>
+                  </div>
+
+                  <!-- Next button -->
+                  <IconButton
+                    @click="nextPage"
+                    :disabled="currentPage === totalPages"
+                    icon="chevronRight"
+                    title="Next Page"
+                    size="sm"
+                    color="gray"
+                    outlined
+                    :class="[
+                      'px-3 py-1.5 rounded text-sm font-medium transition-colors duration-150',
+                      currentPage === totalPages
+                        ? 'bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed'
+                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
+                    ]"
+                  >
+                    Next
+                  </IconButton>
+                </div>
+
+                <!-- Page indicator -->
+                <div class="text-sm text-gray-600">
                   Page {{ currentPage }} of {{ totalPages }}
-                </span>
-                <button
-                  @click="nextPage"
-                  :disabled="currentPage === totalPages"
-                  :class="[
-                    'px-3 py-1 rounded border',
-                    currentPage === totalPages
-                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                      : 'bg-white text-gray-700 hover:bg-gray-50'
-                  ]"
-                >
-                  Next
-                </button>
+                </div>
+              </div>
+
+              <!-- Results summary -->
+              <div class="mt-4 pt-3 border-t border-gray-300 text-center">
+                <p class="text-sm text-gray-500">
+                  Filtered Results: <span class="font-semibold text-[#7A0C23]">{{ filteredRoomTypes.length }}</span>
+                  | Total Room Types: <span class="font-semibold text-[#7A0C23]">{{ roomTypes.length }}</span>
+                </p>
               </div>
             </div>
           </div>
@@ -772,5 +929,31 @@ onMounted(() => {
 /* Smooth transitions */
 .transition-colors {
   transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Custom styles for pagination */
+button:not(:disabled):hover {
+  transform: translateY(-1px);
+  transition: transform 0.2s ease;
+}
+
+/* Ensure pagination controls are properly spaced */
+.space-x-1 > * + * {
+  margin-left: 0.25rem;
+}
+
+.space-x-2 > * + * {
+  margin-left: 0.5rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .flex-col.md\:flex-row {
+    gap: 1rem;
+  }
+
+  .space-x-2 {
+    justify-content: center;
+  }
 }
 </style>

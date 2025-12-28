@@ -2,12 +2,13 @@
 // ============================================================
 // Imports
 // ============================================================
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import Navbar from '@/Components/Navbar.vue'
 import Sidebar from '@/Components/Sidebar.vue'
 import BuildingTable from '@/Components/BuildingModals/BuildingTable.vue'
 import BuildingModal from '@/Components/BuildingModals/BuildingModal.vue'
 import Messagefunction from '@/Components/Messagefunction.vue'
+import IconButton from '@/Components/IconButton.vue'
 
 // ============================================================
 // State - Building Data
@@ -21,12 +22,66 @@ const buildings = ref([
   { id: 5, name: 'Art Studio Block', address: '301 Creative Lane', parking: true }
 ])
 
+// ⭐ PAGINATION STATE
+const currentPage = ref(1)
+const itemsPerPage = ref(5)
+
 // ⭐ TOAST STATE
 const showCreateSuccess = ref(false)
 const showEditSuccess = ref(false)
 const showDeleteSuccess = ref(false)
 const deletedBuildingName = ref('')
 const toastTimeout = 2000 // 2 seconds
+
+// ============================================================
+// Computed Properties - Pagination
+// ============================================================
+
+// Paginated buildings
+const paginatedBuildings = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage.value
+  const end = start + itemsPerPage.value
+  return buildings.value.slice(start, end)
+})
+
+// Total pages
+const totalPages = computed(() => {
+  return Math.ceil(buildings.value.length / itemsPerPage.value)
+})
+
+// Showing range
+const showingRange = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage.value + 1
+  const end = Math.min(currentPage.value * itemsPerPage.value, buildings.value.length)
+  const total = buildings.value.length
+  return { start, end, total }
+})
+
+// ============================================================
+// Pagination Functions
+// ============================================================
+
+const nextPage = () => {
+  if (currentPage.value < totalPages.value) {
+    currentPage.value++
+  }
+}
+
+const prevPage = () => {
+  if (currentPage.value > 1) {
+    currentPage.value--
+  }
+}
+
+const goToPage = (page) => {
+  if (page >= 1 && page <= totalPages.value) {
+    currentPage.value = page
+  }
+}
+
+const resetPagination = () => {
+  currentPage.value = 1
+}
 
 // ============================================================
 // Sidebar Controls
@@ -69,6 +124,9 @@ const addBuilding = (data) => {
 
   showCreateSuccess.value = true
   setTimeout(() => showCreateSuccess.value = false, toastTimeout)
+
+  // Reset pagination to show new building
+  resetPagination()
 }
 
 // ✏️ Edit
@@ -92,13 +150,15 @@ const deleteBuilding = (id) => {
 
     showDeleteSuccess.value = true
     setTimeout(() => showDeleteSuccess.value = false, toastTimeout)
+
+    // Reset pagination if needed
+    resetPagination()
   }
 }
 
 // 🔁 Handle Updates from Modal
 const handleDataUpdated = (data, type) => {
   if (type === 'delete') {
-    // ❌ Removed confirm popup — Messagefunction handles toast instead
     deleteBuilding(data.id)
   } else if (type === 'add') {
     addBuilding(data)
@@ -119,7 +179,119 @@ const handleDataUpdated = (data, type) => {
       <main class="flex-1 p-6">
         <h2 class="text-xl font-bold mb-6 text-[#7A0C23]">Building Management Dashboard</h2>
 
-        <BuildingTable :buildings="buildings" @openModal="handleOpenModal" />
+        <!-- Building Table Component -->
+        <BuildingTable
+          :buildings="paginatedBuildings"
+          @openModal="handleOpenModal"
+        />
+
+        <!-- Pagination Controls -->
+        <div v-if="buildings.length > 0" class="mt-4 bg-white rounded-lg shadow p-4">
+          <div class="flex flex-col md:flex-row items-center justify-between">
+            <!-- Showing range -->
+            <div class="text-sm text-gray-600 mb-3 md:mb-0">
+              Showing {{ showingRange.start }} to {{ showingRange.end }} of {{ showingRange.total }} entries
+            </div>
+
+            <!-- Items per page selector -->
+            <div class="flex items-center space-x-2 mb-3 md:mb-0">
+              <span class="text-sm text-gray-600">Show:</span>
+              <select
+                v-model="itemsPerPage"
+                @change="resetPagination"
+                class="text-sm border border-gray-300 rounded px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-[#7A0C23] focus:border-transparent"
+              >
+                <option value="3">3</option>
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="50">50</option>
+              </select>
+              <span class="text-sm text-gray-600">per page</span>
+            </div>
+
+            <!-- Page navigation -->
+            <div class="flex items-center space-x-2">
+              <!-- Previous button -->
+              <IconButton
+                @click="prevPage"
+                :disabled="currentPage === 1"
+                icon="chevronLeft"
+                title="Previous Page"
+                size="sm"
+                color="gray"
+                outlined
+                :class="[
+                  'px-3 py-1.5 rounded border text-sm font-medium transition-colors duration-150',
+                  currentPage === 1
+                    ? 'bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed'
+                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
+                ]"
+              >
+                Previous
+              </IconButton>
+
+              <!-- Page numbers -->
+              <div class="flex items-center space-x-1">
+                <button
+                  v-for="page in totalPages"
+                  :key="page"
+                  @click="goToPage(page)"
+                  :class="[
+                    'px-3 py-1.5 rounded border text-sm font-medium min-w-[36px] transition-colors duration-150',
+                    currentPage === page
+                      ? 'bg-[#7A0C23] text-white border-[#7A0C23]'
+                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                  ]"
+                >
+                  {{ page }}
+                </button>
+              </div>
+
+              <!-- Next button -->
+              <IconButton
+                @click="nextPage"
+                :disabled="currentPage === totalPages"
+                icon="chevronRight"
+                title="Next Page"
+                size="sm"
+                color="gray"
+                outlined
+                :class="[
+                  'px-3 py-1.5 rounded border text-sm font-medium transition-colors duration-150',
+                  currentPage === totalPages
+                    ? 'bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed'
+                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
+                ]"
+              >
+                Next
+              </IconButton>
+            </div>
+
+            <!-- Page indicator -->
+            <div class="text-sm text-gray-600 mt-3 md:mt-0">
+              Page {{ currentPage }} of {{ totalPages }}
+            </div>
+          </div>
+
+          <!-- Results summary -->
+          <div class="mt-4 pt-3 border-t border-gray-200 text-center">
+            <p class="text-sm text-gray-500">
+              Total Buildings: <span class="font-semibold text-[#7A0C23]">{{ buildings.length }}</span>
+            </p>
+          </div>
+        </div>
+
+        <!-- Empty state -->
+        <div v-if="buildings.length === 0" class="mt-4 bg-white rounded-lg shadow p-8 text-center">
+          <div class="flex flex-col items-center justify-center">
+            <svg class="w-16 h-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+            </svg>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">No Buildings Found</h3>
+            <p class="text-gray-500 mb-4">Get started by adding your first building.</p>
+          </div>
+        </div>
       </main>
     </div>
 
@@ -141,5 +313,29 @@ const handleDataUpdated = (data, type) => {
 </template>
 
 <style scoped>
-/* optional custom styles */
+/* Custom styles for pagination */
+button:not(:disabled):hover {
+  transform: translateY(-1px);
+  transition: transform 0.2s ease;
+}
+
+/* Ensure pagination controls are properly spaced */
+.space-x-1 > * + * {
+  margin-left: 0.25rem;
+}
+
+.space-x-2 > * + * {
+  margin-left: 0.5rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .flex-col.md\:flex-row {
+    gap: 1rem;
+  }
+
+  .space-x-2 {
+    justify-content: center;
+  }
+}
 </style>
