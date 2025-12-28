@@ -5,7 +5,7 @@ import Navbar from '@/Components/Navbar.vue';
 import Sidebar from '@/Components/Sidebar.vue';
 import AddRoomTypeModal from '@/Components/RoomTypeModal/AddRoom.vue';
 import EditRoomTypeModal from '@/Components/RoomTypeModal/EditRoom.vue';
-import Messagefunction from '@/Components/Messagefunction.vue';
+import Messagefunction from '@/Components/MessageFunction.vue';
 import IconButton from '@/Components/IconButton.vue';
 
 // Sidebar state

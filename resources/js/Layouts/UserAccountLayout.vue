@@ -1,25 +1,50 @@
 <script setup>
 import { ref } from 'vue'
 // Mock components for context, assuming they exist in the actual project
-import Navbar from '@/Components/Navbar.vue'
-import Sidebar from '@/Components/Sidebar.vue'
-import UserAccountTable from '@/Components/UserAccountModal/UserAccountTable.vue'
-import UserModal from '@/Components/UserAccountModal/UserModal.vue'
+import Navbar from '@/Components/Navbar.vue';
+import Sidebar from '@/Components/Sidebar.vue';
+import UserAccountTable from '@/Components/UserAccountModal/UserAccountTable.vue';
+import UserModal from '@/Components/UserAccountModal/UserModal.vue';
+import ToastContainer from '@/Components/MessageFunction.vue';
 
 // --- Data State (Master Array) ---
 const nextId = ref(16);
 // Initialized with mock data matching the Laravel schema
 const users = ref(
-    Array.from({ length: 15 }, (_, i) => ({
+    Array.from({ length: 35 }, (_, i) => ({
         id: i + 1,
         username: `user_${i + 1}`,
         email: `user${i + 1}@example.com`,
         first_name: i % 2 === 0 ? `Alice${i + 1}` : `Bob${i + 1}`,
         last_name: `Smith${i + 1}`,
-        role: ['ADMIN', 'Staff', 'Faculty','DPTAPR','AO','ADPD','OCS','SYSADMIN','USER TYPE NAME'][i % 3],
+        role: ['Admin', 'Staff', 'Faculty','DPTAPR','AO','ADPD','OCS','SYSADMIN','USER'][i % 9],
+        department: ['Computer Science', 'Electrical Engineering', 'Mechanical Engineering', 'Physics', 'Mathematics'][i % 5],
+        college: ['College of Engineering (CoE)', 'College of Arts and Sciences (CAS)', 'College of Business and Accountancy (CBA)', 'College of Education (CoEd)', 'College of Information Technology (CIT)'][i % 5],
+        permissions: getDefaultPermissions(i % 9)
     }))
 );
 
+// Helper function to get default permissions based on role index
+function getDefaultPermissions(roleIndex) {
+    const permissionsMap = {
+        0: ['Can Approve', 'Can Edit', 'Can Book', 'Staff Work', 'User Type Only'], // Admin
+        1: ['Can Book', 'Staff Work'], // Staff
+        2: ['Can Book', 'User Type Only'], // Faculty
+        3: ['Can Approve', 'Can Book', 'User Type Only'], // DPTAPR
+        4: ['Can Approve', 'Can Edit', 'Staff Work'], // AO
+        5: ['Can Approve', 'Can Edit'], // ADPD
+        6: ['Can Approve', 'Can Edit', 'Can Book'], // OCS
+        7: ['Can Approve', 'Can Edit', 'Can Book', 'Staff Work', 'User Type Only'], // SYSADMIN
+        8: ['Can Book', 'User Type Only'] // USER
+    };
+    return permissionsMap[roleIndex] || [];
+}
+
+// --- Toast States ---
+const showCreateSuccess = ref(false);
+const showEditSuccess = ref(false);
+const showDeleteSuccess = ref(false);
+const deletedUserName = ref('');
 
 // --- Layout State ---
 const sidebarVisible = ref(true)
@@ -44,18 +69,46 @@ const handleCloseModal = () => {
     modalType.value = null
 }
 
-// --- CRUD Operations ---
+// --- Toast Functions ---
+const triggerToast = (type, name = "") => {
+    // Reset all toast states first
+    showCreateSuccess.value = false
+    showEditSuccess.value = false
+    showDeleteSuccess.value = false
 
+    // Set the appropriate toast state
+    if (type === "create") {
+        showCreateSuccess.value = true
+    } else if (type === "edit") {
+        showEditSuccess.value = true
+    } else if (type === "delete") {
+        deletedUserName.value = name
+        showDeleteSuccess.value = true
+    }
+
+    // Auto-hide the toast after 3 seconds
+    setTimeout(() => {
+        showCreateSuccess.value = false
+        showEditSuccess.value = false
+        showDeleteSuccess.value = false
+        deletedUserName.value = ""
+    }, 3000)
+}
+
+// --- CRUD Operations ---
 const handleDataUpdated = (data, type) => {
     switch (type) {
         case 'add':
             addUser(data);
+            triggerToast("create");
             break;
         case 'edit':
             updateUser(data);
+            triggerToast("edit");
             break;
         case 'delete':
             deleteUser(data.id);
+            triggerToast("delete", data.username);
             break;
     }
     handleCloseModal();
@@ -65,8 +118,8 @@ const addUser = (newUser) => {
     // Assign a new ID (simulating DB insertion)
     newUser.id = nextId.value++;
     // Set a default role if none is provided in the form
-    if (!newUser.role) newUser.role = 'Staff'; 
-    users.value.push(newUser);
+    if (!newUser.role) newUser.role = 'Staff';
+    users.value.unshift(newUser); // Add to beginning to show at top
     console.log('User added:', newUser.username);
 };
 
@@ -87,28 +140,46 @@ const deleteUser = (userId) => {
     }
 };
 
+// --- Close Toast Handlers ---
+const closeCreateToast = () => showCreateSuccess.value = false;
+const closeEditToast = () => showEditSuccess.value = false;
+const closeDeleteToast = () => {
+    showDeleteSuccess.value = false;
+    deletedUserName.value = '';
+};
 </script>
 
 <template>
-    <div class="bg-gray-200 font-sans">
+    <div class="bg-gray-200 font-sans min-h-screen">
+        <!-- Toast Notifications -->
+        <MessageFunction
+            :show-create-success="showCreateSuccess"
+            :show-edit-success="showEditSuccess"
+            :show-delete-success="showDeleteSuccess"
+            :deleted-room-name="deletedUserName"
+            @close-create="closeCreateToast"
+            @close-edit="closeEditToast"
+            @close-delete="closeDeleteToast"
+        />
+
         <!-- Assuming Navbar and Sidebar exist and are correctly imported -->
-        <Navbar @toggleSidebar="toggleSidebar" />
-        
+        <Navbar @toggle-sidebar="toggleSidebar" />
+
         <div class="flex pt-10 min-h-screen transition-all duration-300">
-            
+
             <Sidebar v-show="sidebarVisible" class="fixed top-5 left-0 h-full z-20 w-64 lg:relative" />
 
             <main id="main" class="flex-1 overflow-y-auto p-0 md:p-6 bg-gray-200">
-                <UserAccountTable :users="users" @openModal="handleOpenModal" />
+                <UserAccountTable :users="users" @open-modal="handleOpenModal" />
             </main>
         </div>
 
         <UserModal
-            :isVisible="isModalVisible"
+            :is-visible="isModalVisible"
             :type="modalType"
             :user="modalData"
             @close="handleCloseModal"
-            @dataUpdated="handleDataUpdated"
+            @data-updated="handleDataUpdated"
         />
     </div>
 </template>

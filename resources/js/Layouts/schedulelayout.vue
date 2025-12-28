@@ -4,7 +4,7 @@ import { ref, computed, watchEffect } from 'vue';
 // Core Components
 import Navbar from '@/Components/Navbar.vue';
 import Sidebar from '@/Components/Sidebar.vue';
-import MessageFunction from '@/Components/Messagefunction.vue';
+import MessageFunction from '@/Components/MessageFunction.vue';
 
 // ScheduleModal Components
 import AppointmentModal from '@/Components/ScheduleModal/AppointmentModal.vue';

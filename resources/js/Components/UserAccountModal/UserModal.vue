@@ -98,7 +98,7 @@ watch(() => [props.user, props.type], ([newUser, newType]) => {
         };
     } else if (newUser) {
         // Deep copy the user object to formData for modification/view
-        formData.value = { 
+        formData.value = {
             username: newUser.username || '',
             email: newUser.email || '',
             first_name: newUser.first_name || '',
@@ -171,9 +171,9 @@ const handleDeleteConfirm = () => {
 <template>
     <Transition name="modal-fade">
         <div v-if="isVisible" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" @click.self="emit('close')">
-            
+
             <div class="bg-white rounded-lg shadow-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto transform transition-all duration-300 scale-100 opacity-100">
-                
+
                 <div class="flex justify-between items-center border-b pb-3 mb-4">
                     <h3 class="text-2xl font-semibold text-gray-800">{{ modalTitle }}</h3>
                     <button @click="emit('close')" class="text-gray-400 hover:text-gray-600 transition">
@@ -181,7 +181,7 @@ const handleDeleteConfirm = () => {
                     </button>
                 </div>
 
-                
+
 
                 <div v-if="isView && user" class="space-y-3 text-gray-700">
                     <div class="grid grid-cols-2 gap-4">
@@ -206,7 +206,7 @@ const handleDeleteConfirm = () => {
                     </div>
                 </div>
 
-                
+
 
                 <form v-else-if="isEditOrAdd" @submit.prevent="handleSubmit" class="space-y-6">
                     <div class="grid grid-cols-2 gap-4">
@@ -219,7 +219,7 @@ const handleDeleteConfirm = () => {
                             <input type="text" id="last_name" v-model="formData.last_name" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
                         </div>
                     </div>
-                    
+
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label for="username" class="block text-sm font-medium text-gray-700 text-left">Username <span class="text-red-500">*</span></label>
@@ -263,17 +263,17 @@ const handleDeleteConfirm = () => {
                         <label class="block text-sm font-medium text-gray-700 mb-2 text-left">Permissions</label>
                         <div class="grid grid-cols-2 gap-2 p-3 border border-gray-300 rounded-md">
                             <div v-for="permission in permissionsOptions" :key="permission" class="flex items-center">
-                                <input 
-                                    :id="permission" 
-                                    type="checkbox" 
-                                    :value="permission" 
-                                    v-model="formData.permissions" 
+                                <input
+                                    :id="permission"
+                                    type="checkbox"
+                                    :value="permission"
+                                    v-model="formData.permissions"
                                     class="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
                                 >
                                 <label :for="permission" class="ml-2 block text-sm text-gray-900">{{ permission }}</label>
                             </div>
                         </div>
-                        <p class="mt-1 text-xs text-gray-500 text-left">Default permissions set for **{{ formData.role }}** role.</p>
+                        <p class="mt-1 text-xs text-gray-500 text-left">Default permissions set for <strong>{{ formData.role }}</strong> role.</p>
                     </div>
 
                     <div class="pt-4 border-t flex justify-end space-x-3">
@@ -285,7 +285,7 @@ const handleDeleteConfirm = () => {
                 </form>
 
                 <div v-else-if="isDelete && user" class="space-y-4">
-                    <p class="text-lg text-red-600">Are you sure you want to delete the account for **{{ user.username }}**?</p>
+                    <p class="text-lg text-red-600">Are you sure you want to delete the account for <strong>{{ user.username }}</strong>?</p>
                     <p class="text-gray-600">This action cannot be undone.</p>
                     <div class="mt-6 pt-4 border-t flex justify-end space-x-3">
                         <button @click="emit('close')" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded transition">Cancel</button>

@@ -7,7 +7,7 @@ import Navbar from '@/Components/Navbar.vue'
 import Sidebar from '@/Components/Sidebar.vue'
 import BuildingTable from '@/Components/BuildingModals/BuildingTable.vue'
 import BuildingModal from '@/Components/BuildingModals/BuildingModal.vue'
-import Messagefunction from '@/Components/Messagefunction.vue'
+import Messagefunction from '@/Components/MessageFunction.vue'
 import IconButton from '@/Components/IconButton.vue'
 
 // ============================================================

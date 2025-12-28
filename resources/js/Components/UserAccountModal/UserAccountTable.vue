@@ -1,18 +1,6 @@
 <script setup>
 import { computed, ref, defineProps, defineEmits } from 'vue';
-
-// 1. --- Font Awesome Imports & Setup ---
-// You must import the Font Awesome component and the specific icons you need.
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { faEye, faPenToSquare, faTrash } from '@fortawesome/free-solid-svg-icons';
-
-// Mapping icons for easier use in the template
-const icons = {
-    eye: faEye,
-    edit: faPenToSquare, // Correct icon for 'Edit'
-    delete: faTrash,     // Correct icon for 'Delete'
-};
-// ----------------------------------------
+import IconButton from '@/Components/IconButton.vue';
 
 const props = defineProps({
     users: {
@@ -25,7 +13,11 @@ const emit = defineEmits(['openModal']);
 
 const searchQuery = ref('');
 
-// Filtering now uses the new user fields
+// --- Pagination State ---
+const currentPage = ref(1);
+const itemsPerPage = ref(10);
+
+// Filtering uses the new user fields
 const filteredUsers = computed(() => {
     if (!searchQuery.value) {
         return props.users;
@@ -36,12 +28,55 @@ const filteredUsers = computed(() => {
         user.email.toLowerCase().includes(query) ||
         user.first_name.toLowerCase().includes(query) ||
         user.last_name.toLowerCase().includes(query) ||
-        user.role.toLowerCase().includes(query)
+        user.role.toLowerCase().includes(query) ||
+        (user.department && user.department.toLowerCase().includes(query)) ||
+        (user.college && user.college.toLowerCase().includes(query))
     );
 });
 
-// --- Action Handlers (Emit events to parent) ---
+// --- Paginated Data ---
+const paginatedUsers = computed(() => {
+    const start = (currentPage.value - 1) * itemsPerPage.value;
+    const end = start + itemsPerPage.value;
+    return filteredUsers.value.slice(start, end);
+});
 
+// --- Pagination Computed ---
+const totalPages = computed(() => {
+    return Math.ceil(filteredUsers.value.length / itemsPerPage.value);
+});
+
+const showingRange = computed(() => {
+    const start = (currentPage.value - 1) * itemsPerPage.value + 1;
+    const end = Math.min(currentPage.value * itemsPerPage.value, filteredUsers.value.length);
+    const total = filteredUsers.value.length;
+    return { start, end, total };
+});
+
+// --- Pagination Methods ---
+const nextPage = () => {
+    if (currentPage.value < totalPages.value) {
+        currentPage.value++;
+    }
+};
+
+const prevPage = () => {
+    if (currentPage.value > 1) {
+        currentPage.value--;
+    }
+};
+
+const goToPage = (page) => {
+    if (page >= 1 && page <= totalPages.value) {
+        currentPage.value = page;
+    }
+};
+
+const resetPagination = () => {
+    currentPage.value = 1;
+};
+
+// --- Action Handlers ---
 const handleAddAccount = () => {
     emit('openModal', 'add');
 };
@@ -57,9 +92,6 @@ const handleEdit = (user) => {
 const handleDelete = (user) => {
     emit('openModal', 'delete', user);
 };
-
-
-
 </script>
 
 <template>
@@ -67,62 +99,239 @@ const handleDelete = (user) => {
         <h2 class="text-xl font-bold mb-4 text-[#7A0C23]">User Account Management</h2>
 
         <div class="mb-4 flex justify-between items-center">
-            <input
-                type="text"
-                v-model="searchQuery"
-                placeholder="SEARCH "
-                class="border border-gray-300 rounded-full px-4 py-2 w-72 focus:outline-none focus:ring-2 focus:ring-sky-400"
-            />
-            <button @click="handleAddAccount" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded shadow transition duration-150">
+            <div class="relative">
+                <input
+                    type="text"
+                    v-model="searchQuery"
+                    @input="resetPagination"
+                    placeholder="Search users..."
+                    class="border border-yellow-400 rounded-full pl-10 pr-4 py-2 w-72 focus:outline-none focus:ring-2 focus:ring-sky-400"
+                />
+                <!-- Search Icon using IconButton -->
+                <IconButton
+                    icon="search"
+                    size="sm"
+                    color="gray"
+                    class="absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none"
+                />
+            </div>
+            <!-- Add Button using IconButton -->
+            <IconButton
+                @click="handleAddAccount"
+                icon="plus"
+                title="Add New User"
+                size="sm"
+                color="green"
+                outlined
+                class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded shadow transition duration-150"
+            >
                 Add New User
-            </button>
+            </IconButton>
         </div>
 
-        <div class=" bg-white rounded-lg shadow-xl">
-            <div class=" max-h-[80vh]">
-                <table class="min-w-full border border-gray-200 text-sm text-center">
-                    <thead class="bg-[#7A0C23] text-white  top-0 shadow">
+        <div class="border-yellow-700 bg-white rounded-lg shadow-xl overflow-hidden">
+            <div class="overflow-x-auto max-h-[80vh]">
+                <table class="min-w-full border border-yellow-400 text-sm text-center">
+                    <thead class="border-yellow-400 bg-[#7A0C23] text-white sticky top-0 shadow">
                         <tr>
-                             <th class="px-4 py-3 border border-gray-500 font-semibold text-left">NAME</th>
-                            <th class="px-4 py-3 border border-gray-500 font-semibold text-left">USERNAME</th>
-                            <th class="px-4 py-3 border border-gray-500 font-semibold text-left">EMAIL</th>
-                            
-                            <th class="px-4 py-3 border border-gray-500 font-semibold">OFFICE</th>
-                            <th class="px-4 py-3 border border-gray-500 font-semibold">ACTION</th>
-                          
+                            <th class="px-4 py-3 font-semibold text-left">NAME</th>
+                            <th class="px-4 py-3 font-semibold text-left">USERNAME</th>
+                            <th class="px-4 py-3  font-semibold text-left">EMAIL</th>
+                            <th class="px-4 py-3  font-semibold">ROLE</th>
+                            <th class="px-4 py-3  font-semibold">DEPARTMENT</th>
+                            <th class="px-4 py-3  font-semibold">COLLEGE</th>
+                            <th class="px-4 py-3  font-semibold">ACTION</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr
-                            v-for="(user) in filteredUsers"
+                            v-for="(user) in paginatedUsers"
                             :key="user.id"
-                            class="odd:bg-white even:bg-gray-100 hover:bg-gray-200 transition duration-100"
+                            class="border-yellow-400 odd:bg-white even:bg-gray-100 hover:bg-gray-200 transition duration-100"
                         >
-                            <td class="px-4 py-2 text-left font-medium text-gray-800">{{ user.first_name }}</td>
-                           
-                             <td class="px-4 py-2 text-left">{{ user.username }}</td>
-                            
+                            <td class="border-yellow-400 px-4 py-2 text-left font-medium text-gray-800">
+                                {{ user.first_name }} {{ user.last_name }}
+                            </td>
+                            <td class="px-4 py-2 text-left">{{ user.username }}</td>
                             <td class="px-4 py-2 text-left">{{ user.email }}</td>
-                            
-                            <td class="px-4 py-2">{{ user.role }}</td>
+                            <td class="px-4 py-2">
+                                <span :class="[
+                                    'px-2 py-1 text-xs rounded-full font-medium',
+                                    user.role === 'Admin' || user.role === 'SYSADMIN' ? 'bg-purple-100 text-purple-800' :
+                                    user.role === 'Staff' ? 'bg-blue-100 text-blue-800' :
+                                    user.role === 'Faculty' ? 'bg-green-100 text-green-800' :
+                                    'bg-gray-100 text-gray-800'
+                                ]">
+                                    {{ user.role }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-2">{{ user.department || 'N/A' }}</td>
+                            <td class="px-4 py-2">{{ user.college || 'N/A' }}</td>
                             <td class="px-4 py-2 space-x-2 whitespace-nowrap">
-                                <button @click="handleView(user)" title="View" class="text-blue-500 hover:text-blue-700 transform hover:scale-110 transition">
-                                    <FontAwesomeIcon :icon="icons.eye" class="h-5 w-5" />
-                                </button>
-                                <button @click="handleEdit(user)" title="Edit" class="text-green-600 hover:text-green-800 transform hover:scale-110 transition">
-                                    <FontAwesomeIcon :icon="icons.edit" class="h-5 w-5" />
-                                </button>
-                                <button @click="handleDelete(user)" title="Delete" class="text-red-600 hover:text-red-800 transform hover:scale-110 transition">
-                                    <FontAwesomeIcon :icon="icons.delete" class="h-5 w-5" />
-                                </button>
+                                <!-- View Button using IconButton -->
+                                <IconButton
+                                    @click="handleView(user)"
+                                    icon="eye"
+                                    title="View User"
+                                    size="sm"
+                                    color="blue"
+                                    class="hover:scale-110 transition-transform"
+                                />
+                                <!-- Edit Button using IconButton -->
+                                <IconButton
+                                    @click="handleEdit(user)"
+                                    icon="edit"
+                                    title="Edit User"
+                                    size="sm"
+                                    color="green"
+                                    class="hover:scale-110 transition-transform"
+                                />
+                                <!-- Delete Button using IconButton -->
+                                <IconButton
+                                    @click="handleDelete(user)"
+                                    icon="delete"
+                                    title="Delete User"
+                                    size="sm"
+                                    color="red"
+                                    class="hover:scale-110 transition-transform"
+                                />
                             </td>
                         </tr>
                         <tr v-if="filteredUsers.length === 0">
-                            <td colspan="5" class="p-8 text-center text-gray-500">No users found matching your search.</td>
+                            <td colspan="7" class="p-8 text-center text-gray-500">
+                                No users found matching your search.
+                            </td>
                         </tr>
                     </tbody>
                 </table>
             </div>
+
+            <!-- Pagination Controls -->
+            <div v-if="filteredUsers.length > 0" class="bg-gray-50 px-6 py-4 border-t border-gray-200">
+                <div class="flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
+
+                    <!-- Showing range -->
+                    <div class="text-sm text-gray-600">
+                        Showing {{ showingRange.start }} to {{ showingRange.end }} of {{ showingRange.total }} entries
+                    </div>
+
+                    <!-- Items per page selector -->
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm text-gray-600">Show:</span>
+                        <select
+                            v-model="itemsPerPage"
+                            @change="resetPagination"
+                            class="text-sm border border-gray-300 rounded px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-[#7A0C23] focus:border-transparent"
+                        >
+                            <option value="5">5</option>
+                            <option value="10">10</option>
+                            <option value="15">15</option>
+                            <option value="20">20</option>
+                            <option value="30">30</option>
+                        </select>
+                        <span class="text-sm text-gray-600">per page</span>
+                    </div>
+
+                    <!-- Page navigation -->
+                    <div class="flex items-center space-x-2">
+                        <!-- Previous button using IconButton -->
+                        <IconButton
+                            @click="prevPage"
+                            :disabled="currentPage === 1"
+                            icon="chevronLeft"
+                            title="Previous Page"
+                            size="sm"
+                            color="gray"
+                            outlined
+                            :class="[
+                                'px-3 py-1.5 rounded text-sm font-medium transition-colors duration-150',
+                                currentPage === 1
+                                    ? 'bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed'
+                                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
+                            ]"
+                        >
+                            Previous
+                        </IconButton>
+
+                        <!-- Page numbers -->
+                        <div class="flex items-center space-x-1">
+                            <button
+                                v-for="page in totalPages"
+                                :key="page"
+                                @click="goToPage(page)"
+                                :class="[
+                                    'px-3 py-1.5 rounded border text-sm font-medium min-w-[36px] transition-colors duration-150',
+                                    currentPage === page
+                                        ? 'bg-[#7A0C23] text-white border-[#7A0C23]'
+                                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                                ]"
+                            >
+                                {{ page }}
+                            </button>
+                        </div>
+
+                        <!-- Next button using IconButton -->
+                        <IconButton
+                            @click="nextPage"
+                            :disabled="currentPage === totalPages"
+                            icon="chevronRight"
+                            title="Next Page"
+                            size="sm"
+                            color="gray"
+                            outlined
+                            :class="[
+                                'px-3 py-1.5 rounded text-sm font-medium transition-colors duration-150',
+                                currentPage === totalPages
+                                    ? 'bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed'
+                                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
+                            ]"
+                        >
+                            Next
+                        </IconButton>
+                    </div>
+
+                    <!-- Page indicator -->
+                    <div class="text-sm text-gray-600">
+                        Page {{ currentPage }} of {{ totalPages }}
+                    </div>
+                </div>
+
+                <!-- Results summary -->
+                <div class="mt-4 pt-3 border-t border-gray-300 text-center">
+                    <p class="text-sm text-gray-500">
+                        Filtered Results: <span class="font-semibold text-[#7A0C23]">{{ filteredUsers.length }}</span>
+                        | Total Users: <span class="font-semibold text-[#7A0C23]">{{ users.length }}</span>
+                    </p>
+                </div>
+            </div>
         </div>
     </div>
 </template>
+
+<style scoped>
+/* Custom styles for pagination */
+button:not(:disabled):hover {
+    transform: translateY(-1px);
+    transition: transform 0.2s ease;
+}
+
+/* Ensure pagination controls are properly spaced */
+.space-x-1 > * + * {
+    margin-left: 0.25rem;
+}
+
+.space-x-2 > * + * {
+    margin-left: 0.5rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .flex-col.md\:flex-row {
+        gap: 1rem;
+    }
+
+    .space-x-2 {
+        justify-content: center;
+    }
+}
+</style>

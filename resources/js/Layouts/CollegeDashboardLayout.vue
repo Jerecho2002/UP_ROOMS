@@ -3,7 +3,7 @@ import { ref } from "vue";
 import Navbar from "@/Components/Navbar.vue";
 import Sidebar from "@/Components/Sidebar.vue";
 import CollegeTableComponent from "@/Components/CollegeModals/CollegeStatsAndLinks.vue";
-import MessageFunction from "@/Components/Messagefunction.vue";
+import MessageFunction from "@/Components/MessageFunction.vue";
 
 const sidebarVisible = ref(true);
 const toggleSidebar = () => (sidebarVisible.value = !sidebarVisible.value);

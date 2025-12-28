@@ -9,7 +9,7 @@ import Sidebar from '@/Components/Sidebar.vue';
 import Sidebarsearch from '@/Components/RoomModals/Sidebarsearch.vue';
 import EditRoomModal from '@/Components/RoomModals/EditRoomModal.vue';
 import AddRoomModal from '@/Components/RoomModals/AddRoomModal.vue';
-import ToastContainer from '@/Components/Messagefunction.vue';
+import ToastContainer from '@/Components/MessageFunction.vue';
 
 
 /* ------------------------------------------------------------------- */

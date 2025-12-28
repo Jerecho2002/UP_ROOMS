@@ -5,7 +5,7 @@ import { ref } from 'vue'
 
 // Import the new components
 import DepartmentTable from '@/Components/DepartmentModals/DepartmentTable.vue'
-import MessageFunction from '@/Components/Messagefunction.vue'
+import MessageFunction from '@/Components/MessageFunction.vue'
 
 // Sidebar toggle state and method
 const sidebarVisible = ref(true)

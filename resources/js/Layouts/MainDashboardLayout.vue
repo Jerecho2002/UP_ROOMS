@@ -3,28 +3,8 @@ import { ref, onMounted, onUnmounted, computed, watchEffect } from "vue";
 import { usePage, router } from '@inertiajs/vue3';
 import Navbar from "@/Components/Navbar.vue";
 import Sidebar from "@/Components/Sidebar.vue";
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import {
-    faEye,
-    faPenToSquare,
-    faTrash,
-    faPlus,
-    faSearch,
-    faChevronLeft,
-    faChevronRight
-} from '@fortawesome/free-solid-svg-icons';
-
-// --- ICON MAPPING ---
-// Maps imported FontAwesome icons to a local object for template use.
-const icons = {
-    eye: faEye,
-    edit: faPenToSquare,
-    delete: faTrash,
-    plus: faPlus,
-    search: faSearch,
-    prev: faChevronLeft, // For pagination
-    next: faChevronRight // For pagination
-};
+import IconButton from "@/Components/IconButton.vue";
+import MessageFunction from "@/Components/MessageFunction.vue";
 
 // --- LAYOUT & SIDEBAR LOGIC ---
 
@@ -93,7 +73,126 @@ const page = usePage();
  * Computed property to safely access the paginated 'rooms' data.
  */
 const rooms = computed(() => page.props.rooms);
-// const inventoryitems = computed(() => page.props.inventoryitems); // Already defined as a prop
+
+// --- SEARCH FUNCTIONALITY ---
+const searchQuery = ref('');
+
+/**
+ * Computed property that filters rooms based on search query across all visible fields
+ */
+const filteredRooms = computed(() => {
+    if (!rooms.value || !rooms.value.data) return [];
+
+    if (!searchQuery.value.trim()) {
+        return rooms.value.data;
+    }
+
+    const query = searchQuery.value.toLowerCase().trim();
+
+    return rooms.value.data.filter(room => {
+        // Search in all available fields
+        return (
+            // Room name/subject
+            (room.room_name && room.room_name.toLowerCase().includes(query)) ||
+
+            // College name
+            (room.college?.college_name && room.college.college_name.toLowerCase().includes(query)) ||
+
+            // User account/username
+            (room.user_account?.username && room.user_account.username.toLowerCase().includes(query)) ||
+
+            // Location/building
+            (room.location && room.location.toLowerCase().includes(query)) ||
+
+            // Faculty (placeholder data)
+            ('Faculty Data'.toLowerCase().includes(query)) ||
+
+            // Date field (if exists)
+            (room.date && room.date.toLowerCase().includes(query)) ||
+
+            // Time field (if exists)
+            (room.time && room.time.toLowerCase().includes(query)) ||
+
+            // Building field (if separate from location)
+            (room.building && room.building.toLowerCase().includes(query)) ||
+
+            // Additional fields from schedules
+            (room.schedules && room.schedules.some(schedule =>
+                (schedule.cfic_id && schedule.cfic_id.toLowerCase().includes(query)) ||
+                (schedule.course_name && schedule.course_name.toLowerCase().includes(query)) ||
+                (schedule.day && schedule.day.toLowerCase().includes(query)) ||
+                (schedule.start_time && schedule.start_time.toLowerCase().includes(query)) ||
+                (schedule.end_time && schedule.end_time.toLowerCase().includes(query))
+            ))
+        );
+    });
+});
+
+/**
+ * Computed property for pagination with filtered data
+ */
+const paginatedRooms = computed(() => {
+    if (!rooms.value) return {};
+
+    // Return filtered rooms count for pagination display
+    return {
+        ...rooms.value,
+        data: filteredRooms.value,
+        total: filteredRooms.value.length,
+        from: 1,
+        to: filteredRooms.value.length
+    };
+});
+
+// --- MESSAGE FUNCTION STATE ---
+const showCreateSuccess = ref(false);
+const showEditSuccess = ref(false);
+const showDeleteSuccess = ref(false);
+const showError = ref(false);
+const showInfo = ref(false);
+const deletedRoomName = ref('');
+const errorMessage = ref('');
+const infoMessage = ref('');
+
+// --- TOAST TRIGGER FUNCTIONS ---
+const triggerToast = (type, data = {}) => {
+    // Reset all toast states
+    showCreateSuccess.value = false;
+    showEditSuccess.value = false;
+    showDeleteSuccess.value = false;
+    showError.value = false;
+    showInfo.value = false;
+
+    switch (type) {
+        case 'create':
+            showCreateSuccess.value = true;
+            break;
+        case 'edit':
+            showEditSuccess.value = true;
+            break;
+        case 'delete':
+            showDeleteSuccess.value = true;
+            deletedRoomName.value = data.name || '';
+            break;
+        case 'error':
+            showError.value = true;
+            errorMessage.value = data.message || 'An error occurred!';
+            break;
+        case 'info':
+            showInfo.value = true;
+            infoMessage.value = data.message || '';
+            break;
+    }
+
+    // Auto-hide after 5 seconds
+    setTimeout(() => {
+        showCreateSuccess.value = false;
+        showEditSuccess.value = false;
+        showDeleteSuccess.value = false;
+        showError.value = false;
+        showInfo.value = false;
+    }, 5000);
+};
 
 // --- TABLE ACTION HANDLERS ---
 
@@ -119,6 +218,8 @@ const handleViewDetails = (room) => {
  */
 const handleEditRoom = (room) => {
     console.log("Editing room:", room.id);
+    // Show edit success toast
+    triggerToast('edit', { message: `Room "${room.room_name || 'Unnamed'}" updated successfully!` });
     // Example: router.get(route('rooms.edit', room.id));
 };
 
@@ -127,10 +228,18 @@ const handleEditRoom = (room) => {
  * (Placeholder - This function should prompt for confirmation and then delete).
  * @param {number} id - The ID of the room to delete.
  */
-const handleDeleteRoom = (id) => {
+const handleDeleteRoom = (room) => {
     if (confirm("Are you sure you want to delete this room record?")) {
-        console.log("Deleting room with ID:", id);
+        console.log("Deleting room with ID:", room.id);
+
+        // Show delete success toast
+        triggerToast('delete', {
+            name: room.room_name || 'Room',
+            message: `Room "${room.room_name || 'Unnamed'}" deleted successfully!`
+        });
+
         // Example: router.delete(route('rooms.destroy', id));
+        // For demo purposes, we'll just show the toast
     }
 };
 
@@ -154,10 +263,61 @@ const goToPage = (url) => {
         preserveScroll: true,
     });
 };
+
+// --- ADD ROOM FUNCTION (Demo) ---
+const handleAddRoom = () => {
+    // Demo function to show create success toast
+    triggerToast('create', { message: 'New room created successfully!' });
+
+    // In real application, this would open a form modal or navigate to create page
+    // Example: router.get(route('rooms.create'));
+};
+
+// --- SEARCH FUNCTION ---
+const handleSearch = () => {
+    if (searchQuery.value.trim()) {
+        // Show info toast for search with result count
+        const resultCount = filteredRooms.value.length;
+        const message = resultCount === 0
+            ? `No results found for "${searchQuery.value}"`
+            : `Found ${resultCount} result(s) for "${searchQuery.value}"`;
+
+        triggerToast('info', { message });
+
+        console.log("Searching for:", searchQuery.value);
+        console.log("Found results:", resultCount);
+    } else {
+        // Show toast when clearing search
+        triggerToast('info', { message: 'Showing all room records' });
+    }
+};
+
+// Clear search function
+const clearSearch = () => {
+    searchQuery.value = '';
+    triggerToast('info', { message: 'Search cleared, showing all records' });
+};
 </script>
 
 <template>
     <div class="relative min-h-screen">
+        <!-- Message Function Toasts -->
+        <MessageFunction
+            :show-create-success="showCreateSuccess"
+            :show-edit-success="showEditSuccess"
+            :show-delete-success="showDeleteSuccess"
+            :show-error="showError"
+            :show-info="showInfo"
+            :deleted-room-name="deletedRoomName"
+            :error-message="errorMessage"
+            :info-message="infoMessage"
+            @close-create="showCreateSuccess = false"
+            @close-edit="showEditSuccess = false"
+            @close-delete="showDeleteSuccess = false"
+            @close-error="showError = false"
+            @close-info="showInfo = false"
+        />
+
         <Navbar @toggleSidebar="toggleSidebar" :is-mobile-open="sidebarOpen" :is-desktop-open="sidebarForcedOpen"
             :is-desktop="isDesktop" />
 
@@ -180,12 +340,19 @@ const goToPage = (url) => {
 
             <main id="mainContent" class="flex-1 px-6 py-6 bg-gray-200 pt-20">
                 <slot>
-                    <div class=" text-gray-500 mb-4 flex justify-between items-center">
-                        <h1 class="hidden md:block text-[#7A0C23] font-bold text-2xl">Dashboard</h1>
-                        <span>UPCEBU &gt; Dashboard</span>
+                    <!-- Header with Actions -->
+                    <div class="text-gray-500 mb-6 flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+                        <div>
+                            <h1 class="text-[#7A0C23] font-bold text-2xl">Dashboard</h1>
+
+                        </div>
+ <span class="text-sm text-gray-600 px-3 py-1 rounded-md border ">
+                                    UPCEBU &gt; Dashboard
+                                </span>
+
                     </div>
 
-                    <div class="grid grid-cols-1 gap-6 mb-8 md:grid-cols-2 lg:grid-cols-4">
+                   <div class="grid grid-cols-1 gap-6 mb-8 md:grid-cols-2 lg:grid-cols-4">
                         <div class="rounded-xl text-center shadow-lg overflow-hidden">
                             <div class="bg-yellow-500 text-white p-3 font-semibold">Total Accounts</div>
                             <div class="bg-white p-3">
@@ -215,8 +382,73 @@ const goToPage = (url) => {
                         </div>
                     </div>
 
+
+                      <div class=" mb-4 flex flex-col sm:flex-row gap-3">
+                            <!-- Search Bar with Clear Button -->
+                            <div class="relative flex-1">
+                                <input
+                                    v-model="searchQuery"
+                                    type="text"
+                                    placeholder="Search by room name, college, location, faculty, etc..."
+                                    class="pl-10 pr-10 py-2 border border-yellow-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-500"
+                                    @keyup.enter="handleSearch"
+                                />
+                                <!-- Search Icon -->
+                                <IconButton
+                                    icon="search"
+                                    size="sm"
+                                    color="gray"
+                                    class="absolute left-2 top-1/2 transform -translate-y-1/2"
+                                    @click="handleSearch"
+                                    title="Search"
+                                />
+                                <!-- Clear Icon (only shows when there's text) -->
+                                <IconButton
+                                    v-if="searchQuery"
+                                    icon="times"
+                                    size="sm"
+                                    color="gray"
+                                    class="absolute right-2 top-1/2 transform -translate-y-1/2 hover:bg-gray-100 rounded-full p-1"
+                                    @click="clearSearch"
+                                    title="Clear search"
+                                />
+                            </div>
+
+                            <!-- Search Button -->
+
+                        </div>
+
+                    <!-- Rooms Table -->
                     <div class="overflow-x-auto bg-white rounded-lg shadow-xl mb-6">
-                        <table class="min-w-full text-sm text-center border-collapse">
+                        <!-- Search Results Summary -->
+                        <div v-if="searchQuery" class="px-4 py-2 bg-blue-50 border-b border-blue-100">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <IconButton
+                                        icon="search"
+                                        size="sm"
+                                        color="blue"
+                                        class="mr-2"
+                                    />
+                                    <span class="text-sm font-medium text-blue-800">
+                                        Search results for: "<span class="font-bold">{{ searchQuery }}</span>"
+                                    </span>
+                                    <span class="ml-3 text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full">
+                                        {{ filteredRooms.length }} {{ filteredRooms.length === 1 ? 'result' : 'results' }}
+                                    </span>
+                                </div>
+                                <IconButton
+                                    v-if="filteredRooms.length === 0"
+                                    icon="info"
+                                    size="xs"
+                                    color="blue"
+                                    outlined
+                                    title="No results found. Try different keywords."
+                                />
+                            </div>
+                        </div>
+
+                        <table class="min-w-full text-sm border-collapse">
                             <thead class="bg-[#800020] text-white">
                                 <tr>
                                     <th class="px-4 py-3 font-semibold text-left">SUBJECT</th>
@@ -226,37 +458,74 @@ const goToPage = (url) => {
                                     <th class="px-4 py-3 font-semibold hidden md:table-cell">FACULTY</th>
                                     <th class="px-4 py-3 font-semibold hidden md:table-cell">ROOM</th>
                                     <th class="px-4 py-3 font-semibold hidden md:table-cell">BUILDING</th>
-                                    <th class="px-4 py-3 font-semibold">ACTION</th>
+                                    <th class="px-4 py-3 font-semibold text-center">ACTION</th>
                                 </tr>
                             </thead>
 
                             <tbody class="divide-y divide-yellow-600">
-                                <tr v-if="!rooms || rooms.data.length === 0">
-                                    <td colspan="8" class="px-4 py-6 text-gray-500 italic">No room records found.</td>
+                                <tr v-if="filteredRooms.length === 0">
+                                    <td colspan="8" class="px-4 py-8 text-center text-gray-500 italic">
+                                        <div class="flex flex-col items-center justify-center">
+                                            <IconButton
+                                                icon="search"
+                                                size="lg"
+                                                color="gray"
+                                                disabled
+                                                class="mb-2"
+                                            />
+                                            <p v-if="searchQuery">No room records found matching "{{ searchQuery }}"</p>
+                                            <p v-else>No room records found.</p>
+                                            <p class="text-sm mt-1" v-if="searchQuery">
+                                                Try different search terms like room name, college, or location.
+                                            </p>
+                                            <p class="text-sm mt-1" v-else>
+                                                Click "Add Room" to create a new one.
+                                            </p>
+                                        </div>
+                                    </td>
                                 </tr>
 
-                                <tr v-for="room in rooms.data" :key="room.id" class="odd:bg-white even:bg-gray-50 hover:bg-gray-100">
+                                <tr v-for="room in filteredRooms" :key="room.id"
+                                    class="odd:bg-white even:bg-gray-50 hover:bg-gray-100 transition-colors">
                                     <td class="px-4 py-3 text-left font-medium">{{ room.room_name || 'N/A' }}</td>
                                     <td class="px-4 py-3 text-left hidden sm:table-cell">{{ room.college?.college_name || 'N/A' }}</td>
-
                                     <td class="px-4 py-3 hidden md:table-cell">{{ room.user_account?.username || 'N/A' }}</td>
                                     <td class="px-4 py-3 hidden md:table-cell">{{ room.location ?? "N/A" }}</td>
-
+                                    <td class="px-4 py-3 hidden md:table-cell">Faculty Data</td>
+                                    <td class="px-4 py-3 hidden md:table-cell">{{ room.room_name || 'N/A' }}</td>
+                                    <td class="px-4 py-3 hidden md:table-cell">{{ room.location || 'N/A' }}</td>
 
                                     <td class="px-4 py-3 whitespace-nowrap">
                                         <div class="flex items-center justify-center space-x-2">
-                                            <button @click="handleViewDetails(room)" title="View Details"
-                                                class="text-blue-500 hover:text-blue-700 transform hover:scale-110 transition p-1">
-                                                <FontAwesomeIcon :icon="icons.eye" class="h-5 w-5" />
-                                            </button>
-                                            <button @click="handleEditRoom(room)" title="Edit Room"
-                                                class="text-green-600 hover:text-green-800 transform hover:scale-110 transition p-1">
-                                                <FontAwesomeIcon :icon="icons.edit" class="h-5 w-5" />
-                                            </button>
-                                            <button @click="handleDeleteRoom(room.id)" title="Delete Room"
-                                                class="text-red-600 hover:text-red-800 transform hover:scale-110 transition p-1">
-                                                <FontAwesomeIcon :icon="icons.delete" class="h-5 w-5" />
-                                            </button>
+                                            <!-- View Button -->
+                                            <IconButton
+                                                icon="eye"
+                                                size="sm"
+                                                color="blue"
+                                                title="View Details"
+                                                @click="handleViewDetails(room)"
+                                                class="hover:scale-110 transition-transform"
+                                            />
+
+                                            <!-- Edit Button -->
+                                            <IconButton
+                                                icon="edit"
+                                                size="sm"
+                                                color="green"
+                                                title="Edit Room"
+                                                @click="handleEditRoom(room)"
+                                                class="hover:scale-110 transition-transform"
+                                            />
+
+                                            <!-- Delete Button -->
+                                            <IconButton
+                                                icon="delete"
+                                                size="sm"
+                                                color="red"
+                                                title="Delete Room"
+                                                @click="handleDeleteRoom(room)"
+                                                class="hover:scale-110 transition-transform"
+                                            />
                                         </div>
                                     </td>
                                 </tr>
@@ -264,7 +533,8 @@ const goToPage = (url) => {
                         </table>
                     </div>
 
-                    <div class="mt-2 flex justify-end" v-if="rooms && rooms.links">
+                    <!-- Pagination (Only show if not searching) -->
+                    <div v-if="rooms && rooms.links && !searchQuery" class="mt-2 flex justify-end">
                         <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4
                                     bg-gray-100 border border-gray-300 rounded-md px-3 py-1">
                             <p class="text-xs sm:text-sm border-r border-gray-300 px-3" v-if="rooms.from">
@@ -281,8 +551,22 @@ const goToPage = (url) => {
                                             'bg-blue-600 text-white font-bold hover:bg-blue-700': link.active,
                                             'text-gray-400 cursor-not-allowed': !link.url
                                         }">
-                                        <FontAwesomeIcon v-if="link.label.includes('Previous')" :icon="icons.prev" class="h-3 w-3" />
-                                        <FontAwesomeIcon v-else-if="link.label.includes('Next')" :icon="icons.next" class="h-3 w-3" />
+                                        <template v-if="link.label.includes('Previous')">
+                                            <IconButton
+                                                icon="chevronLeft"
+                                                size="xs"
+                                                color="gray"
+                                                disabled
+                                            />
+                                        </template>
+                                        <template v-else-if="link.label.includes('Next')">
+                                            <IconButton
+                                                icon="chevronRight"
+                                                size="xs"
+                                                color="gray"
+                                                disabled
+                                            />
+                                        </template>
                                         <span class="px-1" v-else v-html="link.label"></span>
                                     </button>
                                 </span>
@@ -293,52 +577,112 @@ const goToPage = (url) => {
             </main>
         </div>
 
+        <!-- Details Modal -->
         <transition name="fade">
             <div v-if="isDetailsModalVisible"
                 class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
                 <div class="bg-white rounded-lg shadow-2xl w-full max-w-lg p-6 relative">
-                    <h3 class="text-xl font-bold text-[#800020] mb-4 border-b pb-2">Room/Schedule Details</h3>
+                    <div class="flex justify-between items-center mb-4 pb-3 border-b">
+                        <h3 class="text-xl font-bold text-[#800020]">Room/Schedule Details</h3>
+                        <IconButton
+                            icon="times"
+                            size="sm"
+                            color="gray"
+                            title="Close"
+                            @click="closeDetailsModal"
+                        />
+                    </div>
 
-                    <div v-if="currentViewedDetails" class="space-y-3">
-                        <div class="flex justify-between items-center text-gray-700">
-                            <span class="font-medium text-gray-900">Room:</span>
-                            <span>{{ currentViewedDetails.room_name }}</span>
+                    <div v-if="currentViewedDetails" class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-500">Room Name:</label>
+                                <p class="text-gray-900 font-medium">{{ currentViewedDetails.room_name || 'N/A' }}</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-500">Location:</label>
+                                <p class="text-gray-900">{{ currentViewedDetails.location || 'N/A' }}</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-500">College:</label>
+                                <p class="text-gray-900">{{ currentViewedDetails.college?.college_name || currentViewedDetails.college || 'N/A' }}</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-500">User Account:</label>
+                                <p class="text-gray-900">{{ currentViewedDetails.user_account?.username || 'N/A' }}</p>
+                            </div>
                         </div>
 
-                        <div class="flex justify-between items-center text-gray-700">
-                            <span class="font-medium text-gray-900">Location:</span>
-                            <span>{{ currentViewedDetails.location || 'N/A' }}</span>
-                        </div>
-
-                        <div class="flex justify-between items-center text-gray-700">
-                            <span class="font-medium text-gray-900">College:</span>
-                            <span>{{ currentViewedDetails.college?.college_name || currentViewedDetails.college || 'N/A' }}</span>
-                        </div>
-
-                        <div class="pt-2">
-                            <div class="font-medium text-gray-900 mb-2">Schedules:</div>
-
-                            <div v-if="(currentViewedDetails.schedules || []).length === 0" class="text-sm text-gray-500">
-                                — No schedules found for this room —
+                        <div class="pt-3 border-t">
+                            <div class="flex items-center mb-3">
+                                <IconButton
+                                    icon="list"
+                                    size="sm"
+                                    color="gray"
+                                    class="mr-2"
+                                />
+                                <h4 class="font-medium text-gray-900">Schedules:</h4>
                             </div>
 
-                            <div v-else class="max-h-60 overflow-y-auto pr-2">
+                            <div v-if="(currentViewedDetails.schedules || []).length === 0"
+                                 class="text-center py-4 text-gray-500 italic bg-gray-50 rounded">
+                                <IconButton
+                                    icon="warning"
+                                    size="sm"
+                                    color="gray"
+                                    disabled
+                                    class="mb-2"
+                                />
+                                <p>No schedules found for this room</p>
+                            </div>
+
+                            <div v-else class="max-h-60 overflow-y-auto pr-2 space-y-2">
                                 <div v-for="sched in currentViewedDetails.schedules" :key="sched.id"
-                                    class="mb-3 p-3 border rounded bg-gray-50">
-                                    <div class="text-sm"><strong>CFIC ID:</strong> {{ sched.cfic_id || 'N/A' }}</div>
-                                    <div class="text-sm"><strong>Course:</strong> {{ sched.course_name || 'N/A' }}</div>
-                                    <div class="text-sm"><strong>Day:</strong> {{ sched.day || 'N/A' }}</div>
-                                    <div class="text-sm"><strong>Time:</strong> {{ sched.start_time || 'N/A' }} — {{ sched.end_time || 'N/A' }}</div>
+                                    class="p-3 border rounded bg-gray-50 hover:bg-gray-100 transition-colors">
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <div>
+                                            <label class="text-xs text-gray-500">CFIC ID:</label>
+                                            <p class="text-sm">{{ sched.cfic_id || 'N/A' }}</p>
+                                        </div>
+                                        <div>
+                                            <label class="text-xs text-gray-500">Course:</label>
+                                            <p class="text-sm">{{ sched.course_name || 'N/A' }}</p>
+                                        </div>
+                                        <div>
+                                            <label class="text-xs text-gray-500">Day:</label>
+                                            <p class="text-sm">{{ sched.day || 'N/A' }}</p>
+                                        </div>
+                                        <div>
+                                            <label class="text-xs text-gray-500">Time:</label>
+                                            <p class="text-sm">{{ sched.start_time || 'N/A' }} — {{ sched.end_time || 'N/A' }}</p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="mt-6 flex justify-end">
-                        <button @click="closeDetailsModal"
-                            class="px-4 py-2 bg-[#800020] text-white rounded-lg hover:bg-red-800 transition duration-150">
+                    <div class="mt-6 pt-4 border-t flex justify-end space-x-3">
+                        <IconButton
+                            icon="edit"
+                            outlined
+                            color="green"
+                            title="Edit Room"
+                            @click="handleEditRoom(currentViewedDetails)"
+                            v-if="currentViewedDetails"
+                        >
+                            Edit Room
+                        </IconButton>
+
+                        <IconButton
+                            icon="times"
+                            outlined
+                            color="gray"
+                            title="Close"
+                            @click="closeDetailsModal"
+                        >
                             Close
-                        </button>
+                        </IconButton>
                     </div>
                 </div>
             </div>
@@ -356,5 +700,31 @@ const goToPage = (url) => {
 .fade-enter-from,
 .fade-leave-to {
     opacity: 0;
+}
+
+/* Smooth hover transitions for cards */
+.rounded-xl {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.rounded-xl:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* Highlight search results */
+.highlight-search {
+    background-color: #fff3cd;
+    border-left: 4px solid #ffc107;
+}
+
+/* Search bar clear button animation */
+.clear-button {
+    transition: all 0.2s ease;
+}
+
+.clear-button:hover {
+    background-color: #f8f9fa;
+    transform: scale(1.1);
 }
 </style>
