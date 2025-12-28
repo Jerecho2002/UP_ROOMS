@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { faEye, faPenToSquare, faTrash, faPlus, faSearch } from '@fortawesome/free-solid-svg-icons';
+import { faEye, faPenToSquare, faTrash, faPlus, faSearch, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 
 // Assuming these imports are correct for your project structure
 import Navbar from '@/Components/Navbar.vue';
@@ -9,7 +9,6 @@ import Sidebar from '@/Components/Sidebar.vue';
 import Sidebarsearch from '@/Components/RoomModals/Sidebarsearch.vue';
 import EditRoomModal from '@/Components/RoomModals/EditRoomModal.vue';
 import AddRoomModal from '@/Components/RoomModals/AddRoomModal.vue';
-// ⭐ FIXED IMPORT: Using 'ToastContainer' to match the template tag, pointing to Messagefunction.vue
 import ToastContainer from '@/Components/Messagefunction.vue';
 
 
@@ -22,6 +21,8 @@ const icons = {
     delete: faTrash,
     plus: faPlus,
     search: faSearch,
+    chevronLeft: faChevronLeft,
+    chevronRight: faChevronRight,
 };
 
 
@@ -40,6 +41,10 @@ const roomToViewInSidebar = ref(null); // The selected room object for the sideb
 // --- SEARCH STATE ---
 const searchQuery = ref('');
 
+// --- PAGINATION STATE ---
+const currentPage = ref(1);
+const itemsPerPage = ref(10);
+
 // --- TOAST STATE (These states are now passed to ToastContainer) ---
 const showCreateSuccess = ref(false);
 const showEditSuccess = ref(false);
@@ -57,6 +62,17 @@ const roomList = ref([
     { id: 205, room: 'LH 201', building: 'Lecture Hall', college: 'General', capacity: 150, location: 'Center', roomType: 'Lecture Hall', description: 'Main lecture hall', department: 'All', floorNumber: 2, schedules: [] },
     { id: 101, room: 'A101', building: 'CED', college: 'COE', capacity: 35, location: '1st Floor', roomType: 'Classroom', description: 'Standard classroom', department: 'Engineering', floorNumber: 1, schedules: [] },
     { id: 312, room: 'C312', building: 'Main', college: 'CC', capacity: 20, location: '3rd Floor', roomType: 'Computer Lab', description: 'Multimedia lab', department: 'IT', floorNumber: 3, schedules: [{ name: 'IT Elective 1', time: '10:00AM - 12:00PM Th', college: 'CC', isAvailable: false }] },
+    // Add more rooms to test pagination
+    { id: 415, room: 'UG 115', building: 'UG Building', college: 'CCAD', capacity: 40, location: 'North Wing', roomType: 'Classroom', description: 'General Classroom', department: 'Arts & Design', floorNumber: 1, schedules: [] },
+    { id: 416, room: 'UG 116', building: 'UG Building', college: 'CCAD', capacity: 45, location: 'North Wing', roomType: 'Classroom', description: 'General Classroom', department: 'Arts & Design', floorNumber: 1, schedules: [] },
+    { id: 417, room: 'UG 117', building: 'UG Building', college: 'CCAD', capacity: 50, location: 'North Wing', roomType: 'Classroom', description: 'General Classroom', department: 'Arts & Design', floorNumber: 1, schedules: [] },
+    { id: 418, room: 'UG 118', building: 'UG Building', college: 'CCAD', capacity: 55, location: 'North Wing', roomType: 'Classroom', description: 'General Classroom', department: 'Arts & Design', floorNumber: 1, schedules: [] },
+    { id: 419, room: 'UG 119', building: 'UG Building', college: 'CCAD', capacity: 60, location: 'North Wing', roomType: 'Classroom', description: 'General Classroom', department: 'Arts & Design', floorNumber: 1, schedules: [] },
+    { id: 420, room: 'UG 120', building: 'UG Building', college: 'CCAD', capacity: 65, location: 'North Wing', roomType: 'Classroom', description: 'General Classroom', department: 'Arts & Design', floorNumber: 1, schedules: [] },
+    { id: 421, room: 'UG 121', building: 'UG Building', college: 'CCAD', capacity: 70, location: 'North Wing', roomType: 'Classroom', description: 'General Classroom', department: 'Arts & Design', floorNumber: 1, schedules: [] },
+    { id: 422, room: 'UG 122', building: 'UG Building', college: 'CCAD', capacity: 75, location: 'North Wing', roomType: 'Classroom', description: 'General Classroom', department: 'Arts & Design', floorNumber: 1, schedules: [] },
+    { id: 423, room: 'UG 123', building: 'UG Building', college: 'CCAD', capacity: 80, location: 'North Wing', roomType: 'Classroom', description: 'General Classroom', department: 'Arts & Design', floorNumber: 1, schedules: [] },
+    { id: 424, room: 'UG 124', building: 'UG Building', college: 'CCAD', capacity: 85, location: 'North Wing', roomType: 'Classroom', description: 'General Classroom', department: 'Arts & Design', floorNumber: 1, schedules: [] },
 ]);
 
 // Layout visibility functions
@@ -100,6 +116,64 @@ const filteredRoomList = computed(() => {
         room.roomType.toLowerCase().includes(query)
     );
 });
+
+/**
+ * Computed property for paginated rooms
+ */
+const paginatedRooms = computed(() => {
+    const start = (currentPage.value - 1) * itemsPerPage.value;
+    const end = start + itemsPerPage.value;
+    return filteredRoomList.value.slice(start, end);
+});
+
+/**
+ * Computed property for total pages
+ */
+const totalPages = computed(() => {
+    return Math.ceil(filteredRoomList.value.length / itemsPerPage.value);
+});
+
+/**
+ * Computed property for showing range
+ */
+const showingRange = computed(() => {
+    const start = (currentPage.value - 1) * itemsPerPage.value + 1;
+    const end = Math.min(currentPage.value * itemsPerPage.value, filteredRoomList.value.length);
+    const total = filteredRoomList.value.length;
+    return { start, end, total };
+});
+
+/**
+ * Navigate to next page
+ */
+const nextPage = () => {
+    if (currentPage.value < totalPages.value) {
+        currentPage.value++;
+    }
+};
+
+/**
+ * Navigate to previous page
+ */
+const prevPage = () => {
+    if (currentPage.value > 1) {
+        currentPage.value--;
+    }
+};
+
+/**
+ * Go to specific page
+ */
+const goToPage = (page) => {
+    if (page >= 1 && page <= totalPages.value) {
+        currentPage.value = page;
+    }
+};
+
+// Reset to page 1 when search changes
+const resetPagination = () => {
+    currentPage.value = 1;
+};
 
 /**
  * Handles clicking a table row to view details in the sidebar.
@@ -150,6 +224,9 @@ const handleDeleteRoom = (id) => {
             }, 2000); // 2 seconds
 
             console.log(`Room ID ${id} deleted.`);
+
+            // Reset pagination if needed
+            resetPagination();
         }
     }
 };
@@ -182,6 +259,9 @@ const handleAddRoom = (newRoomData) => {
 
     // finally close modal
     closeAddModal();
+
+    // Reset pagination to show new room
+    resetPagination();
 };
 
 /**
@@ -284,20 +364,21 @@ const uniqueRoomTypesCount = computed(() => {
             <Navbar @toggle-sidebar="toggleSidebar" />
 
             <main class="flex-1 overflow-x-hidden overflow-y-auto p-6 relative">
-                <h3 class="text-xl font-bold text-[#7A0C23]">Rooms Dashboard</h3>
+                <h3 class="mt-2 text-2xl font-bold text-[#7A0C23]">Rooms Dashboard</h3>
                 <div class="absolute right-6 top-6 z-20">
                     <div class="text-sm text-gray-500 whitespace-nowrap ">
                         <span>UPCEBU > Room</span>
                     </div>
                 </div>
 
-                <div class="space-y-4 mt-8">
+                <div class="space-y-4 mt-4">
                     <div class="flex justify-between items-center pt-4">
                         <div class="relative w-full max-w-sm">
                             <input
                                 type="text"
                                 placeholder="SEARCH"
                                 v-model="searchQuery"
+                                @input="resetPagination"
                                 class="pl-12 pr-4 py-2 w-full rounded-lg border-2 border-gray-300 focus:outline-none focus:border-green-500 transition duration-150 bg-white"
                             />
                             <svg class="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
@@ -318,26 +399,37 @@ const uniqueRoomTypesCount = computed(() => {
                         </div>
                     </div>
 
-                    <div class="bg-white p-6 rounded-xl shadow-xl overflow-x-auto">
-                        <h2 class="text-xl font-bold mb-4 text-gray-800">Room List ({{ filteredRoomList.length }})</h2>
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
+                    <div class=" bg-white p-6 rounded-xl shadow-xl overflow-x-auto">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-xl font-bold text-gray-800">Room List ({{ filteredRoomList.length }})</h2>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-sm text-gray-600">Items per page:</span>
+                                <select v-model="itemsPerPage" @change="resetPagination" class="text-sm border border-gray-300 rounded px-2 py-1">
+                                    <option value="5">5</option>
+                                    <option value="10">10</option>
+                                    <option value="20">20</option>
+                                    <option value="50">50</option>
+                                </select>
+                            </div>
+                        </div>
+                        <table class="min-w-full divide-y divide-yellow-600 ">
+                            <thead class="bg-[#7A0C23] ">
                                 <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">ID</th>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Room</th>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Building</th>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">College</th>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Capacity</th>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Location</th>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Room Type</th>
-                                    <th class="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Action</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase">ID</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase">Room</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase">Building</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase">College</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase">Capacity</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase">Location</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase">Room Type</th>
+                                    <th class="px-6 py-3 text-center text-xs font-semibold text-white uppercase">Action</th>
                                 </tr>
                             </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
+                            <tbody class="bg-white divide-y divide-yellow-600">
                                 <tr v-if="filteredRoomList.length === 0">
                                     <td colspan="8" class="px-6 py-4 text-center text-gray-500">No rooms found matching "{{ searchQuery }}".</td>
                                 </tr>
-                                <tr v-for="room in filteredRoomList" :key="room.id" class="hover:bg-gray-50 transition duration-100">
+                                <tr v-for="room in paginatedRooms" :key="room.id" class="hover:bg-gray-200 transition duration-100">
                                     <td class="px-6 py-4 text-sm font-mono text-gray-500 cursor-pointer" @click="selectRoomForSidebar(room)">{{ room.id }}</td>
                                     <td class="px-6 py-4 text-sm font-medium text-gray-900 cursor-pointer" @click="selectRoomForSidebar(room)">{{ room.room }}</td>
                                     <td class="px-6 py-4 text-sm text-gray-800 cursor-pointer" @click="selectRoomForSidebar(room)">{{ room.building }}</td>
@@ -364,6 +456,65 @@ const uniqueRoomTypesCount = computed(() => {
                                 </tr>
                             </tbody>
                         </table>
+
+                        <!-- Pagination Controls -->
+                        <div v-if="filteredRoomList.length > itemsPerPage" class="flex flex-col sm:flex-row items-center justify-between pt-4 border-t border-gray-200 mt-4">
+                            <div class="text-sm text-gray-600 mb-2 sm:mb-0">
+                                Showing {{ showingRange.start }} to {{ showingRange.end }} of {{ showingRange.total }} entries
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <!-- Previous Button -->
+                                <button
+                                    @click="prevPage"
+                                    :disabled="currentPage === 1"
+                                    :class="[
+                                        'flex items-center px-3 py-1.5 rounded border text-sm',
+                                        currentPage === 1
+                                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                            : 'bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-400'
+                                    ]"
+                                >
+                                    <FontAwesomeIcon :icon="icons.chevronLeft" class="h-3 w-3 mr-1" />
+                                    Previous
+                                </button>
+
+                                <!-- Page Numbers -->
+                                <div class="flex items-center space-x-1">
+                                    <button
+                                        v-for="page in totalPages"
+                                        :key="page"
+                                        @click="goToPage(page)"
+                                        :class="[
+                                            'px-3 py-1.5 rounded border text-sm',
+                                            currentPage === page
+                                                ? 'bg-[#7A0C23] text-white border-[#7A0C23]'
+                                                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                                        ]"
+                                    >
+                                        {{ page }}
+                                    </button>
+                                </div>
+
+                                <!-- Next Button -->
+                                <button
+                                    @click="nextPage"
+                                    :disabled="currentPage === totalPages"
+                                    :class="[
+                                        'flex items-center px-3 py-1.5 rounded border text-sm',
+                                        currentPage === totalPages
+                                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                            : 'bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-400'
+                                    ]"
+                                >
+                                    Next
+                                    <FontAwesomeIcon :icon="icons.chevronRight" class="h-3 w-3 ml-1" />
+                                </button>
+                            </div>
+
+                            <div class="text-sm text-gray-600 mt-2 sm:mt-0">
+                                Page {{ currentPage }} of {{ totalPages }}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </main>
@@ -420,4 +571,9 @@ const uniqueRoomTypesCount = computed(() => {
     top: 0;
 }
 
+/* Pagination button hover effects */
+button:not(:disabled):hover {
+    transform: translateY(-1px);
+    transition: transform 0.2s;
+}
 </style>

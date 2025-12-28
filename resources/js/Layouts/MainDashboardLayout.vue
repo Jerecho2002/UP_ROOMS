@@ -4,14 +4,14 @@ import { usePage, router } from '@inertiajs/vue3';
 import Navbar from "@/Components/Navbar.vue";
 import Sidebar from "@/Components/Sidebar.vue";
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { 
-    faEye, 
-    faPenToSquare, 
-    faTrash, 
-    faPlus, 
-    faSearch, 
-    faChevronLeft, 
-    faChevronRight 
+import {
+    faEye,
+    faPenToSquare,
+    faTrash,
+    faPlus,
+    faSearch,
+    faChevronLeft,
+    faChevronRight
 } from '@fortawesome/free-solid-svg-icons';
 
 // --- ICON MAPPING ---
@@ -177,7 +177,7 @@ const goToPage = (url) => {
         <div :class="['min-h-screen transition-all duration-300',
             // Content margin based on sidebar state
             isDesktop ? (sidebarForcedOpen ? 'ml-64' : 'ml-0') : 'ml-0']">
-            
+
             <main id="mainContent" class="flex-1 px-6 py-6 bg-gray-200 pt-20">
                 <slot>
                     <div class=" text-gray-500 mb-4 flex justify-between items-center">
@@ -187,28 +187,28 @@ const goToPage = (url) => {
 
                     <div class="grid grid-cols-1 gap-6 mb-8 md:grid-cols-2 lg:grid-cols-4">
                         <div class="rounded-xl text-center shadow-lg overflow-hidden">
-                            <div class="bg-cyan-500 text-white p-3 font-semibold">Total Accounts</div>
+                            <div class="bg-yellow-500 text-white p-3 font-semibold">Total Accounts</div>
                             <div class="bg-white p-3">
                                 <p class="text-3xl font-bold text-gray-800">{{ totalAccounts }}</p>
                             </div>
                         </div>
 
                         <div class="rounded-xl text-center shadow-lg overflow-hidden">
-                            <div class="bg-purple-600 text-white p-3 font-semibold">Total Department</div>
+                            <div class="bg-green-600 text-white p-3 font-semibold">Total Department</div>
                             <div class="bg-white p-3">
                                 <p class="text-3xl font-bold text-gray-800">{{ totalDepartments }}</p>
                             </div>
                         </div>
 
                         <div class="rounded-xl text-center shadow-lg overflow-hidden">
-                            <div class="bg-orange-500 text-white p-3 font-semibold">Total Colleges</div>
+                            <div class="bg-[#800020] text-white p-3 font-semibold">Total Colleges</div>
                             <div class="bg-white p-3">
                                 <p class="text-3xl font-bold text-gray-800">{{ totalColleges }}</p>
                             </div>
                         </div>
 
                         <div class="rounded-xl text-center shadow-lg overflow-hidden">
-                            <div class="bg-red-500 text-white p-3 font-semibold">Total Rooms</div>
+                            <div class="bg-blue-500 text-white p-3 font-semibold">Total Rooms</div>
                             <div class="bg-white p-3">
                                 <p class="text-3xl font-bold text-gray-800">{{ totalRooms }}</p>
                             </div>
@@ -230,19 +230,19 @@ const goToPage = (url) => {
                                 </tr>
                             </thead>
 
-                            <tbody class="divide-y divide-gray-200">
+                            <tbody class="divide-y divide-yellow-600">
                                 <tr v-if="!rooms || rooms.data.length === 0">
                                     <td colspan="8" class="px-4 py-6 text-gray-500 italic">No room records found.</td>
                                 </tr>
-                                
+
                                 <tr v-for="room in rooms.data" :key="room.id" class="odd:bg-white even:bg-gray-50 hover:bg-gray-100">
                                     <td class="px-4 py-3 text-left font-medium">{{ room.room_name || 'N/A' }}</td>
                                     <td class="px-4 py-3 text-left hidden sm:table-cell">{{ room.college?.college_name || 'N/A' }}</td>
-                                  
+
                                     <td class="px-4 py-3 hidden md:table-cell">{{ room.user_account?.username || 'N/A' }}</td>
                                     <td class="px-4 py-3 hidden md:table-cell">{{ room.location ?? "N/A" }}</td>
 
-                                    
+
                                     <td class="px-4 py-3 whitespace-nowrap">
                                         <div class="flex items-center justify-center space-x-2">
                                             <button @click="handleViewDetails(room)" title="View Details"
@@ -265,17 +265,17 @@ const goToPage = (url) => {
                     </div>
 
                     <div class="mt-2 flex justify-end" v-if="rooms && rooms.links">
-                        <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 
+                        <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4
                                     bg-gray-100 border border-gray-300 rounded-md px-3 py-1">
                             <p class="text-xs sm:text-sm border-r border-gray-300 px-3" v-if="rooms.from">
                                 {{ rooms.from }}-{{ rooms.to }} of {{ rooms.total }}
                             </p>
                             <div class="flex space-x-1">
                                 <span v-for="link in rooms.links" :key="link.label">
-                                    <button 
-                                        v-if="link.url" 
-                                        @click="goToPage(link.url)" 
-                                        class="p-1 text-xs sm:text-sm rounded transition" 
+                                    <button
+                                        v-if="link.url"
+                                        @click="goToPage(link.url)"
+                                        class="p-1 text-xs sm:text-sm rounded transition"
                                         :class="{
                                             'text-gray-600 hover:bg-gray-200': link.url && !link.active,
                                             'bg-blue-600 text-white font-bold hover:bg-blue-700': link.active,

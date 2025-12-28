@@ -1,3 +1,4 @@
+<!-- Layouts/RoomTypeLayout.vue -->
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import Navbar from '@/Components/Navbar.vue';
@@ -16,11 +17,22 @@ function toggleSidebar() {
 // Modal states
 const isAddModalOpen = ref(false);
 const isEditModalOpen = ref(false);
+const isViewModalOpen = ref(false);
 const selectedRoomType = ref(null);
 const isDeleteModalOpen = ref(false);
 const roomToDelete = ref(null);
 
-// Optimized room types data - smaller initial set
+// Toast notification states
+const showCreateSuccess = ref(false);
+const showEditSuccess = ref(false);
+const showDeleteSuccess = ref(false);
+const showError = ref(false);
+const showInfo = ref(false);
+const deletedRoomName = ref('');
+const errorMessage = ref('');
+const infoMessage = ref('');
+
+// Room types data
 const roomTypes = ref([
   { id: 1, name: 'Audio Visual Room', slug: 'audio-visual-room' },
   { id: 2, name: 'Bioassay Laboratory', slug: 'bioassay-laboratory' },
@@ -37,7 +49,7 @@ const roomTypes = ref([
 // Search functionality
 const searchQuery = ref('');
 
-// Filtered room types - computed for better performance
+// Filtered room types
 const filteredRoomTypes = computed(() => {
   if (!searchQuery.value.trim()) {
     return roomTypes.value;
@@ -51,7 +63,7 @@ const filteredRoomTypes = computed(() => {
   );
 });
 
-// Pagination for better performance
+// Pagination
 const itemsPerPage = 10;
 const currentPage = ref(1);
 
@@ -91,6 +103,12 @@ const openEditModal = (room) => {
   isEditModalOpen.value = true;
 };
 
+// Open view modal
+const openViewModal = (room) => {
+  selectedRoomType.value = { ...room };
+  isViewModalOpen.value = true;
+};
+
 // Open delete confirmation
 const openDeleteModal = (room) => {
   roomToDelete.value = room;
@@ -99,66 +117,97 @@ const openDeleteModal = (room) => {
 
 // Handle adding new room type
 const handleAddRoomType = (newRoom) => {
-  // Generate new ID
-  const newId = roomTypes.value.length > 0 ? Math.max(...roomTypes.value.map(r => r.id)) + 1 : 1;
+  try {
+    if (!newRoom.name || !newRoom.slug) {
+      throw new Error('Room name and slug are required');
+    }
 
-  // Add to the beginning of the list
-  roomTypes.value.unshift({
-    id: newId,
-    name: newRoom.name,
-    slug: newRoom.slug.toLowerCase().replace(/\s+/g, '-')
-  });
+    const newId = roomTypes.value.length > 0 ? Math.max(...roomTypes.value.map(r => r.id)) + 1 : 1;
 
-  isAddModalOpen.value = false;
-  showToast('Room type added successfully!', 'success');
+    roomTypes.value.unshift({
+      id: newId,
+      name: newRoom.name,
+      slug: newRoom.slug.toLowerCase().replace(/\s+/g, '-')
+    });
+
+    isAddModalOpen.value = false;
+    showCreateSuccess.value = true;
+  } catch (error) {
+    errorMessage.value = error.message || 'Failed to create room type';
+    showError.value = true;
+  }
 };
 
 // Handle editing room type
 const handleEditRoomType = (updatedRoom) => {
-  const index = roomTypes.value.findIndex(r => r.id === updatedRoom.id);
-  if (index !== -1) {
-    roomTypes.value[index] = {
-      ...updatedRoom,
-      slug: updatedRoom.slug.toLowerCase().replace(/\s+/g, '-')
-    };
+  try {
+    if (!updatedRoom.name || !updatedRoom.slug) {
+      throw new Error('Room name and slug are required');
+    }
 
-    isEditModalOpen.value = false;
-    showToast('Room type updated successfully!', 'success');
+    const index = roomTypes.value.findIndex(r => r.id === updatedRoom.id);
+    if (index !== -1) {
+      roomTypes.value[index] = {
+        ...updatedRoom,
+        slug: updatedRoom.slug.toLowerCase().replace(/\s+/g, '-')
+      };
+
+      isEditModalOpen.value = false;
+      showEditSuccess.value = true;
+    } else {
+      throw new Error('Room not found');
+    }
+  } catch (error) {
+    errorMessage.value = error.message || 'Failed to update room type';
+    showError.value = true;
   }
 };
 
 // Handle deleting room type
 const handleDeleteRoomType = () => {
-  if (roomToDelete.value) {
-    const index = roomTypes.value.findIndex(r => r.id === roomToDelete.value.id);
-    if (index !== -1) {
-      roomTypes.value.splice(index, 1);
-      isDeleteModalOpen.value = false;
-      roomToDelete.value = null;
-      showToast('Room type deleted successfully!', 'success');
+  try {
+    if (roomToDelete.value) {
+      const index = roomTypes.value.findIndex(r => r.id === roomToDelete.value.id);
+      if (index !== -1) {
+        deletedRoomName.value = roomToDelete.value.name;
+        roomTypes.value.splice(index, 1);
+
+        isDeleteModalOpen.value = false;
+        roomToDelete.value = null;
+        showDeleteSuccess.value = true;
+      } else {
+        throw new Error('Room not found');
+      }
     }
+  } catch (error) {
+    errorMessage.value = error.message || 'Failed to delete room type';
+    showError.value = true;
+    isDeleteModalOpen.value = false;
+    roomToDelete.value = null;
   }
 };
 
-// Toast notification
-const toastMessage = ref('');
-const toastType = ref('');
-
-const showToast = (message, type = 'success') => {
-  toastMessage.value = message;
-  toastType.value = type;
-
-  setTimeout(() => {
-    toastMessage.value = '';
-    toastType.value = '';
-  }, 3000);
+// Close toast functions
+const closeCreateToast = () => showCreateSuccess.value = false;
+const closeEditToast = () => showEditSuccess.value = false;
+const closeDeleteToast = () => {
+  showDeleteSuccess.value = false;
+  deletedRoomName.value = '';
+};
+const closeErrorToast = () => {
+  showError.value = false;
+  errorMessage.value = '';
+};
+const closeInfoToast = () => {
+  showInfo.value = false;
+  infoMessage.value = '';
 };
 
 // Handle icon button clicks
 const handleIconClick = (action, room) => {
   switch(action) {
     case 'view':
-      openEditModal(room);
+      openViewModal(room);
       break;
     case 'edit':
       openEditModal(room);
@@ -168,39 +217,64 @@ const handleIconClick = (action, room) => {
       break;
   }
 };
+
+// Handle edit from view modal
+const handleEditFromView = () => {
+  if (selectedRoomType.value) {
+    isViewModalOpen.value = false;
+    openEditModal(selectedRoomType.value);
+  }
+};
+
+// Format date
+const formatDate = () => {
+  return new Date().toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};
+
+// Close view modal when clicking outside
+const closeViewModalOutside = (event) => {
+  if (event.target.classList.contains('bg-black')) {
+    isViewModalOpen.value = false;
+  }
+};
+
+// Close view modal with Escape key
+const handleEscapeKey = (event) => {
+  if (event.key === 'Escape' && isViewModalOpen.value) {
+    isViewModalOpen.value = false;
+  }
+};
+
+// Add event listener for Escape key
+onMounted(() => {
+  document.addEventListener('keydown', handleEscapeKey);
+});
 </script>
 
 <template>
   <div class="bg-gray-100 font-sans antialiased flex flex-col min-h-screen">
-    <!-- Toast Notification -->
-    <div v-if="toastMessage"
-         :class="[
-           'fixed top-20 right-4 z-50 p-4 rounded-lg shadow-lg transform transition-all duration-300',
-           toastType === 'success' ? 'bg-green-100 border-l-4 border-green-500 text-green-700' :
-           'bg-red-100 border-l-4 border-red-500 text-red-700'
-         ]">
-      <div class="flex items-center">
-        <IconButton
-          v-if="toastType === 'success'"
-          icon="check"
-          title="Success"
-          color="green"
-          size="sm"
-          class="mr-2"
-          disabled
-        />
-        <IconButton
-          v-else
-          icon="times"
-          title="Error"
-          color="red"
-          size="sm"
-          class="mr-2"
-          disabled
-        />
-        {{ toastMessage }}
-      </div>
-    </div>
+    <!-- Toast Notifications -->
+    <Messagefunction
+      :show-create-success="showCreateSuccess"
+      :show-edit-success="showEditSuccess"
+      :show-delete-success="showDeleteSuccess"
+      :deleted-room-name="deletedRoomName"
+      :show-error="showError"
+      :error-message="errorMessage"
+      :show-info="showInfo"
+      :info-message="infoMessage"
+      @close-create="closeCreateToast"
+      @close-edit="closeEditToast"
+      @close-delete="closeDeleteToast"
+      @close-error="closeErrorToast"
+      @close-info="closeInfoToast"
+    />
 
     <Navbar @toggle-sidebar="toggleSidebar" />
 
@@ -222,8 +296,8 @@ const handleIconClick = (action, room) => {
         <div class="p-4 md:p-6">
           <!-- Header -->
           <div class="mb-6">
-            <h1 class="text-2xl md:text-3xl font-bold text-[#7A0C23] mb-1">Room Type Management</h1>
-            <p class="text-sm text-gray-600">Manage and organize different types of rooms in your facility</p>
+            <h1 class="text-2xl md:text-3xl font-bold text-[#7A0C23] mb-1">Room Types Dashboard</h1>
+
           </div>
 
           <!-- Controls -->
@@ -233,8 +307,7 @@ const handleIconClick = (action, room) => {
               <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <IconButton
                   icon="search"
-                  title="Search"
-                  color="gray"
+                  title="Search room types"
                   size="sm"
                   disabled
                 />
@@ -264,27 +337,27 @@ const handleIconClick = (action, room) => {
           </div>
 
           <!-- Room Types Table -->
-          <div class="bg-white rounded-lg shadow border border-gray-100 overflow-hidden">
+          <div class="bg-white rounded-lg shadow border border-yellow-400 overflow-hidden">
             <div class="overflow-x-auto">
-              <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
+              <table class="min-w-full divide-y divide-yellow-600">
+                <thead class="bg-[#7A0C23]">
                   <tr>
-                    <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">
                       ID
                     </th>
-                    <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">
                       Name
                     </th>
-                    <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">
                       Slug
                     </th>
-                    <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                  <tr v-for="room in paginatedRoomTypes" :key="room.id" class="hover:bg-gray-50 transition-colors duration-150">
+                <tbody class="bg-white divide-y divide-yellow-400">
+                  <tr v-for="room in paginatedRoomTypes" :key="room.id" class="hover:bg-gray-200 transition-colors duration-150">
                     <td class="px-4 py-3 whitespace-nowrap">
                       <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
                         #{{ room.id }}
@@ -298,31 +371,31 @@ const handleIconClick = (action, room) => {
                     </td>
                     <td class="px-4 py-3 whitespace-nowrap">
                       <div class="flex items-center space-x-2">
+                        <!-- View Button -->
                         <IconButton
                           icon="eye"
                           title="View Room Type Details"
-                          color="blue"
                           size="sm"
                           @click="handleIconClick('view', room)"
-                          class="p-1.5  rounded bg-white hover:bg-gray-50"
+                          class="p-1.5 rounded hover:bg-blue-50 transition-colors"
                         />
 
+                        <!-- Edit Button -->
                         <IconButton
                           icon="edit"
                           title="Edit Room Type"
-                          color="green"
                           size="sm"
                           @click="handleIconClick('edit', room)"
-                          class="p-1.5 rounded bg-green-50 hover:bg-blue-100"
+                          class="p-1.5 rounded hover:bg-green-50 transition-colors"
                         />
 
+                        <!-- Delete Button -->
                         <IconButton
                           icon="delete"
                           title="Delete Room Type"
-                          color="red"
                           size="sm"
                           @click="handleIconClick('delete', room)"
-                          class="p-1.5  rounded bg-red-50 hover:bg-red-100"
+                          class="p-1.5 rounded hover:bg-red-50 transition-colors"
                         />
                       </div>
                     </td>
@@ -335,7 +408,6 @@ const handleIconClick = (action, room) => {
                         <IconButton
                           icon="search"
                           title="No Results"
-                          color="gray"
                           size="lg"
                           disabled
                           class="mx-auto mb-3 opacity-50"
@@ -419,6 +491,197 @@ const handleIconClick = (action, room) => {
       @save="handleEditRoomType"
     />
 
+    <!-- VIEW MODAL - Shows all information (Read-only) -->
+    <div v-if="isViewModalOpen" class="fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center p-4" @click="closeViewModalOutside">
+      <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
+        <!-- Modal Header -->
+        <div class="px-6 py-4 border-b border-gray-200 bg-blue-50 flex items-center justify-between">
+          <div class="flex items-center">
+            <div class="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+              <IconButton
+                icon="eye"
+                title="View Room"
+                size="md"
+                disabled
+              />
+            </div>
+            <div>
+              <h2 class="text-xl font-semibold text-gray-900">Room Type Details</h2>
+              <p class="text-sm text-gray-600">Read-only information display</p>
+            </div>
+          </div>
+
+          <!-- Close Button -->
+          <button
+            @click="isViewModalOpen = false"
+            class="text-gray-400 hover:text-gray-600 transition-colors duration-150"
+            title="Close"
+          >
+            <IconButton
+              icon="times"
+              title="Close"
+              size="sm"
+            />
+          </button>
+        </div>
+
+        <!-- Modal Content -->
+        <div class="p-6 overflow-y-auto max-h-[calc(90vh-120px)]" v-if="selectedRoomType">
+          <!-- Room ID Section -->
+          <div class="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <div class="flex items-center mb-2">
+              <IconButton
+                icon="info"
+                title="Room ID"
+                size="sm"
+                disabled
+                class="mr-2"
+              />
+              <h3 class="text-lg font-medium text-gray-900">Room ID</h3>
+            </div>
+            <div class="flex items-center">
+              <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                #{{ selectedRoomType.id }}
+              </span>
+              <span class="ml-3 text-sm text-gray-500">Unique identifier for this room type</span>
+            </div>
+          </div>
+
+          <!-- Room Information Grid -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <!-- Room Name -->
+            <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+              <div class="flex items-center mb-3">
+                <IconButton
+                  icon="edit"
+                  title="Room Name"
+                  size="sm"
+                  disabled
+                  class="mr-2"
+                />
+                <h4 class="text-md font-medium text-gray-900">Room Name</h4>
+              </div>
+              <div class="p-3 bg-gray-50 rounded border border-gray-200">
+                <p class="text-lg font-semibold text-gray-800">{{ selectedRoomType.name }}</p>
+                <p class="text-sm text-gray-500 mt-1">The display name of the room type</p>
+              </div>
+            </div>
+
+            <!-- Room Slug -->
+            <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+              <div class="flex items-center mb-3">
+                <IconButton
+                  icon="list"
+                  title="Room Slug"
+                  size="sm"
+                  disabled
+                  class="mr-2"
+                />
+                <h4 class="text-md font-medium text-gray-900">Room Slug</h4>
+              </div>
+              <div class="p-3 bg-gray-50 rounded border border-gray-200">
+                <code class="text-lg font-mono text-gray-800 bg-white px-2 py-1 rounded">{{ selectedRoomType.slug }}</code>
+                <p class="text-sm text-gray-500 mt-1">URL-friendly identifier</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Additional Information -->
+          <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm mb-6">
+            <div class="flex items-center mb-3">
+              <IconButton
+                icon="info"
+                title="Additional Information"
+                size="sm"
+                disabled
+                class="mr-2"
+              />
+              <h4 class="text-md font-medium text-gray-900">Additional Information</h4>
+            </div>
+            <div class="space-y-3">
+              <!-- Created Date -->
+              <div class="flex items-center justify-between p-3 bg-gray-50 rounded">
+                <div>
+                  <p class="text-sm font-medium text-gray-700">Created Date</p>
+                  <p class="text-xs text-gray-500">When this room type was added</p>
+                </div>
+                <div class="text-sm text-gray-600">
+                  {{ formatDate() }}
+                </div>
+              </div>
+
+              <!-- Last Modified -->
+              <div class="flex items-center justify-between p-3 bg-gray-50 rounded">
+                <div>
+                  <p class="text-sm font-medium text-gray-700">Last Modified</p>
+                  <p class="text-xs text-gray-500">When this room type was last updated</p>
+                </div>
+                <div class="text-sm text-gray-600">
+                  {{ formatDate() }}
+                </div>
+              </div>
+
+              <!-- Status -->
+              <div class="flex items-center justify-between p-3 bg-gray-50 rounded">
+                <div>
+                  <p class="text-sm font-medium text-gray-700">Status</p>
+                  <p class="text-xs text-gray-500">Current status of the room type</p>
+                </div>
+                <div>
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    <IconButton
+                      icon="check"
+                      title="Active"
+                      size="xs"
+                      disabled
+                      class="mr-1"
+                    />
+                    Active
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Info Box -->
+          <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
+            <div class="flex">
+              <div class="flex-shrink-0">
+                <IconButton
+                  icon="info"
+                  title="Information"
+                  size="sm"
+                  disabled
+                />
+              </div>
+              <div class="ml-3">
+                <h3 class="text-sm font-medium text-blue-800">View-Only Mode</h3>
+                <div class="mt-2 text-sm text-blue-700">
+                  <p>This is a read-only view. All fields are displayed for reference only and cannot be modified here.</p>
+                  <p class="mt-1">To make changes, please use the "Edit" button on the main page.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Loading State -->
+        <div v-else class="p-8 text-center">
+          <IconButton
+            icon="warning"
+            title="Loading"
+            size="lg"
+            disabled
+            class="mx-auto mb-3 opacity-50"
+          />
+          <p class="text-gray-500">Loading room information...</p>
+        </div>
+
+
+
+      </div>
+    </div>
+
     <!-- Delete Confirmation Modal -->
     <div v-if="isDeleteModalOpen" class="fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center p-4">
       <div class="bg-white rounded-lg shadow-xl w-full max-w-sm p-5">
@@ -427,7 +690,6 @@ const handleIconClick = (action, room) => {
             <IconButton
               icon="delete"
               title="Delete Warning"
-              color="red"
               size="md"
               disabled
             />
@@ -443,7 +705,6 @@ const handleIconClick = (action, room) => {
               <IconButton
                 icon="warning"
                 title="Warning"
-                color="yellow"
                 size="sm"
                 disabled
               />
@@ -451,6 +712,7 @@ const handleIconClick = (action, room) => {
             <div class="ml-3">
               <p class="text-sm text-yellow-700">
                 Delete <span class="font-semibold">"{{ roomToDelete?.name }}"</span>?
+                <span class="block text-yellow-600 text-xs mt-1">This action cannot be undone.</span>
               </p>
             </div>
           </div>
@@ -464,7 +726,6 @@ const handleIconClick = (action, room) => {
             <IconButton
               icon="times"
               title="Cancel"
-              color="gray"
               size="sm"
               class="mr-2"
             />
@@ -506,5 +767,10 @@ const handleIconClick = (action, room) => {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #a1a1a1;
+}
+
+/* Smooth transitions */
+.transition-colors {
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 </style>

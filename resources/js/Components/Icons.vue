@@ -15,8 +15,8 @@ import {
   faExclamationTriangle
 } from '@fortawesome/free-solid-svg-icons';
 
-// Export all icons as a single object
-const icons = {
+// Export as a module
+export const icons = {
   eye: faEye,
   edit: faPenToSquare,
   delete: faTrash,
@@ -31,11 +31,22 @@ const icons = {
   warning: faExclamationTriangle
 };
 
-// Make icons available for import
-defineExpose({ icons });
+export const iconColors = {
+  eye: 'blue',
+  edit: 'green',
+  delete: 'red',
+  plus: 'green',
+  search: 'gray',
+  times: 'gray',
+  check: 'green',
+  chevronLeft: 'gray',
+  chevronRight: 'gray',
+  list: 'gray',
+  info: 'blue',
+  warning: 'orange'
+};
 </script>
 
 <template>
-  <!-- This component doesn't render anything, it just exports icons -->
   <div style="display: none;"></div>
 </template>
