@@ -364,10 +364,10 @@ const uniqueRoomTypesCount = computed(() => {
             <Navbar @toggle-sidebar="toggleSidebar" />
 
             <main class="flex-1 overflow-x-hidden overflow-y-auto p-6 relative">
-                <h3 class="mt-2 text-2xl font-bold text-[#7A0C23]">Rooms Dashboard</h3>
+                <h3 class="mt-2 text-2xl font-bold text-[#7A0C23]">Rooms Management</h3>
                 <div class="absolute right-6 top-6 z-20">
-                    <div class="text-sm text-gray-500 whitespace-nowrap ">
-                        <span>UPCEBU > Room</span>
+                    <div class="mr-4 mt-4 text-sm text-gray-500 whitespace-nowrap ">
+                        <span>UPCEBU > ROOMS</span>
                     </div>
                 </div>
 
@@ -379,7 +379,7 @@ const uniqueRoomTypesCount = computed(() => {
                                 placeholder="SEARCH"
                                 v-model="searchQuery"
                                 @input="resetPagination"
-                                class="pl-12 pr-4 py-2 w-full rounded-lg border-2 border-gray-300 focus:outline-none focus:border-green-500 transition duration-150 bg-white"
+                                class="pl-12 pr-4 py-2 w-400 rounded-lg border-2 border-yellow-300 focus:outline-none focus:border-[#7A0C23] transition duration-150 bg-white"
                             />
                             <svg class="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                         </div>

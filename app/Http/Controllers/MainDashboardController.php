@@ -2,33 +2,23 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\UserAccount;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
-use App\Services\MainDashboardService;
+use Inertia\Inertia;
+use Illuminate\Support\Facades\Auth;
 
-class MainDashboardController
+class MainDashboardController extends Controller
 {
-    public function index(Request $request, MainDashboardService $service)
+    public function index()
     {
-        // $apiUrl = env('SYSTEM_A_API_URL') . '/inventoryitems';
-        // $token = env('SYSTEM_A_API_TOKEN');
+        $user = Auth::user();
 
-        // $response = Http::withHeaders([
-        //     'Authorization' => "Bearer {$token}",
-        //     'Accept' => 'application/json',
-        // ])->get($apiUrl);
-
-        // $inventoryitems = $response->successful()
-        //     ? $response->json()
-        //     : [];
-        
-        $search = $request->input('search');
-
-        return inertia('MainDashboard', [
-            // 'inventoryitems' => $inventoryitems,
-            'rooms' => $service->getMainDashboard($search),
+        return Inertia::render('MainDashboard', [
+            'user' => $user,
+            'stats' => [
+                'total_users' => \App\Models\User::count(),
+                'total_buildings' => 5, // Replace with actual model
+                'total_colleges' => 10, // Replace with actual model
+                'total_rooms' => 50, // Replace with actual model
+            ]
         ]);
     }
-
 }

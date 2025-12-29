@@ -391,8 +391,23 @@ onMounted(() => {
         <div class="p-4 md:p-6">
           <!-- Header -->
           <div class="mb-6">
-            <h1 class="text-2xl md:text-3xl font-bold text-[#7A0C23] mb-1">Room Types Dashboard</h1>
-          </div>
+            <h1 class="text-1xl md:text-2xl font-bold text-[#7A0C23] mb-1">Room Types Management</h1>
+           <div class="absolute right-6 top-6 z-20">
+                    <div class="text-sm text-gray-500 whitespace-nowrap ">
+
+        </div>
+
+<div class="mt-8 absolute right-6 top-6 z-20">
+                    <div class="text-sm text-gray-500 whitespace-nowrap ">
+                        <span>UPCEBU > ROOM TYPES</span>
+                    </div>
+                </div>
+     </div>
+
+                </div>
+
+
+
 
           <!-- Controls -->
           <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-4">
@@ -410,14 +425,14 @@ onMounted(() => {
                 type="text"
                 v-model="searchQuery"
                 placeholder="Search by ID, name, or slug..."
-                class="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7A0C23] focus:border-transparent outline-none bg-white shadow-sm"
+                class="pl-10 pr-4 py-2 w-full border border-yellow-400 rounded-lg focus:ring-2 focus:ring-[#7A0C23] focus:border-transparent outline-none bg-white shadow-sm"
               />
             </div>
 
             <!-- Add Button -->
             <button
               @click="openAddModal"
-              class="flex items-center px-4 py-2 bg-[#7A0C23] text-white rounded-lg hover:bg-red-800 transition-colors duration-200 font-medium shadow-sm w-full md:w-auto mt-2 md:mt-0"
+              class="flex items-center px-4 py-2 bg-green-700 text-white rounded-lg bg-green-800 transition-colors duration-200 font-medium shadow-sm w-full md:w-auto mt-2 md:mt-0"
             >
               <IconButton
                 icon="plus"

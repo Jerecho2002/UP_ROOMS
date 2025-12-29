@@ -164,8 +164,8 @@ const resetPagination = () => {
 <template>
     <div class="bg-white shadow-lg rounded-xl overflow-auto">
         <!-- Table Header with Pagination Controls -->
-        <div class=" flex flex-col sm:flex-row justify-between items-center p-4 border-b border-yellow-400">
-            <div class=" text-lg font-semibold text-[#7A0C23] mb-2 sm:mb-0">
+        <div class="flex flex-col sm:flex-row justify-between items-center p-4 border-b border-yellow-400">
+            <div class="text-lg font-semibold text-[#7A0C23] mb-2 sm:mb-0">
                 Appointments ({{ processedEvents.length }})
             </div>
             <div class="flex items-center space-x-4">
@@ -203,7 +203,7 @@ const resetPagination = () => {
                         <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider whitespace-nowrap overflow-hidden text-ellipsis">COLLEGE</th>
                         <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider whitespace-nowrap overflow-hidden text-ellipsis">START DATE</th>
                         <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider whitespace-nowrap overflow-hidden text-ellipsis">TIME SLOT</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider whitespace-nowrap overflow-hidden text-ellipsis">RECURRING</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider whitespace-nowrap overflow-hidden text-ellipsis">EVENT TYPE</th>
                         <th class="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider whitespace-nowrap overflow-hidden text-ellipsis">ACTIONS</th>
                     </tr>
                 </thead>
@@ -221,14 +221,10 @@ const resetPagination = () => {
                             <div class="text-xs text-gray-500 mt-1 truncate" :title="item.description">{{ item.description }}</div>
                         </td>
 
-                        <!-- ROOM Column -->
+                        <!-- ROOM Column (Only show room name, no "Occupied" badge) -->
                         <td class="px-4 py-4">
-                            <div class="flex items-center">
-                                <div class="text-sm font-medium text-gray-900 truncate" :title="item.room">{{ item.room }}</div>
-                                <span class="ml-2 text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full whitespace-nowrap flex-shrink-0">
-                                    <FontAwesomeIcon :icon="icons.clock" class="w-3 h-3 mr-1" />
-                                    Occupied
-                                </span>
+                            <div class="text-sm font-medium text-gray-900 truncate" :title="item.room">
+                                {{ item.room }}
                             </div>
                         </td>
 

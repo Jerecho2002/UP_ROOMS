@@ -416,7 +416,7 @@ const saveNewDepartment = () => {
                     </div>
                 </div>
             </div>
-        </Teleport>
+</Teleport>
 
         <!-- Add Modal -->
         <Teleport to="body">

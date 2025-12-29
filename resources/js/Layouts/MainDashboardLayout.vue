@@ -390,7 +390,7 @@ const clearSearch = () => {
                                     v-model="searchQuery"
                                     type="text"
                                     placeholder="Search by room name, college, location, faculty, etc..."
-                                    class="pl-10 pr-10 py-2 border border-yellow-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-500"
+                                    class="pl-10 pr-10 py-2 border border-yellow-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7A0C23] focus:border-transparent w-500"
                                     @keyup.enter="handleSearch"
                                 />
                                 <!-- Search Icon -->

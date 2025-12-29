@@ -177,7 +177,23 @@ const handleDataUpdated = (data, type) => {
       <Sidebar v-show="sidebarVisible" class="fixed top-0 left-0 h-full z-20 w-64 lg:relative" />
 
       <main class="flex-1 p-6">
-        <h2 class="text-xl font-bold mb-6 text-[#7A0C23]">Building Management Dashboard</h2>
+        <!-- Header Section with left-aligned arrangement -->
+        <div class="mb-6">
+          <!-- Main Title and Breadcrumb Container -->
+          <div class="flex flex-col">
+            <!-- Building Management Title -->
+            <h1 class="text-xl md:text-2xl font-bold text-[#7A0C23] mb-1">
+              Building Management
+            </h1>
+            <!-- Breadcrumb - Left aligned under the title -->
+            <div class="mt-20 absolute right-6 top-2 z-20">
+                    <div class="text-sm text-gray-500 whitespace-nowrap ">
+                        <span>UPCEBU > BUILDING</span>
+                    </div>
+                </div>
+     </div>
+</div>
+
 
         <!-- Building Table Component -->
         <BuildingTable

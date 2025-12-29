@@ -19,7 +19,7 @@
         <span class="font-semibold">USER</span>
         <div class="w-9 h-9 rounded-full ring-2 ring-white overflow-hidden">
           <img src="/image/usericon.png" alt="user" />
-          
+
         </div>
       </div>
     </div>

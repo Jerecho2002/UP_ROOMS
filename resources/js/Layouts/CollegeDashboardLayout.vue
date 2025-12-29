@@ -52,7 +52,20 @@ const handleDeleted = (name) => triggerToast("delete", name);
         class="flex-1 p-6 bg-gray-200 transition-all duration-300 w-full"
         :style="sidebarVisible ? 'margin-left: 14rem;' : 'margin-left: 0;'"
       >
-        <h1 class="text-xl font-bold text-[#7A0C23] mt-3 ml-10 mb-3">COLLEGE DASHBOARD</h1>
+              <div class="mt-5 mb-12">
+            <h1 class="ml-10 text-xl md:text-2xl font-bold text-[#7A0C23] mb-1">College Management</h1>
+           <div class="absolute right-6 top-14 z-20">
+                    <div class="text-sm text-gray-500 whitespace-nowrap ">
+
+        </div>
+
+<div class="mt-10 absolute right-6 top-2 z-20">
+                    <div class="text-sm text-gray-500 whitespace-nowrap ">
+                        <span>UPCEBU > COLLEGE</span>
+                    </div>
+                </div>
+     </div>
+</div>
 
         <div class="bg-white shadow-lg rounded-lg p-4 sm:p-6 mb-6 ml-8 mt-6">
           <!-- CHILD COMPONENT WITH EVENTS -->

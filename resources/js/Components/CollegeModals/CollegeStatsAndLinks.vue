@@ -456,8 +456,6 @@ const handleDeleteDetails = (details) => {
                             >
                                 Edit
                             </IconButton>
-
-
                         </div>
                     </div>
                 </div>

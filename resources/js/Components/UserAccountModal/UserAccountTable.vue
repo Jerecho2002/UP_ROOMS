@@ -96,9 +96,26 @@ const handleDelete = (user) => {
 
 <template>
     <div class="flex-1 p-6">
-        <h2 class="text-xl font-bold mb-4 text-[#7A0C23]">User Account Management</h2>
+        <!-- Header Section with Title and Breadcrumb -->
+        <div class="mb-6">
+            <div class="flex justify-between items-center">
+                <!-- Title on the Left -->
+                <div>
+                    <h1 class="text-xl md:text-2xl font-bold text-[#7A0C23]">
+                        Account Management
+                    </h1>
+                </div>
 
-        <div class="mb-4 flex justify-between items-center">
+                <!-- Breadcrumb on the Right -->
+                <div class="text-sm text-gray-500">
+                    <span>UPCEBU > ACCOUNT</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search and Add Button Section -->
+        <div class="mb-6 flex justify-between items-center">
+            <!-- Search Input -->
             <div class="relative">
                 <input
                     type="text"
@@ -115,6 +132,7 @@ const handleDelete = (user) => {
                     class="absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none"
                 />
             </div>
+
             <!-- Add Button using IconButton -->
             <IconButton
                 @click="handleAddAccount"
@@ -129,6 +147,7 @@ const handleDelete = (user) => {
             </IconButton>
         </div>
 
+        <!-- Main Table Container -->
         <div class="border-yellow-700 bg-white rounded-lg shadow-xl overflow-hidden">
             <div class="overflow-x-auto max-h-[80vh]">
                 <table class="min-w-full border border-yellow-400 text-sm text-center">
@@ -136,11 +155,11 @@ const handleDelete = (user) => {
                         <tr>
                             <th class="px-4 py-3 font-semibold text-left">NAME</th>
                             <th class="px-4 py-3 font-semibold text-left">USERNAME</th>
-                            <th class="px-4 py-3  font-semibold text-left">EMAIL</th>
-                            <th class="px-4 py-3  font-semibold">ROLE</th>
-                            <th class="px-4 py-3  font-semibold">DEPARTMENT</th>
-                            <th class="px-4 py-3  font-semibold">COLLEGE</th>
-                            <th class="px-4 py-3  font-semibold">ACTION</th>
+                            <th class="px-4 py-3 font-semibold text-left">EMAIL</th>
+                            <th class="px-4 py-3 font-semibold">ROLE</th>
+                            <th class="px-4 py-3 font-semibold">DEPARTMENT</th>
+                            <th class="px-4 py-3 font-semibold">COLLEGE</th>
+                            <th class="px-4 py-3 font-semibold">ACTION</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -331,6 +350,26 @@ button:not(:disabled):hover {
     }
 
     .space-x-2 {
+        justify-content: center;
+    }
+
+    /* Make search input and button stack on mobile */
+    .mb-6.flex.justify-between.items-center {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+    }
+
+    .mb-6.flex.justify-between.items-center .relative {
+        width: 100%;
+    }
+
+    .mb-6.flex.justify-between.items-center .relative input {
+        width: 100%;
+    }
+
+    .mb-6.flex.justify-between.items-center .IconButton {
+        width: 100%;
         justify-content: center;
     }
 }

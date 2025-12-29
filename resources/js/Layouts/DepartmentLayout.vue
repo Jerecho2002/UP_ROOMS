@@ -125,7 +125,21 @@ const handleDepartmentDeleted = (deptName) => {
                 'flex-1 p-6 overflow-y-auto transition-all duration-300',
                 sidebarVisible ? '' : ''
             ]">
-                <h1 class="text-xl font-extrabold text-[#7A0C23] mt-3 mb-5">Department Dashboard</h1>
+                <!-- Header Section with Breadcrumb on Left and Title on Right -->
+                <div class="mb-6">
+                    <div class="flex justify-between items-start">
+                        <!-- Breadcrumb on the left -->
+                         <h1 class="text-xl md:text-2xl font-bold text-[#7A0C23]">
+                            Department Management
+                        </h1>
+
+
+                        <!-- Department Management Title on the right -->
+                         <div class="text-sm text-gray-500">
+                            <span>UPCEBU > DEPARTMENT</span>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Department Table Component -->
                 <DepartmentTable
