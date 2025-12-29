@@ -12,8 +12,8 @@
 
       <!-- Login Form -->
       <form @submit.prevent="submit" class="space-y-6">
-        <div v-if="$page.props.flash.error" class="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg">
-          {{ $page.props.flash.error }}
+        <div v-if="errors" class="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg">
+          {{ errors }}
         </div>
 
         <div>
@@ -27,11 +27,10 @@
             required
             :class="[
               'w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition duration-200',
-              errors.username ? 'border-red-300 focus:ring-red-500' : 'border-gray-300 focus:ring-[#7A0C23]'
+              'border-gray-300 focus:ring-[#7A0C23]'
             ]"
             placeholder="Enter your username"
           >
-          <p v-if="errors.username" class="mt-1 text-sm text-red-600">{{ errors.username }}</p>
         </div>
 
         <div>
@@ -45,11 +44,10 @@
             required
             :class="[
               'w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition duration-200',
-              errors.password ? 'border-red-300 focus:ring-red-500' : 'border-gray-300 focus:ring-[#7A0C23]'
+              'border-gray-300 focus:ring-[#7A0C23]'
             ]"
             placeholder="Enter your password"
           >
-          <p v-if="errors.password" class="mt-1 text-sm text-red-600">{{ errors.password }}</p>
         </div>
 
         <!-- Login Button -->
@@ -75,10 +73,12 @@
       <div class="mt-8 pt-6 border-t border-gray-200">
         <h3 class="text-sm font-medium text-gray-700 mb-2">Demo Credentials:</h3>
         <div class="space-y-1 text-sm text-gray-600">
-          <div><span class="font-medium">Admin:</span> admin / password</div>
-          <div><span class="font-medium">Staff:</span> staff / password</div>
-          <div><span class="font-medium">Faculty:</span> faculty / password</div>
-          <div><span class="font-medium">Sysadmin:</span> sysadmin / password</div>
+          <div><span class="font-medium">Admin:</span> admin / password123</div>
+          <div><span class="font-medium">Staff:</span> staff / password123</div>
+          <div><span class="font-medium">Faculty:</span> faculty / password123</div>
+          <div><span class="font-medium">Sysadmin:</span> sysadmin / password123</div>
+          <div><span class="font-medium">AO:</span> ao / password123</div>
+          <div><span class="font-medium">ADPD:</span> adpd / password123</div>
         </div>
       </div>
     </div>
@@ -87,37 +87,37 @@
 
 <script setup>
 import { ref, reactive } from 'vue';
-import { useForm } from '@inertiajs/vue3';
+import { router } from '@inertiajs/vue3';
 
 const processing = ref(false);
+const errors = ref('');
 
-const form = useForm({
+const form = reactive({
   username: '',
   password: '',
 });
 
-const errors = reactive({
-  username: '',
-  password: '',
-});
-
-const submit = () => {
+const submit = async () => {
   processing.value = true;
+  errors.value = '';
 
-  form.clearErrors();
-
-  form.post('/login', {
-    onFinish: () => {
-      processing.value = false;
-    },
-    onError: (errors) => {
-      if (errors.username) {
-        errors.username = errors.username;
-      }
-      if (errors.password) {
-        errors.password = errors.password;
-      }
-    },
-  });
+  try {
+    await router.post('/login', form, {
+      onSuccess: () => {
+        processing.value = false;
+      },
+      onError: (error) => {
+        processing.value = false;
+        if (error.username) {
+          errors.value = error.username;
+        } else {
+          errors.value = 'Invalid username or password';
+        }
+      },
+    });
+  } catch (error) {
+    processing.value = false;
+    errors.value = 'Login failed. Please try again.';
+  }
 };
 </script>
