@@ -1,44 +1,24 @@
 <script setup>
-import { ref } from 'vue'
-// Mock components for context, assuming they exist in the actual project
+import { ref, onMounted } from 'vue'
 import Navbar from '@/Components/Navbar.vue';
 import Sidebar from '@/Components/Sidebar.vue';
 import UserAccountTable from '@/Components/UserAccountModal/UserAccountTable.vue';
 import UserModal from '@/Components/UserAccountModal/UserModal.vue';
 import MessageFunction from '@/Components/MessageFunction.vue';
 
-// --- Data State (Master Array) ---
-const nextId = ref(16);
-// Initialized with mock data matching the Laravel schema
-const users = ref(
-    Array.from({ length: 35 }, (_, i) => ({
-        id: i + 1,
-        username: `user_${i + 1}`,
-        email: `user${i + 1}@example.com`,
-        first_name: i % 2 === 0 ? `Alice${i + 1}` : `Bob${i + 1}`,
-        last_name: `Smith${i + 1}`,
-        role: ['Admin', 'Staff', 'Faculty','DPTAPR','AO','ADPD','OCS','SYSADMIN','USER'][i % 9],
-        department: ['Computer Science', 'Electrical Engineering', 'Mechanical Engineering', 'Physics', 'Mathematics'][i % 5],
-        college: ['College of Engineering (CoE)', 'College of Arts and Sciences (CAS)', 'College of Business and Accountancy (CBA)', 'College of Education (CoEd)', 'College of Information Technology (CIT)'][i % 5],
-        permissions: getDefaultPermissions(i % 9)
-    }))
-);
 
-// Helper function to get default permissions based on role index
-function getDefaultPermissions(roleIndex) {
-    const permissionsMap = {
-        0: ['Can Approve', 'Can Edit', 'Can Book', 'Staff Work', 'User Type Only'], // Admin
-        1: ['Can Book', 'Staff Work'], // Staff
-        2: ['Can Book', 'User Type Only'], // Faculty
-        3: ['Can Approve', 'Can Book', 'User Type Only'], // DPTAPR
-        4: ['Can Approve', 'Can Edit', 'Staff Work'], // AO
-        5: ['Can Approve', 'Can Edit'], // ADPD
-        6: ['Can Approve', 'Can Edit', 'Can Book'], // OCS
-        7: ['Can Approve', 'Can Edit', 'Can Book', 'Staff Work', 'User Type Only'], // SYSADMIN
-        8: ['Can Book', 'User Type Only'] // USER
-    };
-    return permissionsMap[roleIndex] || [];
-}
+
+// --- Props ---
+const props = defineProps({
+    initialUsers: {
+        type: Array,
+        default: () => []
+    }
+});
+
+// --- Data State ---
+const users = ref([]);
+const isLoading = ref(false);
 
 // --- Toast States ---
 const showCreateSuccess = ref(false);
@@ -54,99 +34,181 @@ const toggleSidebar = () => {
 
 // --- Modal State ---
 const isModalVisible = ref(false)
-const modalType = ref(null) // 'add', 'view', 'edit', 'delete'
-const modalData = ref(null) // The user object to be viewed/edited/deleted
+const modalType = ref(null)
+const modalData = ref(null)
 
+// --- Database Methods (Using Laravel Controllers) ---
+const fetchUsers = async () => {
+    isLoading.value = true;
+    try {
+        // In a real app, you might fetch from controller
+        // For now, use the initial users passed from Laravel
+        users.value = props.initialUsers;
+    } catch (error) {
+        console.error('Error fetching users:', error);
+    } finally {
+        isLoading.value = false;
+    }
+};
+
+const addUser = async (newUser) => {
+    try {
+        const response = await fetch('/user-accounts', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': window.Laravel.csrfToken
+            },
+            body: JSON.stringify(newUser)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            // Add the new user to the local array
+            users.value.unshift(result.user);
+            return { success: true, data: result.user };
+        } else {
+            return { success: false, error: result };
+        }
+    } catch (error) {
+        console.error('Error adding user:', error);
+        return { success: false, error: { message: 'Network error' } };
+    }
+};
+
+const updateUser = async (updatedUser) => {
+    try {
+        const response = await fetch(`/user-accounts/${updatedUser.id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': window.Laravel.csrfToken
+            },
+            body: JSON.stringify(updatedUser)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            // Update the user in the local array
+            const index = users.value.findIndex(u => u.id === updatedUser.id);
+            if (index !== -1) {
+                users.value[index] = result.user;
+            }
+            return { success: true, data: result.user };
+        } else {
+            return { success: false, error: result };
+        }
+    } catch (error) {
+        console.error('Error updating user:', error);
+        return { success: false, error: { message: 'Network error' } };
+    }
+};
+
+const deleteUser = async (userId) => {
+    try {
+        const response = await fetch(`/user-accounts/${userId}`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': window.Laravel.csrfToken
+            }
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            // Remove the user from the local array
+            users.value = users.value.filter(u => u.id !== userId);
+            return { success: true, username: result.username };
+        } else {
+            return { success: false, error: result.message };
+        }
+    } catch (error) {
+        console.error('Error deleting user:', error);
+        return { success: false, error: 'Network error' };
+    }
+};
+
+// --- Event Handlers ---
 const handleOpenModal = (type, data = null) => {
-    modalType.value = type
-    modalData.value = data
-    isModalVisible.value = true
-}
+    modalType.value = type;
+    modalData.value = data;
+    isModalVisible.value = true;
+};
 
 const handleCloseModal = () => {
-    isModalVisible.value = false
-    modalData.value = null
-    modalType.value = null
-}
+    isModalVisible.value = false;
+    modalData.value = null;
+    modalType.value = null;
+};
+
+const handleDataUpdated = async (data, type) => {
+    let result;
+
+    switch (type) {
+        case 'add':
+            result = await addUser(data);
+            if (result.success) {
+                triggerToast("create");
+                handleCloseModal();
+            } else {
+                return result;
+            }
+            break;
+        case 'edit':
+            result = await updateUser(data);
+            if (result.success) {
+                triggerToast("edit");
+                handleCloseModal();
+            } else {
+                return result;
+            }
+            break;
+        case 'delete':
+            result = await deleteUser(data.id);
+            if (result.success) {
+                triggerToast("delete", result.username);
+                handleCloseModal();
+            }
+            break;
+    }
+};
 
 // --- Toast Functions ---
 const triggerToast = (type, name = "") => {
-    // Reset all toast states first
-    showCreateSuccess.value = false
-    showEditSuccess.value = false
-    showDeleteSuccess.value = false
+    showCreateSuccess.value = false;
+    showEditSuccess.value = false;
+    showDeleteSuccess.value = false;
 
-    // Set the appropriate toast state
     if (type === "create") {
-        showCreateSuccess.value = true
+        showCreateSuccess.value = true;
     } else if (type === "edit") {
-        showEditSuccess.value = true
+        showEditSuccess.value = true;
     } else if (type === "delete") {
-        deletedUserName.value = name
-        showDeleteSuccess.value = true
+        deletedUserName.value = name;
+        showDeleteSuccess.value = true;
     }
 
-    // Auto-hide the toast after 3 seconds
     setTimeout(() => {
-        showCreateSuccess.value = false
-        showEditSuccess.value = false
-        showDeleteSuccess.value = false
-        deletedUserName.value = ""
-    }, 3000)
-}
-
-// --- CRUD Operations ---
-const handleDataUpdated = (data, type) => {
-    switch (type) {
-        case 'add':
-            addUser(data);
-            triggerToast("create");
-            break;
-        case 'edit':
-            updateUser(data);
-            triggerToast("edit");
-            break;
-        case 'delete':
-            deleteUser(data.id);
-            triggerToast("delete", data.username);
-            break;
-    }
-    handleCloseModal();
-}
-
-const addUser = (newUser) => {
-    // Assign a new ID (simulating DB insertion)
-    newUser.id = nextId.value++;
-    // Set a default role if none is provided in the form
-    if (!newUser.role) newUser.role = 'Staff';
-    users.value.unshift(newUser); // Add to beginning to show at top
-    console.log('User added:', newUser.username);
+        showCreateSuccess.value = false;
+        showEditSuccess.value = false;
+        showDeleteSuccess.value = false;
+        deletedUserName.value = "";
+    }, 3000);
 };
 
-const updateUser = (updatedUser) => {
-    const index = users.value.findIndex(u => u.id === updatedUser.id);
-    if (index !== -1) {
-        // Simple update/replace of the object
-        users.value[index] = updatedUser;
-        console.log('User updated:', updatedUser.username);
-    }
-};
-
-const deleteUser = (userId) => {
-    const initialLength = users.value.length;
-    users.value = users.value.filter(u => u.id !== userId);
-    if (users.value.length < initialLength) {
-        console.log(`User with ID ${userId} deleted.`);
-    }
-};
-
-// --- Close Toast Handlers ---
 const closeCreateToast = () => showCreateSuccess.value = false;
 const closeEditToast = () => showEditSuccess.value = false;
 const closeDeleteToast = () => {
     showDeleteSuccess.value = false;
     deletedUserName.value = '';
 };
+
+// Lifecycle
+onMounted(() => {
+    fetchUsers();
+});
 </script>
 
 <template>
@@ -162,15 +224,25 @@ const closeDeleteToast = () => {
             @close-delete="closeDeleteToast"
         />
 
-        <!-- Assuming Navbar and Sidebar exist and are correctly imported -->
+        <!-- Loading Overlay -->
+        <div v-if="isLoading" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white p-6 rounded-lg shadow-xl">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7A0C23] mx-auto"></div>
+                <p class="mt-4 text-gray-600">Loading users...</p>
+            </div>
+        </div>
+
         <Navbar @toggle-sidebar="toggleSidebar" />
 
         <div class="flex pt-10 min-h-screen transition-all duration-300">
-
             <Sidebar v-show="sidebarVisible" class="fixed top-5 left-0 h-full z-20 w-64 lg:relative" />
 
             <main id="main" class="flex-1 overflow-y-auto p-0 md:p-6 bg-gray-200">
-                <UserAccountTable :users="users" @open-modal="handleOpenModal" />
+                <UserAccountTable
+                    :users="users"
+                    :loading="isLoading"
+                    @open-modal="handleOpenModal"
+                />
             </main>
         </div>
 

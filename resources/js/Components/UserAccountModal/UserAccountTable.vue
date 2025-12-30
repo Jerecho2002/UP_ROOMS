@@ -1,99 +1,3 @@
-<script setup>
-import { computed, ref, defineProps, defineEmits } from 'vue';
-import IconButton from '@/Components/IconButton.vue';
-
-const props = defineProps({
-    users: {
-        type: Array,
-        required: true
-    }
-});
-
-const emit = defineEmits(['openModal']);
-
-const searchQuery = ref('');
-
-// --- Pagination State ---
-const currentPage = ref(1);
-const itemsPerPage = ref(10);
-
-// Filtering uses the new user fields
-const filteredUsers = computed(() => {
-    if (!searchQuery.value) {
-        return props.users;
-    }
-    const query = searchQuery.value.toLowerCase();
-    return props.users.filter(user =>
-        user.username.toLowerCase().includes(query) ||
-        user.email.toLowerCase().includes(query) ||
-        user.first_name.toLowerCase().includes(query) ||
-        user.last_name.toLowerCase().includes(query) ||
-        user.role.toLowerCase().includes(query) ||
-        (user.department && user.department.toLowerCase().includes(query)) ||
-        (user.college && user.college.toLowerCase().includes(query))
-    );
-});
-
-// --- Paginated Data ---
-const paginatedUsers = computed(() => {
-    const start = (currentPage.value - 1) * itemsPerPage.value;
-    const end = start + itemsPerPage.value;
-    return filteredUsers.value.slice(start, end);
-});
-
-// --- Pagination Computed ---
-const totalPages = computed(() => {
-    return Math.ceil(filteredUsers.value.length / itemsPerPage.value);
-});
-
-const showingRange = computed(() => {
-    const start = (currentPage.value - 1) * itemsPerPage.value + 1;
-    const end = Math.min(currentPage.value * itemsPerPage.value, filteredUsers.value.length);
-    const total = filteredUsers.value.length;
-    return { start, end, total };
-});
-
-// --- Pagination Methods ---
-const nextPage = () => {
-    if (currentPage.value < totalPages.value) {
-        currentPage.value++;
-    }
-};
-
-const prevPage = () => {
-    if (currentPage.value > 1) {
-        currentPage.value--;
-    }
-};
-
-const goToPage = (page) => {
-    if (page >= 1 && page <= totalPages.value) {
-        currentPage.value = page;
-    }
-};
-
-const resetPagination = () => {
-    currentPage.value = 1;
-};
-
-// --- Action Handlers ---
-const handleAddAccount = () => {
-    emit('openModal', 'add');
-};
-
-const handleView = (user) => {
-    emit('openModal', 'view', user);
-};
-
-const handleEdit = (user) => {
-    emit('openModal', 'edit', user);
-};
-
-const handleDelete = (user) => {
-    emit('openModal', 'delete', user);
-};
-</script>
-
 <template>
     <div class="flex-1 p-6">
         <!-- Header Section with Title and Breadcrumb -->
@@ -162,7 +66,21 @@ const handleDelete = (user) => {
                             <th class="px-4 py-3 font-semibold">ACTION</th>
                         </tr>
                     </thead>
-                    <tbody>
+
+                    <!-- Loading State -->
+                    <tbody v-if="loading">
+                        <tr>
+                            <td colspan="7" class="p-8 text-center">
+                                <div class="flex items-center justify-center">
+                                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-[#7A0C23] mr-3"></div>
+                                    <span class="text-gray-600">Loading users...</span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+
+                    <!-- Data Rows -->
+                    <tbody v-else>
                         <tr
                             v-for="(user) in paginatedUsers"
                             :key="user.id"
@@ -216,7 +134,7 @@ const handleDelete = (user) => {
                                 />
                             </td>
                         </tr>
-                        <tr v-if="filteredUsers.length === 0">
+                        <tr v-if="filteredUsers.length === 0 && !loading">
                             <td colspan="7" class="p-8 text-center text-gray-500">
                                 No users found matching your search.
                             </td>
@@ -226,7 +144,7 @@ const handleDelete = (user) => {
             </div>
 
             <!-- Pagination Controls -->
-            <div v-if="filteredUsers.length > 0" class="bg-gray-50 px-6 py-4 border-t border-gray-200">
+            <div v-if="filteredUsers.length > 0 && !loading" class="bg-gray-50 px-6 py-4 border-t border-gray-200">
                 <div class="flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
 
                     <!-- Showing range -->
@@ -326,6 +244,105 @@ const handleDelete = (user) => {
         </div>
     </div>
 </template>
+
+<script setup>
+import { computed, ref, defineProps, defineEmits } from 'vue';
+import IconButton from '@/Components/IconButton.vue';
+
+const props = defineProps({
+    users: {
+        type: Array,
+        required: true
+    },
+    loading: {
+        type: Boolean,
+        default: false
+    }
+});
+const emit = defineEmits(['openModal']);
+
+const searchQuery = ref('');
+
+// --- Pagination State ---
+const currentPage = ref(1);
+const itemsPerPage = ref(10);
+
+// Filtering uses the new user fields
+const filteredUsers = computed(() => {
+    if (!searchQuery.value) {
+        return props.users;
+    }
+    const query = searchQuery.value.toLowerCase();
+    return props.users.filter(user =>
+        user.username.toLowerCase().includes(query) ||
+        user.email.toLowerCase().includes(query) ||
+        user.first_name.toLowerCase().includes(query) ||
+        user.last_name.toLowerCase().includes(query) ||
+        user.role.toLowerCase().includes(query) ||
+        (user.department && user.department.toLowerCase().includes(query)) ||
+        (user.college && user.college.toLowerCase().includes(query))
+    );
+});
+
+// --- Paginated Data ---
+const paginatedUsers = computed(() => {
+    const start = (currentPage.value - 1) * itemsPerPage.value;
+    const end = start + itemsPerPage.value;
+    return filteredUsers.value.slice(start, end);
+});
+
+// --- Pagination Computed ---
+const totalPages = computed(() => {
+    return Math.ceil(filteredUsers.value.length / itemsPerPage.value);
+});
+
+const showingRange = computed(() => {
+    const start = (currentPage.value - 1) * itemsPerPage.value + 1;
+    const end = Math.min(currentPage.value * itemsPerPage.value, filteredUsers.value.length);
+    const total = filteredUsers.value.length;
+    return { start, end, total };
+});
+
+// --- Pagination Methods ---
+const nextPage = () => {
+    if (currentPage.value < totalPages.value) {
+        currentPage.value++;
+    }
+};
+
+const prevPage = () => {
+    if (currentPage.value > 1) {
+        currentPage.value--;
+    }
+};
+
+const goToPage = (page) => {
+    if (page >= 1 && page <= totalPages.value) {
+        currentPage.value = page;
+    }
+};
+
+const resetPagination = () => {
+    currentPage.value = 1;
+};
+
+// --- Action Handlers ---
+const handleAddAccount = () => {
+    emit('openModal', 'add');
+};
+
+const handleView = (user) => {
+    emit('openModal', 'view', user);
+};
+
+const handleEdit = (user) => {
+    emit('openModal', 'edit', user);
+};
+
+const handleDelete = (user) => {
+    emit('openModal', 'delete', user);
+};
+</script>
 
 <style scoped>
 /* Custom styles for pagination */

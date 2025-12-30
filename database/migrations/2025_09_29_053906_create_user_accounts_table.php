@@ -9,15 +9,18 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('user_accounts', function (Blueprint $table) {
-            $table->id('id');
+            $table->id();
             $table->string('username', 50)->unique();
             $table->string('password', 255);
             $table->string('email', 100)->unique()->nullable();
-
             $table->string('first_name', 50)->nullable();
             $table->string('last_name', 50)->nullable();
             $table->string('role', 50)->nullable();
-            $table->timestamp('created_at')->useCurrent();
+            $table->string('department', 100)->nullable();
+            $table->string('college', 150)->nullable();
+            $table->json('permissions')->nullable();
+            $table->timestamps();
+            $table->softDeletes(); // Optional: for soft deletion
         });
     }
 

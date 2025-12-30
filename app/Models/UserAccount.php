@@ -3,13 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Database\Eloquent\Model;
 
-class UserAccount extends Authenticatable
+class UserAccount extends Model
 {
     use HasFactory;
 
-    protected $table = 'user_accounts';
     protected $fillable = [
         'username',
         'password',
@@ -17,13 +16,20 @@ class UserAccount extends Authenticatable
         'first_name',
         'last_name',
         'role',
+        'department',
+        'college',
+        'permissions', // Make sure this is in fillable
+        // ... other fields
     ];
 
-    public $timestamps = false;
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
 
-    // 🔗 Relations
-    public function rooms()
-    {
-        return $this->hasMany(Room::class);
-    }
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+        'permissions' => 'array', // Add this line to cast permissions to array/JSON
+    ];
 }
