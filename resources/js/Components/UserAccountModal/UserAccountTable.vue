@@ -1,3 +1,103 @@
+<script setup>
+import { computed, ref, defineProps, defineEmits } from 'vue';
+import IconButton from '@/Components/IconButton.vue';
+
+const props = defineProps({
+    users: {
+        type: Array,
+        required: true
+    },
+    loading: {
+        type: Boolean,
+        default: false
+    }
+});
+const emit = defineEmits(['openModal']);
+
+const searchQuery = ref('');
+
+// --- Pagination State ---
+const currentPage = ref(1);
+const itemsPerPage = ref(10);
+
+// Filtering uses the new user fields
+const filteredUsers = computed(() => {
+    if (!searchQuery.value) {
+        return props.users;
+    }
+    const query = searchQuery.value.toLowerCase();
+    return props.users.filter(user =>
+        user.username.toLowerCase().includes(query) ||
+        user.email.toLowerCase().includes(query) ||
+        user.first_name.toLowerCase().includes(query) ||
+        user.last_name.toLowerCase().includes(query) ||
+        user.role.toLowerCase().includes(query) ||
+        (user.department && user.department.toLowerCase().includes(query)) ||
+        (user.college && user.college.toLowerCase().includes(query))
+    );
+});
+
+// --- Paginated Data ---
+const paginatedUsers = computed(() => {
+    const start = (currentPage.value - 1) * itemsPerPage.value;
+    const end = start + itemsPerPage.value;
+    return filteredUsers.value.slice(start, end);
+});
+
+// --- Pagination Computed ---
+const totalPages = computed(() => {
+    return Math.ceil(filteredUsers.value.length / itemsPerPage.value);
+});
+
+const showingRange = computed(() => {
+    const start = (currentPage.value - 1) * itemsPerPage.value + 1;
+    const end = Math.min(currentPage.value * itemsPerPage.value, filteredUsers.value.length);
+    const total = filteredUsers.value.length;
+    return { start, end, total };
+});
+
+// --- Pagination Methods ---
+const nextPage = () => {
+    if (currentPage.value < totalPages.value) {
+        currentPage.value++;
+    }
+};
+
+const prevPage = () => {
+    if (currentPage.value > 1) {
+        currentPage.value--;
+    }
+};
+
+const goToPage = (page) => {
+    if (page >= 1 && page <= totalPages.value) {
+        currentPage.value = page;
+    }
+};
+
+const resetPagination = () => {
+    currentPage.value = 1;
+};
+
+// --- Action Handlers ---
+const handleAddAccount = () => {
+    emit('openModal', 'add');
+};
+
+const handleView = (user) => {
+    emit('openModal', 'view', user);
+};
+
+const handleEdit = (user) => {
+    emit('openModal', 'edit', user);
+};
+
+const handleDelete = (user) => {
+    emit('openModal', 'delete', user);
+};
+</script>
+
+
 <template>
     <div class="flex-1 p-6">
         <!-- Header Section with Title and Breadcrumb -->
@@ -245,104 +345,6 @@
     </div>
 </template>
 
-<script setup>
-import { computed, ref, defineProps, defineEmits } from 'vue';
-import IconButton from '@/Components/IconButton.vue';
-
-const props = defineProps({
-    users: {
-        type: Array,
-        required: true
-    },
-    loading: {
-        type: Boolean,
-        default: false
-    }
-});
-const emit = defineEmits(['openModal']);
-
-const searchQuery = ref('');
-
-// --- Pagination State ---
-const currentPage = ref(1);
-const itemsPerPage = ref(10);
-
-// Filtering uses the new user fields
-const filteredUsers = computed(() => {
-    if (!searchQuery.value) {
-        return props.users;
-    }
-    const query = searchQuery.value.toLowerCase();
-    return props.users.filter(user =>
-        user.username.toLowerCase().includes(query) ||
-        user.email.toLowerCase().includes(query) ||
-        user.first_name.toLowerCase().includes(query) ||
-        user.last_name.toLowerCase().includes(query) ||
-        user.role.toLowerCase().includes(query) ||
-        (user.department && user.department.toLowerCase().includes(query)) ||
-        (user.college && user.college.toLowerCase().includes(query))
-    );
-});
-
-// --- Paginated Data ---
-const paginatedUsers = computed(() => {
-    const start = (currentPage.value - 1) * itemsPerPage.value;
-    const end = start + itemsPerPage.value;
-    return filteredUsers.value.slice(start, end);
-});
-
-// --- Pagination Computed ---
-const totalPages = computed(() => {
-    return Math.ceil(filteredUsers.value.length / itemsPerPage.value);
-});
-
-const showingRange = computed(() => {
-    const start = (currentPage.value - 1) * itemsPerPage.value + 1;
-    const end = Math.min(currentPage.value * itemsPerPage.value, filteredUsers.value.length);
-    const total = filteredUsers.value.length;
-    return { start, end, total };
-});
-
-// --- Pagination Methods ---
-const nextPage = () => {
-    if (currentPage.value < totalPages.value) {
-        currentPage.value++;
-    }
-};
-
-const prevPage = () => {
-    if (currentPage.value > 1) {
-        currentPage.value--;
-    }
-};
-
-const goToPage = (page) => {
-    if (page >= 1 && page <= totalPages.value) {
-        currentPage.value = page;
-    }
-};
-
-const resetPagination = () => {
-    currentPage.value = 1;
-};
-
-// --- Action Handlers ---
-const handleAddAccount = () => {
-    emit('openModal', 'add');
-};
-
-const handleView = (user) => {
-    emit('openModal', 'view', user);
-};
-
-const handleEdit = (user) => {
-    emit('openModal', 'edit', user);
-};
-
-const handleDelete = (user) => {
-    emit('openModal', 'delete', user);
-};
-</script>
 
 <style scoped>
 /* Custom styles for pagination */

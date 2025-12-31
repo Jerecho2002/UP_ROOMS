@@ -1,7 +1,5 @@
 <script setup>
 import { defineProps, defineEmits, computed, ref, watch } from 'vue';
-// Remove axios import since we're not using API calls
-// import axios from 'axios';
 
 const props = defineProps({
     isVisible: {
@@ -180,7 +178,7 @@ const isValidEmail = (email) => {
     return emailRegex.test(email);
 };
 
-// --- FORM HANDLING METHODS (Updated for no API calls) ---
+// --- FORM HANDLING METHODS ---
 const handleSubmit = async () => {
     if (!validateForm()) {
         return;
@@ -209,7 +207,8 @@ const handleSubmit = async () => {
 
     } catch (error) {
         console.error('Error in form submission:', error);
-        alert('An error occurred. Please try again.');
+        // Let parent handle the error
+        emit('dataUpdated', { error: error.message }, props.type);
     } finally {
         isLoading.value = false;
     }
@@ -227,7 +226,8 @@ const handleDeleteConfirm = async () => {
 
     } catch (error) {
         console.error('Error in delete confirmation:', error);
-        alert('An error occurred. Please try again.');
+        // Let parent handle the error
+        emit('dataUpdated', { error: error.message }, 'delete');
     } finally {
         isLoading.value = false;
     }

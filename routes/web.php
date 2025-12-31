@@ -2,60 +2,99 @@
 
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\MainDashboardController;
-use App\Http\Controllers\UserAccountController; // Add this
+use Illuminate\Http\Request;
+use App\Http\Controllers\LoginController;
 
-// Existing Routes
-Route::get('/MainDashboard', [MainDashboardController::class, 'index'])->name('main.index');
+// Login Routes
+Route::get('/login', function () {
+    return Inertia::render('Login');
+})->name('login');
 
-Route::get('/BuildingDashboard', function(){
+Route::post('/login', [LoginController::class, 'login']);
+Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+
+// Simple auth check function
+function authCheck(Request $request) {
+    return $request->session()->has('user');
+}
+
+// Protected routes with inline auth check
+Route::get('/', function (Request $request) {
+    if (!authCheck($request)) {
+        return redirect('/login');
+    }
+    return Inertia::render('MainDashboard');
+});
+
+Route::get('/MainDashboard', function (Request $request) {
+    if (!authCheck($request)) {
+        return redirect('/login');
+    }
+    return Inertia::render('MainDashboard');
+});
+
+Route::get('/BuildingDashboard', function (Request $request) {
+    if (!authCheck($request)) {
+        return redirect('/login');
+    }
     return Inertia::render('BuildingDashboard');
 });
 
-Route::get('/Terms', function(){
+Route::get('/Terms', function (Request $request) {
+    if (!authCheck($request)) {
+        return redirect('/login');
+    }
     return Inertia::render('Terms');
 });
 
-Route::get('/CollegeDashboard', function () {
+Route::get('/CollegeDashboard', function (Request $request) {
+    if (!authCheck($request)) {
+        return redirect('/login');
+    }
     return Inertia::render('CollegeDashboard');
 });
 
-// User Account Page with data
-Route::get('/UserAccountPage', function () {
+Route::get('/UserAccountPage', function (Request $request) {
+    if (!authCheck($request)) {
+        return redirect('/login');
+    }
     $users = \App\Models\UserAccount::all();
     return Inertia::render('UserAccountPage', [
         'initialUsers' => $users
     ]);
 });
 
-// API Routes for User Accounts
-Route::prefix('user-accounts')->group(function () {
-    Route::get('/', [UserAccountController::class, 'index']);
-    Route::post('/', [UserAccountController::class, 'store']);
-    Route::put('/{userAccount}', [UserAccountController::class, 'update']);
-    Route::delete('/{userAccount}', [UserAccountController::class, 'destroy']);
-});
-
-Route::get('/Department', function () {
+Route::get('/Department', function (Request $request) {
+    if (!authCheck($request)) {
+        return redirect('/login');
+    }
     return Inertia::render('Department');
 });
 
-Route::get('/equipment', function () {
+Route::get('/equipment', function (Request $request) {
+    if (!authCheck($request)) {
+        return redirect('/login');
+    }
     return Inertia::render('equipment');
 });
 
-Route::get('/roomtypes', function () {
+Route::get('/roomtypes', function (Request $request) {
+    if (!authCheck($request)) {
+        return redirect('/login');
+    }
     return Inertia::render('roomtypes');
 });
 
-Route::get('/room', function () {
+Route::get('/room', function (Request $request) {
+    if (!authCheck($request)) {
+        return redirect('/login');
+    }
     return Inertia::render('room');
 });
 
-Route::get('/schedule', function () {
+Route::get('/schedule', function (Request $request) {
+    if (!authCheck($request)) {
+        return redirect('/login');
+    }
     return Inertia::render('schedule');
-});
-
-Route::get('/login', function () {
-    return Inertia::render('login');
 });

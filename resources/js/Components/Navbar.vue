@@ -16,10 +16,9 @@
 
       <!-- Right -->
       <div class="flex items-center space-x-2">
-        <span class="font-semibold">USER</span>
+        <span class="font-semibold">{{ user?.username || 'USER' }}</span>
         <div class="w-9 h-9 rounded-full ring-2 ring-white overflow-hidden">
           <img src="/image/usericon.png" alt="user" />
-
         </div>
       </div>
     </div>
@@ -28,4 +27,11 @@
 
 <script setup>
 import { Link } from '@inertiajs/vue3'
+
+defineProps({
+  user: {
+    type: Object,
+    default: () => ({})
+  }
+});
 </script>

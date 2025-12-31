@@ -90,12 +90,23 @@
       <hr class="border-gray-100 my-1">
       <a href="/Terms" class="block px-4 py-2 text-black hover:bg-[#9c1b33] hover:text-white rounded transition duration-150">Terms</a>
 
+      <!-- Logout Link Added Below Terms -->
+      <form @submit.prevent="logout">
+        <button
+          type="submit"
+          class="w-full text-left block px-4 py-2 text-black hover:bg-[#9c1b33] hover:text-white rounded transition duration-150"
+        >
+          Logout
+        </button>
+      </form>
+
     </nav>
   </aside>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import { router } from '@inertiajs/vue3';
 
 // --- PROPS ---
 
@@ -122,7 +133,7 @@ defineProps({
  */
 const isBuildingOpen = ref(false);
 const isCollegeOpen = ref(false);
-const isRoomsOpen = ref(false);  
+const isRoomsOpen = ref(false);
 
 // --- FUNCTIONS ---
 
@@ -178,6 +189,11 @@ const setInitialMenuState = () => {
   } else if (pathMap.Rooms.includes(currentPath)) {
     isRoomsOpen.value = true;
   }
+};
+
+// Logout function
+const logout = () => {
+  router.post('/logout');
 };
 
 // --- LIFECYCLE HOOKS ---

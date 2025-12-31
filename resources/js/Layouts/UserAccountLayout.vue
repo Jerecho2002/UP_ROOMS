@@ -6,8 +6,6 @@ import UserAccountTable from '@/Components/UserAccountModal/UserAccountTable.vue
 import UserModal from '@/Components/UserAccountModal/UserModal.vue';
 import MessageFunction from '@/Components/MessageFunction.vue';
 
-
-
 // --- Props ---
 const props = defineProps({
     initialUsers: {
@@ -19,12 +17,17 @@ const props = defineProps({
 // --- Data State ---
 const users = ref([]);
 const isLoading = ref(false);
+const isTableLoading = ref(false);
 
 // --- Toast States ---
 const showCreateSuccess = ref(false);
 const showEditSuccess = ref(false);
 const showDeleteSuccess = ref(false);
+const showError = ref(false);
+const showInfo = ref(false);
 const deletedUserName = ref('');
+const errorMessage = ref('');
+const infoMessage = ref('');
 
 // --- Layout State ---
 const sidebarVisible = ref(true)
@@ -37,17 +40,17 @@ const isModalVisible = ref(false)
 const modalType = ref(null)
 const modalData = ref(null)
 
-// --- Database Methods (Using Laravel Controllers) ---
+// --- Database Methods ---
 const fetchUsers = async () => {
-    isLoading.value = true;
+    isTableLoading.value = true;
     try {
-        // In a real app, you might fetch from controller
-        // For now, use the initial users passed from Laravel
+        // Use initialUsers from Laravel
         users.value = props.initialUsers;
     } catch (error) {
         console.error('Error fetching users:', error);
+        triggerError('Failed to load users');
     } finally {
-        isLoading.value = false;
+        isTableLoading.value = false;
     }
 };
 
@@ -57,23 +60,28 @@ const addUser = async (newUser) => {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': window.Laravel.csrfToken
+                'X-CSRF-TOKEN': window.Laravel.csrfToken,
+                'Accept': 'application/json'
             },
             body: JSON.stringify(newUser)
         });
 
         const result = await response.json();
 
-        if (result.success) {
-            // Add the new user to the local array
-            users.value.unshift(result.user);
+        if (response.ok) {
             return { success: true, data: result.user };
         } else {
-            return { success: false, error: result };
+            return {
+                success: false,
+                error: result.message || 'Failed to create user'
+            };
         }
     } catch (error) {
         console.error('Error adding user:', error);
-        return { success: false, error: { message: 'Network error' } };
+        return {
+            success: false,
+            error: { message: 'Network error' }
+        };
     }
 };
 
@@ -83,26 +91,28 @@ const updateUser = async (updatedUser) => {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': window.Laravel.csrfToken
+                'X-CSRF-TOKEN': window.Laravel.csrfToken,
+                'Accept': 'application/json'
             },
             body: JSON.stringify(updatedUser)
         });
 
         const result = await response.json();
 
-        if (result.success) {
-            // Update the user in the local array
-            const index = users.value.findIndex(u => u.id === updatedUser.id);
-            if (index !== -1) {
-                users.value[index] = result.user;
-            }
+        if (response.ok) {
             return { success: true, data: result.user };
         } else {
-            return { success: false, error: result };
+            return {
+                success: false,
+                error: result.message || 'Failed to update user'
+            };
         }
     } catch (error) {
         console.error('Error updating user:', error);
-        return { success: false, error: { message: 'Network error' } };
+        return {
+            success: false,
+            error: { message: 'Network error' }
+        };
     }
 };
 
@@ -111,22 +121,27 @@ const deleteUser = async (userId) => {
         const response = await fetch(`/user-accounts/${userId}`, {
             method: 'DELETE',
             headers: {
-                'X-CSRF-TOKEN': window.Laravel.csrfToken
+                'X-CSRF-TOKEN': window.Laravel.csrfToken,
+                'Accept': 'application/json'
             }
         });
 
         const result = await response.json();
 
-        if (result.success) {
-            // Remove the user from the local array
-            users.value = users.value.filter(u => u.id !== userId);
+        if (response.ok) {
             return { success: true, username: result.username };
         } else {
-            return { success: false, error: result.message };
+            return {
+                success: false,
+                error: result.message || 'Failed to delete user'
+            };
         }
     } catch (error) {
         console.error('Error deleting user:', error);
-        return { success: false, error: 'Network error' };
+        return {
+            success: false,
+            error: 'Network error'
+        };
     }
 };
 
@@ -150,26 +165,36 @@ const handleDataUpdated = async (data, type) => {
         case 'add':
             result = await addUser(data);
             if (result.success) {
+                // Refresh users list
+                await fetchUsers();
                 triggerToast("create");
                 handleCloseModal();
             } else {
+                triggerError(result.error.message || 'Failed to create user');
                 return result;
             }
             break;
+
         case 'edit':
             result = await updateUser(data);
             if (result.success) {
+                // Refresh users list
+                await fetchUsers();
                 triggerToast("edit");
                 handleCloseModal();
             } else {
+                triggerError(result.error.message || 'Failed to update user');
                 return result;
             }
             break;
+
         case 'delete':
             result = await deleteUser(data.id);
             if (result.success) {
                 triggerToast("delete", result.username);
                 handleCloseModal();
+            } else {
+                triggerError(result.error || 'Failed to delete user');
             }
             break;
     }
@@ -177,9 +202,12 @@ const handleDataUpdated = async (data, type) => {
 
 // --- Toast Functions ---
 const triggerToast = (type, name = "") => {
+    // Reset all toasts first
     showCreateSuccess.value = false;
     showEditSuccess.value = false;
     showDeleteSuccess.value = false;
+    showError.value = false;
+    showInfo.value = false;
 
     if (type === "create") {
         showCreateSuccess.value = true;
@@ -190,6 +218,7 @@ const triggerToast = (type, name = "") => {
         showDeleteSuccess.value = true;
     }
 
+    // Auto hide after 3 seconds
     setTimeout(() => {
         showCreateSuccess.value = false;
         showEditSuccess.value = false;
@@ -198,11 +227,39 @@ const triggerToast = (type, name = "") => {
     }, 3000);
 };
 
+const triggerError = (message) => {
+    errorMessage.value = message;
+    showError.value = true;
+
+    setTimeout(() => {
+        showError.value = false;
+        errorMessage.value = '';
+    }, 5000);
+};
+
+const triggerInfo = (message) => {
+    infoMessage.value = message;
+    showInfo.value = true;
+
+    setTimeout(() => {
+        showInfo.value = false;
+        infoMessage.value = '';
+    }, 3000);
+};
+
 const closeCreateToast = () => showCreateSuccess.value = false;
 const closeEditToast = () => showEditSuccess.value = false;
 const closeDeleteToast = () => {
     showDeleteSuccess.value = false;
     deletedUserName.value = '';
+};
+const closeErrorToast = () => {
+    showError.value = false;
+    errorMessage.value = '';
+};
+const closeInfoToast = () => {
+    showInfo.value = false;
+    infoMessage.value = '';
 };
 
 // Lifecycle
@@ -218,17 +275,23 @@ onMounted(() => {
             :show-create-success="showCreateSuccess"
             :show-edit-success="showEditSuccess"
             :show-delete-success="showDeleteSuccess"
+            :show-error="showError"
+            :show-info="showInfo"
             :deleted-room-name="deletedUserName"
+            :error-message="errorMessage"
+            :info-message="infoMessage"
             @close-create="closeCreateToast"
             @close-edit="closeEditToast"
             @close-delete="closeDeleteToast"
+            @close-error="closeErrorToast"
+            @close-info="closeInfoToast"
         />
 
-        <!-- Loading Overlay -->
+        <!-- Loading Overlay for modal operations -->
         <div v-if="isLoading" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div class="bg-white p-6 rounded-lg shadow-xl">
                 <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7A0C23] mx-auto"></div>
-                <p class="mt-4 text-gray-600">Loading users...</p>
+                <p class="mt-4 text-gray-600">Processing...</p>
             </div>
         </div>
 
@@ -240,7 +303,7 @@ onMounted(() => {
             <main id="main" class="flex-1 overflow-y-auto p-0 md:p-6 bg-gray-200">
                 <UserAccountTable
                     :users="users"
-                    :loading="isLoading"
+                    :loading="isTableLoading"
                     @open-modal="handleOpenModal"
                 />
             </main>

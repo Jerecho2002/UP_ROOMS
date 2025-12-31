@@ -3,10 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\UserAccount;
-use Inertia\Inertia; // Add this
+use Inertia\Inertia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rules;
 
 class UserAccountController extends Controller
 {
@@ -37,27 +36,18 @@ class UserAccountController extends Controller
     }
 
     /**
-     * API: Get all users
-     */
-    public function index()
-    {
-        $users = UserAccount::all();
-        return response()->json(['users' => $users]);
-    }
-
-    /**
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
     {
         $validated = $request->validate([
             'username' => ['required', 'string', 'max:50', 'unique:user_accounts'],
-            'email' => ['nullable', 'string', 'email', 'max:100', 'unique:user_accounts'],
+            'email' => ['required', 'string', 'email', 'max:100', 'unique:user_accounts'],
             'first_name' => ['nullable', 'string', 'max:50'],
             'last_name' => ['nullable', 'string', 'max:50'],
             'role' => ['required', 'string', 'max:50'],
-            'department' => ['nullable', 'string', 'max:100'],
-            'college' => ['nullable', 'string', 'max:150'],
+            'department' => ['required', 'string', 'max:100'],
+            'college' => ['required', 'string', 'max:150'],
             'password' => ['required', 'string', 'min:6'],
             'permissions' => ['nullable', 'array'],
         ]);
@@ -75,7 +65,19 @@ class UserAccountController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'User created successfully',
-            'user' => $user
+            'user' => [
+                'id' => $user->id,
+                'username' => $user->username,
+                'email' => $user->email,
+                'first_name' => $user->first_name,
+                'last_name' => $user->last_name,
+                'role' => $user->role,
+                'department' => $user->department,
+                'college' => $user->college,
+                'permissions' => $user->permissions ?: [],
+                'created_at' => $user->created_at,
+                'updated_at' => $user->updated_at,
+            ]
         ], 201);
     }
 
@@ -87,14 +89,14 @@ class UserAccountController extends Controller
         $user = UserAccount::findOrFail($id);
 
         $validated = $request->validate([
-            'username' => ['sometimes', 'string', 'max:50', 'unique:user_accounts,username,' . $id],
-            'email' => ['sometimes', 'nullable', 'string', 'email', 'max:100', 'unique:user_accounts,email,' . $id],
-            'first_name' => ['sometimes', 'nullable', 'string', 'max:50'],
-            'last_name' => ['sometimes', 'nullable', 'string', 'max:50'],
-            'role' => ['sometimes', 'string', 'max:50'],
-            'department' => ['sometimes', 'nullable', 'string', 'max:100'],
-            'college' => ['sometimes', 'nullable', 'string', 'max:150'],
-            'permissions' => ['sometimes', 'nullable', 'array'],
+            'username' => ['required', 'string', 'max:50', 'unique:user_accounts,username,' . $id],
+            'email' => ['required', 'string', 'email', 'max:100', 'unique:user_accounts,email,' . $id],
+            'first_name' => ['nullable', 'string', 'max:50'],
+            'last_name' => ['nullable', 'string', 'max:50'],
+            'role' => ['required', 'string', 'max:50'],
+            'department' => ['required', 'string', 'max:100'],
+            'college' => ['required', 'string', 'max:150'],
+            'permissions' => ['nullable', 'array'],
         ]);
 
         // Only update password if provided
@@ -115,7 +117,19 @@ class UserAccountController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'User updated successfully',
-            'user' => $user
+            'user' => [
+                'id' => $user->id,
+                'username' => $user->username,
+                'email' => $user->email,
+                'first_name' => $user->first_name,
+                'last_name' => $user->last_name,
+                'role' => $user->role,
+                'department' => $user->department,
+                'college' => $user->college,
+                'permissions' => $user->permissions ?: [],
+                'created_at' => $user->created_at,
+                'updated_at' => $user->updated_at,
+            ]
         ]);
     }
 
