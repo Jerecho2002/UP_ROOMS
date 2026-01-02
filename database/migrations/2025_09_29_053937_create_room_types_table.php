@@ -8,10 +8,14 @@ return new class extends Migration
 {
     public function up(): void
     {
-      Schema::create('room_types', function (Blueprint $table) {
-            $table->id('id');
-            $table->string('room_type_name', 100);
+        Schema::create('room_types', function (Blueprint $table) {
+            $table->id();
+            $table->string('room_type_name', 100)->unique();
+            $table->string('slug', 120)->unique();
             $table->text('description')->nullable();
+            $table->integer('default_capacity')->default(30);
+            $table->json('features')->nullable();
+            $table->timestamps();
         });
     }
 

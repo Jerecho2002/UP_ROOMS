@@ -9,24 +9,43 @@ class College extends Model
 {
     use HasFactory;
 
-    protected $table = 'colleges';
-    protected $fillable = ['college_name', 'description'];
+    protected $fillable = [
+        'college_name',
+        'college_code',
+        'description',
+        'dean_id',
+        'contact_email',
+        'contact_phone',
+    ];
 
-    public $timestamps = false;
+    // Relationships
+    public function dean()
+    {
+        return $this->belongsTo(UserAccount::class, 'dean_id');
+    }
 
-    // 🔗 Relations
     public function departments()
     {
-        return $this->hasMany(Department::class);
+        return $this->hasMany(Department::class, 'college_id');
+    }
+
+    public function buildings()
+    {
+        return $this->hasMany(Building::class, 'college_id');
     }
 
     public function rooms()
     {
-        return $this->hasMany(Room::class);
+        return $this->hasMany(Room::class, 'college_id');
     }
 
     public function equipment()
     {
-        return $this->hasMany(Equipment::class);
+        return $this->hasMany(Equipment::class, 'college_id');
+    }
+
+    public function userAccounts()
+    {
+        return $this->hasMany(UserAccount::class, 'college_id');
     }
 }

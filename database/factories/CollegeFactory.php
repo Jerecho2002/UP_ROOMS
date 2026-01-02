@@ -2,15 +2,22 @@
 
 namespace Database\Factories;
 
+use App\Models\College;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class CollegeFactory extends Factory
 {
-    public function definition(): array
+    protected $model = College::class;
+
+    public function definition()
     {
         return [
-            'college_name' => 'College of ' . $this->faker->word(),
-            'description' => $this->faker->sentence(12),
+            'college_name' => $this->faker->unique()->company . ' College',
+            'college_code' => $this->faker->unique()->regexify('[A-Z]{3,4}'),
+            'description' => $this->faker->paragraph,
+            'dean_id' => null, // Will be set later
+            'contact_email' => $this->faker->companyEmail,
+            'contact_phone' => $this->faker->phoneNumber,
         ];
     }
 }

@@ -18,7 +18,7 @@
           'text-black hover:bg-[#9c1b33] hover:text-white': !isBuildingOpen
         }"
       >
-        <span>Build & Equip Management.</span>
+        <span>Build & Equip.</span>
         <svg
           :class="{'rotate-90': isBuildingOpen}"
           class="w-4 h-4 transform transition-transform duration-300"

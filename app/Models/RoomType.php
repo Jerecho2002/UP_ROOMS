@@ -9,18 +9,21 @@ class RoomType extends Model
 {
     use HasFactory;
 
-    protected $table = 'room_types';
-    protected $fillable = ['room_type_name', 'description'];
-    public $timestamps = false;
+    protected $fillable = [
+        'room_type_name',
+        'slug',
+        'description',
+        'default_capacity',
+        'features',
+    ];
 
-    // 🔗 Relations
+    protected $casts = [
+        'features' => 'json',
+    ];
+
+    // Relationships
     public function rooms()
     {
-        return $this->hasMany(Room::class);
-    }
-
-    public function equipment()
-    {
-        return $this->hasMany(Equipment::class);
+        return $this->hasMany(Room::class, 'room_type_id');
     }
 }

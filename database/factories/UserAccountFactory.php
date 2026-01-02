@@ -2,69 +2,37 @@
 
 namespace Database\Factories;
 
+use App\Models\UserAccount;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 
 class UserAccountFactory extends Factory
 {
-    public function definition(): array
+    protected $model = UserAccount::class;
+
+    public function definition()
     {
-        $roles = ['Admin', 'Staff', 'Faculty', 'DPTAPR', 'AO', 'ADPD', 'OCS', 'SYSADMIN', 'USER'];
-
-        $departments = [
-            'Computer Science',
-            'Electrical Engineering',
-            'Mechanical Engineering',
-            'Physics',
-            'Mathematics',
-            'English/Literature',
-            'Accounting',
-            'Management',
-            'N/A - Administration'
-        ];
-
-        $colleges = [
-            'College of Engineering (CoE)',
-            'College of Arts and Sciences (CAS)',
-            'College of Business and Accountancy (CBA)',
-            'College of Education (CoEd)',
-            'College of Information Technology (CIT)',
-            'Graduate School (GS)'
-        ];
-
-        $role = $this->faker->randomElement($roles);
-        $firstName = $this->faker->firstName();
-        $lastName = $this->faker->lastName();
-
         return [
-            'username' => strtolower($firstName[0] . $lastName),
-            'password' => Hash::make('password123'),
-            'email' => strtolower($firstName . '.' . $lastName) . '@upcebu.edu.ph',
-            'first_name' => $firstName,
-            'last_name' => $lastName,
-            'role' => $role,
-            'department' => $this->faker->randomElement($departments),
-            'college' => $this->faker->randomElement($colleges),
-            'permissions' => $this->getPermissionsForRole($role),
-            'created_at' => $this->faker->dateTimeBetween('-1 year', 'now'),
-            'updated_at' => now(),
+            'username' => $this->faker->unique()->userName,
+            'email' => $this->faker->unique()->safeEmail(),
+            'password' => Hash::make('password123'), // Default password
+            'first_name' => $this->faker->firstName(),
+            'last_name' => $this->faker->lastName(),
+            'middle_name' => $this->faker->optional()->firstName(),
+            'employee_id' => $this->faker->optional()->bothify('EMP-#####'),
+            'profile_picture' => $this->faker->optional()->imageUrl(200, 200, 'people'),
+            'gender' => $this->faker->optional()->randomElement(['male', 'female', 'other']),
+            'birth_date' => $this->faker->optional()->date(),
+            'contact_number' => $this->faker->optional()->phoneNumber(),
+            'address' => $this->faker->optional()->address(),
+            'college_id' => \App\Models\College::inRandomOrder()->first()->id ?? null,
+            'department_id' => \App\Models\Department::inRandomOrder()->first()->id ?? null,
+            'user_type' => $this->faker->randomElement(['admin', 'faculty', 'staff', 'student', 'guest']),
+            'roles' => json_encode($this->faker->optional()->randomElements(['admin', 'moderator', 'editor', 'viewer'], 2)),
+            'account_status' => $this->faker->randomElement(['active', 'inactive', 'suspended', 'pending']),
+            'last_login_at' => $this->faker->optional()->dateTime(),
+            'last_login_ip' => $this->faker->optional()->ipv4(),
+            'remember_token' => \Illuminate\Support\Str::random(10),
         ];
-    }
-
-    private function getPermissionsForRole(string $role): array
-    {
-        $permissionsMap = [
-            'Admin' => ['Can Approve', 'Can Edit', 'Can Book', 'Staff Work', 'User Type Only'],
-            'Staff' => ['Can Book', 'Staff Work'],
-            'Faculty' => ['Can Book', 'User Type Only'],
-            'DPTAPR' => ['Can Approve', 'Can Book', 'User Type Only'],
-            'AO' => ['Can Approve', 'Can Edit', 'Staff Work'],
-            'ADPD' => ['Can Approve', 'Can Edit'],
-            'OCS' => ['Can Approve', 'Can Edit', 'Can Book'],
-            'SYSADMIN' => ['Can Approve', 'Can Edit', 'Can Book', 'Staff Work', 'User Type Only'],
-            'USER' => ['Can Book', 'User Type Only']
-        ];
-
-        return $permissionsMap[$role] ?? ['Can Book', 'User Type Only'];
     }
 }

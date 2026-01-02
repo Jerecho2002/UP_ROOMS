@@ -9,39 +9,61 @@ class Room extends Model
 {
     use HasFactory;
 
-    protected $table = 'rooms';
     protected $fillable = [
         'room_name',
+        'room_code',
         'building_id',
         'college_id',
-        'capacity',
-        'location',
+        'department_id',
         'room_type_id',
-        'user_account_id'
+        'assigned_user_id',
+        'floor_number',
+        'location',
+        'capacity',
+        'area_sqm',
+        'facilities',
+        'status',
+        'notes',
     ];
 
+    protected $casts = [
+        'facilities' => 'json',
+        'status' => 'string',
+    ];
+
+    // Relationships
     public function building()
     {
-        return $this->belongsTo(Building::class);
+        return $this->belongsTo(Building::class, 'building_id');
     }
 
     public function college()
     {
-        return $this->belongsTo(College::class);
+        return $this->belongsTo(College::class, 'college_id');
+    }
+
+    public function department()
+    {
+        return $this->belongsTo(Department::class, 'department_id');
     }
 
     public function roomType()
     {
-        return $this->belongsTo(RoomType::class);
+        return $this->belongsTo(RoomType::class, 'room_type_id');
     }
 
-    public function userAccount()
+    public function assignedUser()
     {
-        return $this->belongsTo(UserAccount::class);
+        return $this->belongsTo(UserAccount::class, 'assigned_user_id');
+    }
+
+    public function equipment()
+    {
+        return $this->hasMany(Equipment::class, 'room_id');
     }
 
     public function schedules()
     {
-        return $this->hasMany(Schedule::class);
+        return $this->hasMany(Schedule::class, 'room_id');
     }
 }

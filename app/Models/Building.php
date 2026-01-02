@@ -9,17 +9,37 @@ class Building extends Model
 {
     use HasFactory;
 
-    protected $table = 'buildings';
-    protected $fillable = ['building_name', 'address', 'description'];
+    protected $fillable = [
+        'building_name',
+        'address',
+        'description',
+        'total_floors',
+        'total_rooms',
+        'has_elevator',
+        'has_parking',
+        'restroom_count',
+        'ramp_count',
+        'college_id',
+    ];
 
-    // 🔗 Relations
+    protected $casts = [
+        'has_elevator' => 'boolean',
+        'has_parking' => 'boolean',
+    ];
+
+    // Relationships
+    public function college()
+    {
+        return $this->belongsTo(College::class, 'college_id');
+    }
+
     public function rooms()
     {
-        return $this->hasMany(Room::class);
+        return $this->hasMany(Room::class, 'building_id');
     }
 
     public function equipment()
     {
-        return $this->hasMany(Equipment::class);
+        return $this->hasMany(Equipment::class, 'building_id');
     }
 }

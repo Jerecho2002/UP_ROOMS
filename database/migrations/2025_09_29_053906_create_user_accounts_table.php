@@ -10,17 +10,29 @@ return new class extends Migration
     {
         Schema::create('user_accounts', function (Blueprint $table) {
             $table->id();
-            $table->string('username', 50)->unique();
-            $table->string('password', 255);
-            $table->string('email', 100)->unique()->nullable();
-            $table->string('first_name', 50)->nullable();
-            $table->string('last_name', 50)->nullable();
-            $table->string('role', 50)->nullable();
-            $table->string('department', 100)->nullable();
-            $table->string('college', 150)->nullable();
-            $table->json('permissions')->nullable();
+            $table->string('username')->unique();
+            $table->string('email')->unique();
+            $table->string('password');
+            $table->string('first_name');
+            $table->string('last_name');
+            $table->string('middle_name')->nullable();
+            $table->string('employee_id')->unique()->nullable();
+            $table->string('profile_picture')->nullable();
+            $table->enum('gender', ['male', 'female', 'other'])->nullable();
+            $table->date('birth_date')->nullable();
+            $table->string('contact_number')->nullable();
+            $table->text('address')->nullable();
+            $table->unsignedBigInteger('college_id')->nullable();
+            $table->unsignedBigInteger('department_id')->nullable();
+            $table->enum('user_type', ['admin', 'faculty', 'staff', 'student', 'guest'])->default('faculty');
+            $table->json('roles')->nullable();
+            $table->enum('account_status', ['active', 'inactive', 'suspended', 'pending'])->default('active');
+            $table->timestamp('last_login_at')->nullable();
+            $table->string('last_login_ip')->nullable();
+            $table->rememberToken();
             $table->timestamps();
-            $table->softDeletes(); // Optional: for soft deletion
+            $table->softDeletes();
+            // NO FOREIGN KEYS HERE - add them later
         });
     }
 

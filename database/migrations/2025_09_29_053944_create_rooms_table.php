@@ -1,7 +1,5 @@
 <?php
 
-// create_rooms_table.php (No changes needed, looks correct)
-
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -10,22 +8,24 @@ return new class extends Migration
 {
     public function up(): void
     {
-     Schema::create('rooms', function (Blueprint $table) {
-            $table->id('id');
-            $table->string('room_name', 50);
-            $table->unsignedBigInteger('building_id')->nullable();
-            $table->unsignedBigInteger('college_id')->nullable();
-            $table->integer('capacity')->nullable();
-            $table->string('location', 100)->nullable();
-            $table->unsignedBigInteger('room_type_id')->nullable();
-            $table->unsignedBigInteger('user_account_id')->nullable();
-
-            $table->foreign('building_id')->references('id')->on('buildings')->onDelete('cascade');
-            $table->foreign('college_id')->references('id')->on('colleges')->onDelete('cascade');
-            $table->foreign('room_type_id')->references('id')->on('room_types')->onDelete('cascade');
-            $table->foreign('user_account_id')->references('id')->on('user_accounts')->onDelete('cascade');
-
+        Schema::create('rooms', function (Blueprint $table) {
+            $table->id();
+            $table->string('room_name', 100);
+            $table->string('room_code', 50)->unique();
+            $table->unsignedBigInteger('building_id')->nullable(); // Will be foreign key later
+            $table->unsignedBigInteger('college_id')->nullable(); // Will be foreign key later
+            $table->unsignedBigInteger('department_id')->nullable(); // Will be foreign key later
+            $table->unsignedBigInteger('room_type_id')->nullable(); // Will be foreign key later
+            $table->unsignedBigInteger('assigned_user_id')->nullable(); // Will be foreign key later
+            $table->integer('floor_number')->nullable();
+            $table->string('location', 255)->nullable();
+            $table->integer('capacity')->default(30);
+            $table->integer('area_sqm')->nullable();
+            $table->json('facilities')->nullable();
+            $table->enum('status', ['available', 'occupied', 'maintenance', 'closed'])->default('available');
+            $table->text('notes')->nullable();
             $table->timestamps();
+            // NO FOREIGN KEYS HERE - add later
         });
     }
 

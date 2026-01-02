@@ -6,31 +6,34 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
-       Schema::create('equipments', function (Blueprint $table) {
-            $table->id('id');
+        Schema::create('equipment', function (Blueprint $table) {
+            $table->id();
             $table->string('equipment_name', 100);
+            $table->string('inventory_id', 50)->unique();
+            $table->string('property_id', 50)->nullable();
             $table->text('description')->nullable();
-            $table->integer('quantity')->nullable();
-            $table->unsignedBigInteger('building_id')->nullable();
-            $table->unsignedBigInteger('room_type_id')->nullable();
-            $table->unsignedBigInteger('college_id')->nullable(); 
-
-            $table->foreign('building_id')->references('id')->on('buildings')->onDelete('cascade');
-            $table->foreign('room_type_id')->references('id')->on('room_types')->onDelete('cascade');
-            $table->foreign('college_id')->references('id')->on('colleges')->onDelete('cascade');
-
+            $table->integer('quantity')->default(1);
+            $table->unsignedBigInteger('room_id')->nullable(); // Will be foreign key later
+            $table->unsignedBigInteger('building_id')->nullable(); // Will be foreign key later
+            $table->unsignedBigInteger('college_id')->nullable(); // Will be foreign key later
+            $table->unsignedBigInteger('department_id')->nullable(); // Will be foreign key later
+            $table->string('cfic_id', 100)->nullable();
+            $table->enum('status', ['available', 'in_use', 'maintenance', 'damaged', 'retired'])->default('available');
+            $table->string('brand')->nullable();
+            $table->string('model')->nullable();
+            $table->string('serial_number')->nullable();
+            $table->date('purchase_date')->nullable();
+            $table->decimal('purchase_price', 10, 2)->nullable();
+            $table->unsignedBigInteger('assigned_user_id')->nullable(); // Will be foreign key later
+            $table->json('specifications')->nullable();
             $table->timestamps();
+            $table->softDeletes();
+            // NO FOREIGN KEYS HERE - add later
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('equipment');
