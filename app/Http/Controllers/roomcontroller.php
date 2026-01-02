@@ -8,77 +8,158 @@ use App\Models\College;
 use App\Models\Department;
 use App\Models\RoomType;
 use App\Models\UserAccount;
+use App\Models\Schedule;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
+use Carbon\Carbon;
 
 class RoomController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        return Inertia::render('Room');
+        $rooms = Room::with(['building', 'college', 'department', 'roomType', 'assignedUser'])
+            ->orderBy('room_name')
+            ->paginate(20);
+
+        $buildings = Building::all();
+        $colleges = College::all();
+        $departments = Department::all();
+        $roomTypes = RoomType::all();
+        $users = UserAccount::whereIn('user_type', ['faculty', 'staff'])->get();
+
+        return response()->json([
+            'rooms' => $rooms,
+            'buildings' => $buildings,
+            'colleges' => $colleges,
+            'departments' => $departments,
+            'room_types' => $roomTypes,
+            'users' => $users,
+            'stats' => [
+                'total' => Room::count(),
+                'available' => Room::where('status', 'available')->count(),
+                'occupied' => Room::where('status', 'occupied')->count(),
+                'maintenance' => Room::where('status', 'maintenance')->count(),
+                'avg_capacity' => round(Room::avg('capacity'), 2),
+            ]
+        ]);
     }
 
     public function getAll(Request $request)
     {
-        $search = $request->query('search');
-        $query = Room::with([
-                'building:id,building_name',
-                'college:id,college_name',
-                'department:id,department_name',
-                'roomType:id,room_type_name',
-                'assignedUser:id,first_name,last_name'
-            ])
-            ->orderBy('room_name');
+        $query = Room::with(['building', 'college', 'department', 'roomType', 'assignedUser']);
 
-        if ($search) {
-            $query->where(function ($q) use ($search) {
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
                 $q->where('room_name', 'like', "%{$search}%")
                   ->orWhere('room_code', 'like', "%{$search}%")
-                  ->orWhere('location', 'like', "%{$search}%")
-                  ->orWhere('status', 'like', "%{$search}%")
-                  ->orWhereHas('building', function ($q) use ($search) {
-                      $q->where('building_name', 'like', "%{$search}%");
-                  })
-                  ->orWhereHas('college', function ($q) use ($search) {
-                      $q->where('college_name', 'like', "%{$search}%");
-                  })
-                  ->orWhereHas('department', function ($q) use ($search) {
-                      $q->where('department_name', 'like', "%{$search}%");
-                  });
+                  ->orWhere('location', 'like', "%{$search}%");
             });
         }
 
-        return response()->json($query->paginate(10));
+        if ($request->has('building_id')) {
+            $query->where('building_id', $request->building_id);
+        }
+
+        if ($request->has('college_id')) {
+            $query->where('college_id', $request->college_id);
+        }
+
+        if ($request->has('department_id')) {
+            $query->where('department_id', $request->department_id);
+        }
+
+        if ($request->has('room_type_id')) {
+            $query->where('room_type_id', $request->room_type_id);
+        }
+
+        if ($request->has('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->has('min_capacity')) {
+            $query->where('capacity', '>=', $request->min_capacity);
+        }
+
+        $sortField = $request->get('sort_field', 'room_name');
+        $sortOrder = $request->get('sort_order', 'asc');
+        $query->orderBy($sortField, $sortOrder);
+
+        return response()->json($query->paginate($request->get('per_page', 20)));
     }
 
     public function show($id)
     {
-        $room = Room::with([
-            'building',
-            'college',
-            'department',
-            'roomType',
-            'assignedUser',
-            'equipment',
-            'schedules'
-        ])->findOrFail($id);
+        $room = Room::with(['building', 'college', 'department', 'roomType', 'assignedUser', 'equipment', 'schedules' => function($query) {
+            $query->where('date', '>=', today())
+                  ->orderBy('date')
+                  ->orderBy('start_time')
+                  ->limit(10);
+        }])->findOrFail($id);
 
         return response()->json($room);
+    }
+
+    public function getAvailability($id, Request $request)
+    {
+        $room = Room::findOrFail($id);
+
+        $date = $request->get('date', today()->format('Y-m-d'));
+
+        $schedules = Schedule::where('room_id', $id)
+            ->where('date', $date)
+            ->where('status', 'approved')
+            ->orderBy('start_time')
+            ->get();
+
+        // Generate time slots (assuming 8 AM to 8 PM)
+        $timeSlots = [];
+        $startTime = Carbon::createFromTime(8, 0, 0);
+        $endTime = Carbon::createFromTime(20, 0, 0);
+
+        $current = $startTime->copy();
+
+        while ($current < $endTime) {
+            $slotEnd = $current->copy()->addHour();
+
+            $isBooked = $schedules->contains(function($schedule) use ($current, $slotEnd) {
+                $scheduleStart = Carbon::parse($schedule->start_time);
+                $scheduleEnd = Carbon::parse($schedule->end_time);
+
+                return ($current >= $scheduleStart && $current < $scheduleEnd) ||
+                       ($slotEnd > $scheduleStart && $slotEnd <= $scheduleEnd) ||
+                       ($current <= $scheduleStart && $slotEnd >= $scheduleEnd);
+            });
+
+            $timeSlots[] = [
+                'start' => $current->format('H:i'),
+                'end' => $slotEnd->format('H:i'),
+                'available' => !$isBooked,
+            ];
+
+            $current->addHour();
+        }
+
+        return response()->json([
+            'room' => $room,
+            'date' => $date,
+            'time_slots' => $timeSlots,
+            'bookings' => $schedules,
+        ]);
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'room_name' => 'required|string|max:100',
-            'room_code' => 'required|string|max:50|unique:rooms',
+            'room_name' => 'required|string|max:255',
+            'room_code' => 'required|string|max:50|unique:rooms,room_code',
             'building_id' => 'nullable|exists:buildings,id',
             'college_id' => 'nullable|exists:colleges,id',
             'department_id' => 'nullable|exists:departments,id',
             'room_type_id' => 'nullable|exists:room_types,id',
             'assigned_user_id' => 'nullable|exists:user_accounts,id',
             'floor_number' => 'nullable|integer',
-            'location' => 'nullable|string|max:255',
-            'capacity' => 'required|integer|min:1',
+            'location' => 'nullable|string|max:500',
+            'capacity' => 'nullable|integer|min:1',
             'area_sqm' => 'nullable|numeric|min:0',
             'facilities' => 'nullable|array',
             'status' => 'required|in:available,occupied,maintenance,closed',
@@ -88,46 +169,56 @@ class RoomController extends Controller
         $room = Room::create($validated);
 
         return response()->json([
-            'success' => true,
             'message' => 'Room created successfully',
-            'data' => $room->load(['building', 'college', 'department', 'roomType', 'assignedUser'])
+            'room' => $room->load(['building', 'college', 'department', 'roomType', 'assignedUser']),
         ], 201);
     }
 
     public function update(Request $request, Room $room)
     {
         $validated = $request->validate([
-            'room_name' => 'required|string|max:100',
-            'room_code' => 'required|string|max:50|unique:rooms,room_code,' . $room->id,
+            'room_name' => 'sometimes|required|string|max:255',
+            'room_code' => 'sometimes|required|string|max:50|unique:rooms,room_code,' . $room->id,
             'building_id' => 'nullable|exists:buildings,id',
             'college_id' => 'nullable|exists:colleges,id',
             'department_id' => 'nullable|exists:departments,id',
             'room_type_id' => 'nullable|exists:room_types,id',
             'assigned_user_id' => 'nullable|exists:user_accounts,id',
             'floor_number' => 'nullable|integer',
-            'location' => 'nullable|string|max:255',
-            'capacity' => 'required|integer|min:1',
+            'location' => 'nullable|string|max:500',
+            'capacity' => 'nullable|integer|min:1',
             'area_sqm' => 'nullable|numeric|min:0',
             'facilities' => 'nullable|array',
-            'status' => 'required|in:available,occupied,maintenance,closed',
+            'status' => 'sometimes|required|in:available,occupied,maintenance,closed',
             'notes' => 'nullable|string',
         ]);
 
         $room->update($validated);
 
         return response()->json([
-            'success' => true,
             'message' => 'Room updated successfully',
-            'data' => $room->load(['building', 'college', 'department', 'roomType', 'assignedUser'])
+            'room' => $room->load(['building', 'college', 'department', 'roomType', 'assignedUser']),
         ]);
     }
 
     public function destroy(Room $room)
     {
+        // Check if room has dependencies
+        if ($room->equipment()->count() > 0) {
+            return response()->json([
+                'message' => 'Cannot delete room with existing equipment'
+            ], 422);
+        }
+
+        if ($room->schedules()->count() > 0) {
+            return response()->json([
+                'message' => 'Cannot delete room with existing schedules'
+            ], 422);
+        }
+
         $room->delete();
 
         return response()->json([
-            'success' => true,
             'message' => 'Room deleted successfully'
         ]);
     }

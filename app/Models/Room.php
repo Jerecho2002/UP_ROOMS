@@ -27,29 +27,28 @@ class Room extends Model
     ];
 
     protected $casts = [
-        'facilities' => 'json',
-        'status' => 'string',
+        'facilities' => 'array',
     ];
 
     // Relationships
     public function building()
     {
-        return $this->belongsTo(Building::class, 'building_id');
+        return $this->belongsTo(Building::class);
     }
 
     public function college()
     {
-        return $this->belongsTo(College::class, 'college_id');
+        return $this->belongsTo(College::class);
     }
 
     public function department()
     {
-        return $this->belongsTo(Department::class, 'department_id');
+        return $this->belongsTo(Department::class);
     }
 
     public function roomType()
     {
-        return $this->belongsTo(RoomType::class, 'room_type_id');
+        return $this->belongsTo(RoomType::class);
     }
 
     public function assignedUser()
@@ -59,11 +58,36 @@ class Room extends Model
 
     public function equipment()
     {
-        return $this->hasMany(Equipment::class, 'room_id');
+        return $this->hasMany(Equipment::class);
     }
 
     public function schedules()
     {
-        return $this->hasMany(Schedule::class, 'room_id');
+        return $this->hasMany(Schedule::class);
+    }
+
+    // Accessor for room with building
+    public function getFullRoomAttribute()
+    {
+        $building = $this->building ? $this->building->building_name : 'No Building';
+        return "{$building} - {$this->room_name} ({$this->room_code})";
+    }
+
+    // Scope for available rooms
+    public function scopeAvailable($query)
+    {
+        return $query->where('status', 'available');
+    }
+
+    // New method to get room utilization statistics
+    public function getUtilizationStats()
+    {
+        $today = now()->format('Y-m-d');
+
+        return [
+            'today_schedules' => $this->schedules()->where('date', $today)->count(),
+            'total_schedules' => $this->schedules()->count(),
+            'upcoming_schedules' => $this->schedules()->where('date', '>=', $today)->count(),
+        ];
     }
 }

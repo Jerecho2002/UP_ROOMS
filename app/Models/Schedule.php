@@ -38,20 +38,19 @@ class Schedule extends Model
     ];
 
     protected $casts = [
-        'equipment_needed' => 'json',
-        'additional_requirements' => 'json',
-        'recurrence_pattern' => 'json',
         'date' => 'date',
-        'start_time' => 'datetime',
-        'end_time' => 'datetime',
+        'start_time' => 'datetime:H:i',
+        'end_time' => 'datetime:H:i',
+        'equipment_needed' => 'array',
+        'additional_requirements' => 'array',
+        'recurrence_pattern' => 'array',
         'is_recurring' => 'boolean',
-        'status' => 'string',
     ];
 
     // Relationships
     public function room()
     {
-        return $this->belongsTo(Room::class, 'room_id');
+        return $this->belongsTo(Room::class);
     }
 
     public function faculty()
@@ -66,6 +65,38 @@ class Schedule extends Model
 
     public function term()
     {
-        return $this->belongsTo(Term::class, 'term_id');
+        return $this->belongsTo(Term::class);
+    }
+
+    // Accessor for event duration
+    public function getDurationAttribute()
+    {
+        $start = \Carbon\Carbon::parse($this->start_time);
+        $end = \Carbon\Carbon::parse($this->end_time);
+        return $start->diff($end)->format('%H:%I');
+    }
+
+    // Accessor for day (compatibility with frontend)
+    public function getDayAttribute()
+    {
+        return $this->day_of_week;
+    }
+
+    // Scope for approved schedules
+    public function scopeApproved($query)
+    {
+        return $query->where('status', 'approved');
+    }
+
+    // Scope for today's schedules
+    public function scopeToday($query)
+    {
+        return $query->where('date', today());
+    }
+
+    // Scope for upcoming schedules
+    public function scopeUpcoming($query)
+    {
+        return $query->where('date', '>=', today())->where('status', 'approved');
     }
 }
