@@ -32,30 +32,30 @@ class Equipment extends Model
     ];
 
     protected $casts = [
-        'specifications' => 'array',
         'purchase_date' => 'date',
         'purchase_price' => 'decimal:2',
+        'specifications' => 'array',
     ];
 
     // Relationships
     public function room()
     {
-        return $this->belongsTo(Room::class, 'room_id');
+        return $this->belongsTo(Room::class);
     }
 
     public function building()
     {
-        return $this->belongsTo(Building::class, 'building_id');
+        return $this->belongsTo(Building::class);
     }
 
     public function college()
     {
-        return $this->belongsTo(College::class, 'college_id');
+        return $this->belongsTo(College::class);
     }
 
     public function department()
     {
-        return $this->belongsTo(Department::class, 'department_id');
+        return $this->belongsTo(Department::class);
     }
 
     public function assignedUser()
@@ -63,29 +63,37 @@ class Equipment extends Model
         return $this->belongsTo(UserAccount::class, 'assigned_user_id');
     }
 
-    public function schedulesWithCfic()
-    {
-        return $this->hasMany(Schedule::class, 'cfic_id', 'cfic_id');
-    }
-
-    // Helper methods
-    public function getFullLocationAttribute()
+    // Accessor for equipment location
+    public function getLocationAttribute()
     {
         $location = [];
+
         if ($this->room) {
-            $location[] = "Room: {$this->room->room_name}";
-            if ($this->room->building) {
-                $location[] = "Building: {$this->room->building->building_name}";
-            }
+            $location[] = "Room: {$this->room->room_name} ({$this->room->room_code})";
         }
+
+        if ($this->building) {
+            $location[] = "Building: {$this->building->building_name}";
+        }
+
         if ($this->college) {
             $location[] = "College: {$this->college->college_name}";
         }
-        return implode(' | ', $location);
+
+        return !empty($location) ? implode(' | ', $location) : 'No specific location';
     }
 
-    public function getAccountablePersonAttribute()
+    // Scope for available equipment
+    public function scopeAvailable($query)
     {
-        return $this->assignedUser ? $this->assignedUser->full_name : 'Unassigned';
+        return $query->where('status', 'available');
+    }
+
+    // Add this method to get equipment with user relationships
+    public function scopeWithAssignedUser($query)
+    {
+        return $query->with(['assignedUser' => function($q) {
+            $q->select('id', 'first_name', 'last_name', 'username', 'email');
+        }]);
     }
 }

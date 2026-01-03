@@ -1,23 +1,17 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import { router, usePage } from '@inertiajs/vue3';
 import IconButton from '@/Components/IconButton.vue';
 
 // EMIT EVENTS TO PARENT
 const emit = defineEmits(["created", "edited", "deleted"]);
 
+// Get initial data from Inertia
+const page = usePage();
+const initialColleges = page.props.initialColleges || [];
+
 // --- Reactive Data Structure ---
-const colleges = ref([
-    { id: 1, college: 'College of Information Technology', department: 'BS Information Technology', building: 'IT Building', description: 'Focuses on information technology and computer science programs.' },
-    { id: 2, college: 'College of Engineering', department: 'BS Civil Engineering', building: 'Engineering Building', description: 'Offers various engineering disciplines with modern laboratories.' },
-    { id: 3, college: 'College of Arts and Sciences', department: 'BS Psychology', building: 'Arts Building', description: 'Provides liberal arts, sciences, and social sciences programs.' },
-    { id: 4, college: 'College of Business', department: 'BS Business Administration', building: 'Business Building', description: 'Focuses on business management, finance, and entrepreneurship.' },
-    { id: 5, college: 'College of Medicine', department: 'Doctor of Medicine', building: 'Medical Building', description: 'Medical school with clinical training facilities.' },
-    { id: 6, college: 'College of Law', department: 'Juris Doctor', building: 'Law Building', description: 'Law school with moot court and legal clinics.' },
-    { id: 7, college: 'College of Education', department: 'BS Elementary Education', building: 'Education Building', description: 'Teacher education and educational leadership programs.' },
-    { id: 8, college: 'College of Nursing', department: 'BS Nursing', building: 'Health Sciences Building', description: 'Nursing programs with simulation laboratories.' },
-    { id: 9, college: 'College of Architecture', department: 'BS Architecture', building: 'Design Building', description: 'Architecture and design programs with studios.' },
-    { id: 10, college: 'College of Pharmacy', department: 'BS Pharmacy', building: 'Science Building', description: 'Pharmacy programs with research laboratories.' },
-]);
+const colleges = ref(initialColleges);
 
 // --- Pagination State ---
 const currentPage = ref(1);
@@ -32,6 +26,33 @@ const showViewModal = ref(false);
 const currentCollege = ref(null);
 const modalTitle = ref('Add New College');
 const viewCollege = ref(null);
+const isLoading = ref(false);
+
+// --- Load colleges from API ---
+const loadColleges = async () => {
+    try {
+        isLoading.value = true;
+        const response = await fetch('/api/colleges');
+        const data = await response.json();
+
+        if (data.success) {
+            colleges.value = data.data;
+        } else {
+            console.error('Failed to load colleges:', data.message);
+        }
+    } catch (error) {
+        console.error('Error loading colleges:', error);
+        // Fallback to initial data
+        colleges.value = initialColleges;
+    } finally {
+        isLoading.value = false;
+    }
+};
+
+// Initialize on component mount
+onMounted(() => {
+    loadColleges();
+});
 
 // --- FILTERED SEARCH ---
 const filteredColleges = computed(() => {
@@ -40,8 +61,9 @@ const filteredColleges = computed(() => {
 
     return colleges.value.filter(college =>
         college.college.toLowerCase().includes(q) ||
-        college.department.toLowerCase().includes(q) ||
-        college.building.toLowerCase().includes(q)
+        (college.department && college.department.toLowerCase().includes(q)) ||
+        (college.building && college.building.toLowerCase().includes(q)) ||
+        (college.college_code && college.college_code.toLowerCase().includes(q))
     );
 });
 
@@ -89,7 +111,15 @@ const resetPagination = () => {
 
 // --- MODAL FUNCTIONS ---
 const openAddModal = () => {
-    currentCollege.value = { college: '', department: '', building: '', description: '' };
+    currentCollege.value = {
+        college: '',
+        college_code: '',
+        department: '',
+        building: '',
+        description: '',
+        contact_email: '',
+        contact_phone: ''
+    };
     modalTitle.value = 'Add New College';
     showAddEditModal.value = true;
 };
@@ -111,58 +141,106 @@ const closeViewModal = () => {
 };
 
 // --- SAVE: ADD or EDIT ---
-const handleSaveCollege = () => {
-    if (!currentCollege.value.college || !currentCollege.value.department || !currentCollege.value.building) {
-        alert('Fill out all fields.');
+const handleSaveCollege = async () => {
+    if (!currentCollege.value.college) {
+        alert('College name is required.');
         return;
     }
 
-    if (currentCollege.value.id) {
-        // EDIT
-        const index = colleges.value.findIndex(c => c.id === currentCollege.value.id);
-        if (index !== -1) {
-            colleges.value[index] = { ...currentCollege.value };
-        }
+    try {
+        isLoading.value = true;
+        const isEdit = !!currentCollege.value.id;
+        const url = isEdit ? `/api/colleges/${currentCollege.value.id}` : '/api/colleges';
+        const method = isEdit ? 'PUT' : 'POST';
 
-        emit("edited"); // FIRE TOAST EVENT
-    } else {
-        // ADD
-        const newId = Math.max(...colleges.value.map(c => c.id)) + 1;
-
-        colleges.value.push({
-            id: newId,
-            college: currentCollege.value.college,
-            department: currentCollege.value.department,
-            building: currentCollege.value.building,
-            description: currentCollege.value.description || 'No description available.'
+        const response = await fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            },
+            body: JSON.stringify(currentCollege.value)
         });
 
-        emit("created"); // FIRE TOAST EVENT
+        const data = await response.json();
 
-        // Reset pagination to show new entry if needed
-        resetPagination();
+        if (data.success) {
+            if (isEdit) {
+                // Update the college in the list
+                const index = colleges.value.findIndex(c => c.id === data.data.id);
+                if (index !== -1) {
+                    colleges.value[index] = data.data;
+                }
+                emit("edited");
+            } else {
+                // Add new college to the list
+                colleges.value.unshift(data.data);
+                emit("created");
+                resetPagination();
+            }
+
+            showAddEditModal.value = false;
+            currentCollege.value = null;
+        } else {
+            alert(data.message || 'Failed to save college. Please check your input.');
+            if (data.errors) {
+                console.error('Validation errors:', data.errors);
+            }
+        }
+    } catch (error) {
+        console.error('Error saving college:', error);
+        alert('An error occurred while saving the college.');
+    } finally {
+        isLoading.value = false;
     }
-
-    showAddEditModal.value = false;
-    currentCollege.value = null;
 };
 
 // --- DELETE FUNCTION ---
-const handleDeleteDetails = (details) => {
-    if (confirm(`Delete "${details.college}"?`)) {
-        colleges.value = colleges.value.filter(c => c.id !== details.id);
-        emit("deleted", details.college); // FIRE TOAST EVENT WITH NAME
+const handleDeleteDetails = async (details) => {
+    if (!confirm(`Are you sure you want to delete "${details.college}"?`)) {
+        return;
+    }
 
-        // Reset pagination if needed
-        if (paginatedColleges.value.length === 0 && currentPage.value > 1) {
-            prevPage();
+    try {
+        isLoading.value = true;
+        const response = await fetch(`/api/colleges/${details.id}`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            colleges.value = colleges.value.filter(c => c.id !== details.id);
+            emit("deleted", details.college);
+
+            // Reset pagination if needed
+            if (paginatedColleges.value.length === 0 && currentPage.value > 1) {
+                prevPage();
+            }
+        } else {
+            alert(data.message || 'Failed to delete college.');
         }
+    } catch (error) {
+        console.error('Error deleting college:', error);
+        alert('An error occurred while deleting the college.');
+    } finally {
+        isLoading.value = false;
     }
 };
 </script>
 
 <template>
     <div class="space-y-6">
+        <!-- Loading overlay -->
+        <div v-if="isLoading" class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+            <div class="bg-white p-6 rounded-lg shadow-lg">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7A0C23] mx-auto"></div>
+                <p class="mt-4 text-gray-600">Loading...</p>
+            </div>
+        </div>
 
         <!-- COLLEGE LIST -->
         <div class="bg-white shadow rounded-lg p-4">
@@ -396,6 +474,9 @@ const handleDeleteDetails = (details) => {
                             </h4>
                             <p class="text-gray-600 text-center text-sm mb-4">
                                 College ID: <span class="font-semibold">#{{ viewCollege.id }}</span>
+                                <span v-if="viewCollege.college_code" class="ml-2">
+                                    (Code: {{ viewCollege.college_code }})
+                                </span>
                             </p>
                         </div>
 
@@ -412,35 +493,35 @@ const handleDeleteDetails = (details) => {
                             </div>
                         </div>
 
+                        <!-- Contact Information -->
+                        <div v-if="viewCollege.contact_email || viewCollege.contact_phone"
+                             class="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                            <h5 class="text-sm font-semibold text-gray-500 mb-2 flex items-center">
+                                <span class="mr-2">📞</span> CONTACT INFORMATION
+                            </h5>
+                            <div class="space-y-2">
+                                <div v-if="viewCollege.contact_email" class="flex items-center">
+                                    <span class="text-gray-600 mr-2">Email:</span>
+                                    <a :href="`mailto:${viewCollege.contact_email}`"
+                                       class="font-semibold text-purple-600 hover:underline">
+                                        {{ viewCollege.contact_email }}
+                                    </a>
+                                </div>
+                                <div v-if="viewCollege.contact_phone" class="flex items-center">
+                                    <span class="text-gray-600 mr-2">Phone:</span>
+                                    <span class="font-semibold">{{ viewCollege.contact_phone }}</span>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Description -->
                         <div class="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
                             <h5 class="text-sm font-semibold text-gray-500 mb-2 flex items-center">
                                 <span class="mr-2">📝</span> DESCRIPTION
                             </h5>
                             <p class="text-gray-700 leading-relaxed">
-                                {{ viewCollege.description }}
+                                {{ viewCollege.description || 'No description available.' }}
                             </p>
-                        </div>
-
-                        <!-- Additional Info -->
-                        <div class="bg-green-50 p-4 rounded-lg border border-green-200">
-                            <h5 class="text-sm font-semibold text-gray-500 mb-3 flex items-center">
-                                <span class="mr-2">ℹ️</span> COLLEGE INFORMATION
-                            </h5>
-                            <div class="space-y-2">
-                                <div class="flex justify-between">
-                                    <span class="text-gray-600">Status:</span>
-                                    <span class="font-semibold text-green-600">Active</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span class="text-gray-600">Established:</span>
-                                    <span class="font-semibold">2020</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span class="text-gray-600">Students:</span>
-                                    <span class="font-semibold">1,500+</span>
-                                </div>
-                            </div>
                         </div>
 
                         <!-- Action Buttons -->
@@ -472,28 +553,50 @@ const handleDeleteDetails = (details) => {
                     <form @submit.prevent="handleSaveCollege">
 
                         <div class="mb-4">
-                            <label class="text-sm font-medium block mb-1">College Name</label>
+                            <label class="text-sm font-medium block mb-1">College Name *</label>
                             <input v-model="currentCollege.college"
                                    class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#7A0C23] focus:border-transparent"
                                    required />
                         </div>
 
                         <div class="mb-4">
+                            <label class="text-sm font-medium block mb-1">College Code</label>
+                            <input v-model="currentCollege.college_code"
+                                   class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#7A0C23] focus:border-transparent"
+                                   placeholder="e.g., CIT, COE, CAS" />
+                        </div>
+
+                        <div class="mb-4">
                             <label class="text-sm font-medium block mb-1">Department</label>
                             <input v-model="currentCollege.department"
                                    class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#7A0C23] focus:border-transparent"
-                                   required />
+                                   placeholder="Main department of the college" />
                         </div>
 
                         <div class="mb-4">
                             <label class="text-sm font-medium block mb-1">Building</label>
                             <input v-model="currentCollege.building"
                                    class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#7A0C23] focus:border-transparent"
-                                   required />
+                                   placeholder="Main building of the college" />
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="text-sm font-medium block mb-1">Contact Email</label>
+                            <input v-model="currentCollege.contact_email"
+                                   type="email"
+                                   class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#7A0C23] focus:border-transparent"
+                                   placeholder="college@upcebu.edu.ph" />
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="text-sm font-medium block mb-1">Contact Phone</label>
+                            <input v-model="currentCollege.contact_phone"
+                                   class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#7A0C23] focus:border-transparent"
+                                   placeholder="+63 XXX XXX XXXX" />
                         </div>
 
                         <div class="mb-6">
-                            <label class="text-sm font-medium block mb-1">Description (Optional)</label>
+                            <label class="text-sm font-medium block mb-1">Description</label>
                             <textarea v-model="currentCollege.description"
                                       rows="3"
                                       class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#7A0C23] focus:border-transparent"
@@ -521,10 +624,15 @@ const handleDeleteDetails = (details) => {
                                 title="Save"
                                 size="sm"
                                 color="green"
-                                outlined
-                                class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                                :disabled="isLoading"
+                                :class="[
+                                    'px-4 py-2 text-white rounded-md',
+                                    isLoading
+                                        ? 'bg-green-400 cursor-not-allowed'
+                                        : 'bg-green-600 hover:bg-green-700'
+                                ]"
                             >
-                                Save
+                                {{ isLoading ? 'Saving...' : 'Save' }}
                             </IconButton>
                         </div>
 

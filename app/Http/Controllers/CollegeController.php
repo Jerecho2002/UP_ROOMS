@@ -4,157 +4,326 @@ namespace App\Http\Controllers;
 
 use App\Models\College;
 use App\Models\UserAccount;
-use App\Models\Building;
-use App\Models\Department;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
+use Illuminate\Support\Facades\Validator;
 
 class CollegeController extends Controller
 {
-    public function index(Request $request)
+    /**
+     * Display college dashboard
+     */
+    public function index()
     {
-        $colleges = College::with('dean')
-            ->orderBy('college_name')
-            ->paginate(20);
-
-        $deans = UserAccount::where('user_type', 'dean')
-            ->orWhere('roles', 'like', '%dean%')
-            ->get();
-
-        return response()->json([
-            'colleges' => $colleges,
-            'deans' => $deans,
-            'stats' => [
-                'total' => College::count(),
-                'with_dean' => College::whereNotNull('dean_id')->count(),
-                'avg_buildings' => round(College::withCount('buildings')->get()->avg('buildings_count'), 2),
-                'avg_departments' => round(College::withCount('departments')->get()->avg('departments_count'), 2),
-            ]
+        return Inertia::render('CollegeDashboard', [
+            'initialColleges' => College::with(['dean:id,first_name,last_name'])
+                ->orderBy('college_name')
+                ->get()
+                ->map(function ($college) {
+                    return [
+                        'id' => $college->id,
+                        'college' => $college->college_name,
+                        'department' => $college->departments()->first()?->department_name ?? 'Not specified',
+                        'building' => $college->buildings()->first()?->building_name ?? 'Not specified',
+                        'description' => $college->description,
+                        'college_code' => $college->college_code,
+                        'contact_email' => $college->contact_email,
+                        'contact_phone' => $college->contact_phone,
+                        'dean_name' => $college->dean ? "{$college->dean->first_name} {$college->dean->last_name}" : 'Not assigned',
+                    ];
+                })
         ]);
     }
 
+    /**
+     * Get all colleges
+     */
     public function getAll(Request $request)
     {
-        $query = College::with('dean');
+        try {
+            $query = College::with(['dean:id,first_name,last_name'])
+                ->orderBy('college_name', 'asc');
 
-        if ($request->has('search')) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('college_name', 'like', "%{$search}%")
-                  ->orWhere('college_code', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
-            });
-        }
-
-        if ($request->has('has_dean')) {
-            if (filter_var($request->has_dean, FILTER_VALIDATE_BOOLEAN)) {
-                $query->whereNotNull('dean_id');
-            } else {
-                $query->whereNull('dean_id');
+            // Search functionality
+            if ($request->has('search') && $request->search) {
+                $search = $request->search;
+                $query->where(function ($q) use ($search) {
+                    $q->where('college_name', 'like', "%{$search}%")
+                      ->orWhere('college_code', 'like', "%{$search}%")
+                      ->orWhere('description', 'like', "%{$search}%")
+                      ->orWhereHas('dean', function ($q2) use ($search) {
+                          $q2->where('first_name', 'like', "%{$search}%")
+                             ->orWhere('last_name', 'like', "%{$search}%");
+                      });
+                });
             }
+
+            $colleges = $query->get()->map(function ($college) {
+                return [
+                    'id' => $college->id,
+                    'college' => $college->college_name,
+                    'department' => $college->departments()->first()?->department_name ?? 'Not specified',
+                    'building' => $college->buildings()->first()?->building_name ?? 'Not specified',
+                    'description' => $college->description,
+                    'college_code' => $college->college_code,
+                    'contact_email' => $college->contact_email,
+                    'contact_phone' => $college->contact_phone,
+                    'dean_name' => $college->dean ? "{$college->dean->first_name} {$college->dean->last_name}" : 'Not assigned',
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'data' => $colleges,
+                'message' => 'Colleges fetched successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch colleges: ' . $e->getMessage()
+            ], 500);
         }
-
-        $sortField = $request->get('sort_field', 'college_name');
-        $sortOrder = $request->get('sort_order', 'asc');
-        $query->orderBy($sortField, $sortOrder);
-
-        return response()->json($query->paginate($request->get('per_page', 20)));
     }
 
-    public function getStats(College $college)
-    {
-        $buildingsCount = $college->buildings()->count();
-        $departmentsCount = $college->departments()->count();
-        $roomsCount = $college->rooms()->count();
-        $equipmentCount = $college->equipment()->count();
-        $usersCount = $college->userAccounts()->count();
-
-        return response()->json([
-            'college' => $college->load('dean'),
-            'stats' => [
-                'buildings' => $buildingsCount,
-                'departments' => $departmentsCount,
-                'rooms' => $roomsCount,
-                'equipment' => $equipmentCount,
-                'users' => $usersCount,
-                'available_rooms' => $college->rooms()->where('status', 'available')->count(),
-                'available_equipment' => $college->equipment()->where('status', 'available')->count(),
-                'building_types' => DB::table('buildings')
-                    ->where('college_id', $college->id)
-                    ->select(
-                        DB::raw("SUM(CASE WHEN has_elevator = 1 THEN 1 ELSE 0 END) as with_elevator"),
-                        DB::raw("SUM(CASE WHEN has_parking = 1 THEN 1 ELSE 0 END) as with_parking")
-                    )
-                    ->first(),
-            ],
-            'departments' => $college->departments()->with('head')->limit(5)->get(),
-            'buildings' => $college->buildings()->limit(5)->get(),
-        ]);
-    }
-
+    /**
+     * Store a new college
+     */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'college_name' => 'required|string|max:255|unique:colleges,college_name',
-            'college_code' => 'required|string|max:50|unique:colleges,college_code',
+        $validator = Validator::make($request->all(), [
+            'college' => 'required|string|max:150|unique:colleges,college_name',
+            'college_code' => 'nullable|string|max:50|unique:colleges,college_code',
+            'department' => 'nullable|string|max:255',
+            'building' => 'nullable|string|max:255',
             'description' => 'nullable|string',
-            'dean_id' => 'nullable|exists:user_accounts,id',
             'contact_email' => 'nullable|email|max:255',
             'contact_phone' => 'nullable|string|max:20',
         ]);
 
-        $college = College::create($validated);
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors(),
+                'message' => 'Validation failed'
+            ], 422);
+        }
 
-        return response()->json([
-            'message' => 'College created successfully',
-            'college' => $college->load('dean'),
-        ], 201);
+        try {
+            $college = College::create([
+                'college_name' => $request->college,
+                'college_code' => $request->college_code,
+                'description' => $request->description,
+                'contact_email' => $request->contact_email,
+                'contact_phone' => $request->contact_phone,
+            ]);
+
+            // If building is provided, create it
+            if ($request->building) {
+                $college->buildings()->create([
+                    'building_name' => $request->building,
+                    'address' => 'Not specified',
+                ]);
+            }
+
+            // If department is provided, create it
+            if ($request->department) {
+                $college->departments()->create([
+                    'department_name' => $request->department,
+                    'department_code' => strtoupper(substr($request->department, 0, 3)),
+                ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'id' => $college->id,
+                    'college' => $college->college_name,
+                    'department' => $request->department ?? 'Not specified',
+                    'building' => $request->building ?? 'Not specified',
+                    'description' => $college->description,
+                    'college_code' => $college->college_code,
+                    'contact_email' => $college->contact_email,
+                    'contact_phone' => $college->contact_phone,
+                    'dean_name' => 'Not assigned',
+                ],
+                'message' => 'College created successfully'
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create college: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
+    /**
+     * Update a college
+     */
     public function update(Request $request, College $college)
     {
-        $validated = $request->validate([
-            'college_name' => 'sometimes|required|string|max:255|unique:colleges,college_name,' . $college->id,
-            'college_code' => 'sometimes|required|string|max:50|unique:colleges,college_code,' . $college->id,
+        $validator = Validator::make($request->all(), [
+            'college' => 'required|string|max:150|unique:colleges,college_name,' . $college->id,
+            'college_code' => 'nullable|string|max:50|unique:colleges,college_code,' . $college->id,
+            'department' => 'nullable|string|max:255',
+            'building' => 'nullable|string|max:255',
             'description' => 'nullable|string',
-            'dean_id' => 'nullable|exists:user_accounts,id',
             'contact_email' => 'nullable|email|max:255',
             'contact_phone' => 'nullable|string|max:20',
         ]);
 
-        $college->update($validated);
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors(),
+                'message' => 'Validation failed'
+            ], 422);
+        }
 
-        return response()->json([
-            'message' => 'College updated successfully',
-            'college' => $college->load('dean'),
-        ]);
+        try {
+            $college->update([
+                'college_name' => $request->college,
+                'college_code' => $request->college_code,
+                'description' => $request->description,
+                'contact_email' => $request->contact_email,
+                'contact_phone' => $request->contact_phone,
+            ]);
+
+            // Update building if exists, otherwise create
+            $building = $college->buildings()->first();
+            if ($request->building) {
+                if ($building) {
+                    $building->update(['building_name' => $request->building]);
+                } else {
+                    $college->buildings()->create([
+                        'building_name' => $request->building,
+                        'address' => 'Not specified',
+                    ]);
+                }
+            }
+
+            // Update department if exists, otherwise create
+            $department = $college->departments()->first();
+            if ($request->department) {
+                if ($department) {
+                    $department->update(['department_name' => $request->department]);
+                } else {
+                    $college->departments()->create([
+                        'department_name' => $request->department,
+                        'department_code' => strtoupper(substr($request->department, 0, 3)),
+                    ]);
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'id' => $college->id,
+                    'college' => $college->college_name,
+                    'department' => $request->department ?? ($department ? $department->department_name : 'Not specified'),
+                    'building' => $request->building ?? ($building ? $building->building_name : 'Not specified'),
+                    'description' => $college->description,
+                    'college_code' => $college->college_code,
+                    'contact_email' => $college->contact_email,
+                    'contact_phone' => $college->contact_phone,
+                    'dean_name' => $college->dean ? "{$college->dean->first_name} {$college->dean->last_name}" : 'Not assigned',
+                ],
+                'message' => 'College updated successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update college: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
+    /**
+     * Delete a college
+     */
     public function destroy(College $college)
     {
-        // Check if college has dependencies
-        if ($college->buildings()->count() > 0) {
+        try {
+            // Check if college has related records
+            if ($college->departments()->count() > 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot delete college that has departments. Please delete departments first.'
+                ], 422);
+            }
+
+            if ($college->buildings()->count() > 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot delete college that has buildings. Please delete buildings first.'
+                ], 422);
+            }
+
+            $college->delete();
+
             return response()->json([
-                'message' => 'Cannot delete college with existing buildings'
-            ], 422);
-        }
-
-        if ($college->departments()->count() > 0) {
+                'success' => true,
+                'message' => 'College deleted successfully'
+            ]);
+        } catch (\Exception $e) {
             return response()->json([
-                'message' => 'Cannot delete college with existing departments'
-            ], 422);
+                'success' => false,
+                'message' => 'Failed to delete college: ' . $e->getMessage()
+            ], 500);
         }
+    }
 
-        if ($college->userAccounts()->count() > 0) {
+    /**
+     * Get college statistics
+     */
+    public function getStats(College $college)
+    {
+        try {
+            $stats = [
+                'total_departments' => $college->departments()->count(),
+                'total_buildings' => $college->buildings()->count(),
+                'total_rooms' => $college->rooms()->count(),
+                'available_rooms' => $college->rooms()->where('status', 'available')->count(),
+                'total_equipment' => $college->equipment()->count(),
+                'available_equipment' => $college->equipment()->where('status', 'available')->count(),
+                'total_users' => $college->userAccounts()->count(),
+                'active_users' => $college->userAccounts()->where('account_status', 'active')->count(),
+            ];
+
             return response()->json([
-                'message' => 'Cannot delete college with existing users'
-            ], 422);
+                'success' => true,
+                'data' => $stats,
+                'message' => 'College stats fetched successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch college stats: ' . $e->getMessage()
+            ], 500);
         }
+    }
 
-        $college->delete();
+    /**
+     * Get all deans for dropdown
+     */
+    public function getDeans()
+    {
+        try {
+            $deans = UserAccount::where('user_type', 'faculty')
+                ->orWhere('user_type', 'admin')
+                ->select('id', 'first_name', 'last_name', 'email')
+                ->orderBy('first_name')
+                ->get();
 
-        return response()->json([
-            'message' => 'College deleted successfully'
-        ]);
+            return response()->json([
+                'success' => true,
+                'data' => $deans,
+                'message' => 'Deans fetched successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch deans: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

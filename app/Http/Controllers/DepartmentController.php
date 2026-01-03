@@ -6,96 +6,155 @@ use App\Models\Department;
 use App\Models\College;
 use App\Models\UserAccount;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
+use Illuminate\Support\Facades\Validator;
 
 class DepartmentController extends Controller
 {
-    public function index(Request $request)
+    /**
+     * Display the department page
+     */
+    public function index()
     {
-        $departments = Department::with(['college', 'head'])
-            ->orderBy('department_name')
-            ->paginate(20);
-
-        $colleges = College::all();
-        $heads = UserAccount::whereIn('user_type', ['faculty', 'staff', 'department_head'])
-            ->orWhere('roles', 'like', '%department_head%')
-            ->get();
-
-        return response()->json([
-            'departments' => $departments,
-            'colleges' => $colleges,
-            'heads' => $heads,
-            'stats' => [
-                'total' => Department::count(),
-                'with_head' => Department::whereNotNull('department_head_id')->count(),
-                'avg_rooms' => round(Department::withCount('rooms')->get()->avg('rooms_count'), 2),
-                'avg_equipment' => round(Department::withCount('equipment')->get()->avg('equipment_count'), 2),
-            ]
-        ]);
+        return Inertia::render('Department');
     }
 
+    /**
+     * Get all departments for the API
+     */
     public function getAll(Request $request)
     {
-        $query = Department::with(['college', 'head']);
+        try {
+            $query = Department::with([
+                'college:id,college_name,college_code',
+                'head:id,first_name,last_name,middle_name,email'
+            ])->orderBy('department_name', 'asc');
 
-        if ($request->has('search')) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('department_name', 'like', "%{$search}%")
-                  ->orWhere('department_code', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
-            });
-        }
-
-        if ($request->has('college_id')) {
-            $query->where('college_id', $request->college_id);
-        }
-
-        if ($request->has('has_head')) {
-            if (filter_var($request->has_head, FILTER_VALIDATE_BOOLEAN)) {
-                $query->whereNotNull('department_head_id');
-            } else {
-                $query->whereNull('department_head_id');
+            // Search functionality
+            if ($request->has('search') && $request->search) {
+                $search = $request->search;
+                $query->where(function ($q) use ($search) {
+                    $q->where('department_name', 'like', "%{$search}%")
+                      ->orWhere('department_code', 'like', "%{$search}%")
+                      ->orWhere('office_location', 'like', "%{$search}%")
+                      ->orWhereHas('college', function ($q2) use ($search) {
+                          $q2->where('college_name', 'like', "%{$search}%");
+                      })
+                      ->orWhereHas('head', function ($q2) use ($search) {
+                          $q2->where('first_name', 'like', "%{$search}%")
+                             ->orWhere('last_name', 'like', "%{$search}%");
+                      });
+                });
             }
+
+            // Filter by college
+            if ($request->has('college_id') && $request->college_id) {
+                $query->where('college_id', $request->college_id);
+            }
+
+            // Pagination
+            $perPage = $request->get('per_page', 10);
+            $departments = $query->paginate($perPage);
+
+            // Transform data for frontend
+            $transformedDepartments = $departments->map(function ($department) {
+                return [
+                    'id' => $department->id,
+                    'department_name' => $department->department_name,
+                    'department_code' => $department->department_code,
+                    'college' => $department->college ? $department->college->college_name : 'Not Assigned',
+                    'college_id' => $department->college_id,
+                    'dean' => $department->head ? $department->head->full_name : 'Not Assigned',
+                    'department_head_id' => $department->department_head_id,
+                    'description' => $department->description,
+                    'office_location' => $department->office_location,
+                    'contact_email' => $department->contact_email,
+                    'contact_phone' => $department->contact_phone,
+                    'created_at' => $department->created_at->format('Y-m-d H:i:s'),
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'data' => $transformedDepartments,
+                'meta' => [
+                    'current_page' => $departments->currentPage(),
+                    'per_page' => $departments->perPage(),
+                    'total' => $departments->total(),
+                    'last_page' => $departments->lastPage(),
+                ],
+                'message' => 'Departments fetched successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch departments: ' . $e->getMessage()
+            ], 500);
         }
-
-        $sortField = $request->get('sort_field', 'department_name');
-        $sortOrder = $request->get('sort_order', 'asc');
-        $query->orderBy($sortField, $sortOrder);
-
-        return response()->json($query->paginate($request->get('per_page', 20)));
     }
 
-    public function getStats(Department $department)
+    /**
+     * Get all colleges for dropdown
+     */
+    public function getColleges()
     {
-        $roomsCount = $department->rooms()->count();
-        $equipmentCount = $department->equipment()->count();
-        $usersCount = $department->userAccounts()->count();
+        try {
+            $colleges = College::select('id', 'college_name', 'college_code')
+                ->orderBy('college_name', 'asc')
+                ->get();
 
-        return response()->json([
-            'department' => $department->load(['college', 'head']),
-            'stats' => [
-                'rooms' => $roomsCount,
-                'equipment' => $equipmentCount,
-                'users' => $usersCount,
-                'available_rooms' => $department->rooms()->where('status', 'available')->count(),
-                'available_equipment' => $department->equipment()->where('status', 'available')->count(),
-                'room_types' => DB::table('rooms')
-                    ->join('room_types', 'rooms.room_type_id', '=', 'room_types.id')
-                    ->where('rooms.department_id', $department->id)
-                    ->select('room_types.room_type_name', DB::raw('COUNT(*) as count'))
-                    ->groupBy('room_types.room_type_name')
-                    ->get(),
-            ],
-            'recent_activities' => $this->getDepartmentActivities($department),
-        ]);
+            return response()->json([
+                'success' => true,
+                'data' => $colleges,
+                'message' => 'Colleges fetched successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch colleges: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
+    /**
+     * Get all potential department heads
+     */
+    public function getDepartmentHeads()
+    {
+        try {
+            $heads = UserAccount::whereIn('user_type', ['faculty', 'admin', 'staff'])
+                ->select('id', 'first_name', 'last_name', 'middle_name', 'email')
+                ->orderBy('first_name')
+                ->get()
+                ->map(function ($user) {
+                    return [
+                        'id' => $user->id,
+                        'full_name' => $user->full_name,
+                        'email' => $user->email
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'data' => $heads,
+                'message' => 'Department heads fetched successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch department heads: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Store a new department
+     */
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $validator = Validator::make($request->all(), [
             'department_name' => 'required|string|max:255',
-            'department_code' => 'required|string|max:50|unique:departments,department_code',
+            'department_code' => 'nullable|string|max:50|unique:departments,department_code',
             'college_id' => 'required|exists:colleges,id',
             'department_head_id' => 'nullable|exists:user_accounts,id',
             'description' => 'nullable|string',
@@ -104,20 +163,52 @@ class DepartmentController extends Controller
             'contact_phone' => 'nullable|string|max:20',
         ]);
 
-        $department = Department::create($validated);
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors(),
+                'message' => 'Validation failed'
+            ], 422);
+        }
 
-        return response()->json([
-            'message' => 'Department created successfully',
-            'department' => $department->load(['college', 'head']),
-        ], 201);
+        try {
+            $department = Department::create($validator->validated());
+
+            // Load relationships for response
+            $department->load(['college', 'head']);
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'id' => $department->id,
+                    'department_name' => $department->department_name,
+                    'department_code' => $department->department_code,
+                    'college' => $department->college ? $department->college->college_name : 'Not Assigned',
+                    'dean' => $department->head ? $department->head->full_name : 'Not Assigned',
+                    'description' => $department->description,
+                    'office_location' => $department->office_location,
+                    'contact_email' => $department->contact_email,
+                    'contact_phone' => $department->contact_phone,
+                ],
+                'message' => 'Department created successfully'
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create department: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
+    /**
+     * Update a department
+     */
     public function update(Request $request, Department $department)
     {
-        $validated = $request->validate([
-            'department_name' => 'sometimes|required|string|max:255',
-            'department_code' => 'sometimes|required|string|max:50|unique:departments,department_code,' . $department->id,
-            'college_id' => 'sometimes|required|exists:colleges,id',
+        $validator = Validator::make($request->all(), [
+            'department_name' => 'required|string|max:255',
+            'department_code' => 'nullable|string|max:50|unique:departments,department_code,' . $department->id,
+            'college_id' => 'required|exists:colleges,id',
             'department_head_id' => 'nullable|exists:user_accounts,id',
             'description' => 'nullable|string',
             'office_location' => 'nullable|string|max:255',
@@ -125,80 +216,111 @@ class DepartmentController extends Controller
             'contact_phone' => 'nullable|string|max:20',
         ]);
 
-        $department->update($validated);
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors(),
+                'message' => 'Validation failed'
+            ], 422);
+        }
 
-        return response()->json([
-            'message' => 'Department updated successfully',
-            'department' => $department->load(['college', 'head']),
-        ]);
+        try {
+            $department->update($validator->validated());
+            $department->load(['college', 'head']);
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'id' => $department->id,
+                    'department_name' => $department->department_name,
+                    'department_code' => $department->department_code,
+                    'college' => $department->college ? $department->college->college_name : 'Not Assigned',
+                    'dean' => $department->head ? $department->head->full_name : 'Not Assigned',
+                    'description' => $department->description,
+                    'office_location' => $department->office_location,
+                    'contact_email' => $department->contact_email,
+                    'contact_phone' => $department->contact_phone,
+                ],
+                'message' => 'Department updated successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update department: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
+    /**
+     * Delete a department
+     */
     public function destroy(Department $department)
     {
-        // Check if department has dependencies
-        if ($department->rooms()->count() > 0) {
+        try {
+            // Check if department has related records
+            if ($department->rooms()->exists()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot delete department that has rooms. Please delete rooms first.'
+                ], 422);
+            }
+
+            if ($department->equipment()->exists()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot delete department that has equipment. Please transfer equipment first.'
+                ], 422);
+            }
+
+            if ($department->userAccounts()->exists()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot delete department that has users. Please reassign users first.'
+                ], 422);
+            }
+
+            $departmentName = $department->department_name;
+            $department->delete();
+
             return response()->json([
-                'message' => 'Cannot delete department with existing rooms'
-            ], 422);
-        }
-
-        if ($department->equipment()->count() > 0) {
+                'success' => true,
+                'message' => "Department '{$departmentName}' deleted successfully",
+                'deleted_name' => $departmentName
+            ]);
+        } catch (\Exception $e) {
             return response()->json([
-                'message' => 'Cannot delete department with existing equipment'
-            ], 422);
+                'success' => false,
+                'message' => 'Failed to delete department: ' . $e->getMessage()
+            ], 500);
         }
-
-        if ($department->userAccounts()->count() > 0) {
-            return response()->json([
-                'message' => 'Cannot delete department with existing users'
-            ], 422);
-        }
-
-        $department->delete();
-
-        return response()->json([
-            'message' => 'Department deleted successfully'
-        ]);
     }
 
-    private function getDepartmentActivities(Department $department)
+    /**
+     * Get department statistics
+     */
+    public function getStats(Department $department)
     {
-        $activities = [];
-
-        // Recent room changes
-        $recentRooms = $department->rooms()
-            ->orderBy('updated_at', 'desc')
-            ->limit(5)
-            ->get();
-
-        foreach ($recentRooms as $room) {
-            $activities[] = [
-                'type' => 'room',
-                'action' => 'updated',
-                'description' => "Room {$room->room_name} was updated",
-                'time' => $room->updated_at->diffForHumans(),
+        try {
+            $stats = [
+                'total_rooms' => $department->rooms()->count(),
+                'available_rooms' => $department->rooms()->where('status', 'available')->count(),
+                'total_equipment' => $department->equipment()->count(),
+                'available_equipment' => $department->equipment()->where('status', 'available')->count(),
+                'total_users' => $department->userAccounts()->count(),
+                'active_users' => $department->userAccounts()->where('account_status', 'active')->count(),
+                'total_schedules' => $department->rooms()->withCount('schedules')->get()->sum('schedules_count'),
             ];
+
+            return response()->json([
+                'success' => true,
+                'data' => $stats,
+                'message' => 'Department stats fetched successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch department stats: ' . $e->getMessage()
+            ], 500);
         }
-
-        // Recent equipment changes
-        $recentEquipment = $department->equipment()
-            ->orderBy('updated_at', 'desc')
-            ->limit(5)
-            ->get();
-
-        foreach ($recentEquipment as $equipment) {
-            $activities[] = [
-                'type' => 'equipment',
-                'action' => 'updated',
-                'description' => "Equipment {$equipment->equipment_name} was updated",
-                'time' => $equipment->updated_at->diffForHumans(),
-            ];
-        }
-
-        usort($activities, function($a, $b) {
-            return strtotime($b['time']) - strtotime($a['time']);
-        });
-
-        return array_slice($activities, 0, 10);
     }
 }

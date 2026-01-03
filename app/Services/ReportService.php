@@ -7,227 +7,252 @@ use App\Models\Schedule;
 use App\Models\Equipment;
 use App\Models\UserAccount;
 use App\Models\Building;
-use App\Models\College;
-use App\Models\Department;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
 
 class ReportService
 {
     public function generateRoomUtilizationReport($startDate, $endDate)
     {
-        $schedules = Schedule::whereBetween('date', [$startDate, $endDate])
-            ->where('status', 'approved')
-            ->select('room_id', DB::raw('count(*) as total_schedules'), DB::raw('sum(TIMESTAMPDIFF(HOUR, start_time, end_time)) as total_hours'))
-            ->groupBy('room_id')
-            ->with('room:id,room_name,room_code,capacity')
-            ->get();
+        try {
+            $rooms = Room::with(['building', 'college'])
+                ->withCount(['schedules as total_schedules' => function ($query) use ($startDate, $endDate) {
+                    $query->whereBetween('date', [$startDate, $endDate])
+                          ->where('status', 'approved');
+                }])
+                ->get()
+                ->map(function ($room) use ($startDate, $endDate) {
+                    $totalDays = Carbon::parse($startDate)->diffInDays(Carbon::parse($endDate)) + 1;
+                    $utilizationRate = $totalDays > 0 ? ($room->total_schedules / $totalDays) * 100 : 0;
 
-        return [
-            'period' => [
-                'start' => $startDate,
-                'end' => $endDate,
-            ],
-            'total_rooms' => Room::count(),
-            'rooms_with_schedules' => $schedules->count(),
-            'room_utilization' => $schedules->map(function ($item) use ($startDate, $endDate) {
-                $totalDays = Carbon::parse($startDate)->diffInDays($endDate) + 1;
-                $availableHours = $totalDays * 9; // Assuming 9 working hours per day
+                    return [
+                        'room_name' => $room->room_name,
+                        'room_code' => $room->room_code,
+                        'building' => $room->building?->building_name,
+                        'college' => $room->college?->college_name,
+                        'capacity' => $room->capacity,
+                        'status' => $room->status,
+                        'total_schedules' => $room->total_schedules,
+                        'utilization_rate' => round($utilizationRate, 2),
+                    ];
+                });
 
-                return [
-                    'room_id' => $item->room_id,
-                    'room_name' => $item->room->room_name,
-                    'room_code' => $item->room->room_code,
-                    'total_schedules' => $item->total_schedules,
-                    'total_hours' => $item->total_hours ?? 0,
-                    'utilization_percentage' => $availableHours > 0 ? min(100, round(($item->total_hours / $availableHours) * 100, 2)) : 0,
-                    'avg_daily_hours' => $totalDays > 0 ? round($item->total_hours / $totalDays, 2) : 0,
-                ];
-            }),
-            'summary' => [
-                'total_schedules' => $schedules->sum('total_schedules'),
-                'total_hours' => $schedules->sum('total_hours'),
-                'avg_utilization' => $schedules->avg('utilization_percentage'),
-            ]
-        ];
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'report_type' => 'Room Utilization',
+                    'period' => $startDate . ' to ' . $endDate,
+                    'generated_at' => now()->toDateTimeString(),
+                    'total_rooms' => $rooms->count(),
+                    'rooms' => $rooms,
+                ],
+                'message' => 'Room utilization report generated successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to generate report: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function generateEquipmentStatusReport()
     {
-        $equipment = Equipment::select('status', DB::raw('count(*) as count'), DB::raw('sum(quantity) as total_quantity'), DB::raw('sum(purchase_price) as total_value'))
-            ->groupBy('status')
-            ->get();
+        try {
+            $equipment = Equipment::with(['room', 'building', 'college', 'department', 'assignedUser'])
+                ->select('status', \DB::raw('count(*) as count'))
+                ->groupBy('status')
+                ->get()
+                ->map(function ($item) {
+                    return [
+                        'status' => $item->status,
+                        'count' => $item->count,
+                    ];
+                });
 
-        $equipmentByCollege = Equipment::whereNotNull('college_id')
-            ->select('college_id', DB::raw('count(*) as count'), DB::raw('sum(purchase_price) as total_value'))
-            ->groupBy('college_id')
-            ->with('college:id,college_name')
-            ->get()
-            ->map(function ($item) {
-                return [
-                    'college_name' => $item->college->college_name ?? 'Unknown',
-                    'count' => $item->count,
-                    'total_value' => $item->total_value ?? 0,
-                ];
-            });
+            $totalEquipment = Equipment::count();
+            $availableEquipment = Equipment::where('status', 'available')->count();
+            $inUseEquipment = Equipment::where('status', 'in_use')->count();
+            $maintenanceEquipment = Equipment::where('status', 'maintenance')->count();
 
-        return [
-            'status_summary' => $equipment->map(function ($item) {
-                return [
-                    'status' => $item->status,
-                    'count' => $item->count,
-                    'quantity' => $item->total_quantity ?? 0,
-                    'value' => $item->total_value ?? 0,
-                ];
-            }),
-            'college_distribution' => $equipmentByCollege,
-            'total_summary' => [
-                'total_items' => Equipment::count(),
-                'total_quantity' => Equipment::sum('quantity'),
-                'total_value' => Equipment::sum('purchase_price'),
-                'avg_value_per_item' => Equipment::avg('purchase_price'),
-            ]
-        ];
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'report_type' => 'Equipment Status',
+                    'generated_at' => now()->toDateTimeString(),
+                    'summary' => [
+                        'total_equipment' => $totalEquipment,
+                        'available' => $availableEquipment,
+                        'in_use' => $inUseEquipment,
+                        'maintenance' => $maintenanceEquipment,
+                    ],
+                    'details' => $equipment,
+                ],
+                'message' => 'Equipment status report generated successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to generate report: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function generateUserActivityReport($startDate, $endDate)
     {
-        $users = UserAccount::whereBetween('created_at', [$startDate, $endDate])
-            ->orWhereBetween('last_login_at', [$startDate, $endDate])
-            ->with(['college:id,college_name', 'department:id,department_name'])
-            ->get()
-            ->map(function ($user) {
-                return [
-                    'id' => $user->id,
-                    'name' => $user->first_name . ' ' . $user->last_name,
-                    'username' => $user->username,
-                    'user_type' => $user->user_type,
-                    'college' => $user->college ? $user->college->college_name : null,
-                    'department' => $user->department ? $user->department->department_name : null,
-                    'account_status' => $user->account_status,
-                    'created_at' => $user->created_at,
-                    'last_login_at' => $user->last_login_at,
-                    'days_since_last_login' => $user->last_login_at ? Carbon::parse($user->last_login_at)->diffInDays() : null,
-                ];
-            });
+        try {
+            $users = UserAccount::with(['college', 'department'])
+                ->whereHas('schedules', function ($query) use ($startDate, $endDate) {
+                    $query->whereBetween('date', [$startDate, $endDate]);
+                })
+                ->withCount(['schedules as total_schedules' => function ($query) use ($startDate, $endDate) {
+                    $query->whereBetween('date', [$startDate, $endDate]);
+                }])
+                ->orderBy('total_schedules', 'desc')
+                ->limit(50)
+                ->get()
+                ->map(function ($user) use ($startDate, $endDate) {
+                    $lastActivity = Schedule::where('faculty_id', $user->id)
+                        ->orWhere('requester_id', $user->id)
+                        ->orderBy('created_at', 'desc')
+                        ->first();
 
-        $activityByDay = UserAccount::whereNotNull('last_login_at')
-            ->whereBetween('last_login_at', [$startDate, $endDate])
-            ->select(DB::raw('DATE(last_login_at) as date'), DB::raw('count(*) as login_count'))
-            ->groupBy(DB::raw('DATE(last_login_at)'))
-            ->orderBy('date')
-            ->get();
+                    return [
+                        'user_id' => $user->id,
+                        'full_name' => $user->full_name,
+                        'username' => $user->username,
+                        'email' => $user->email,
+                        'college' => $user->college?->college_name,
+                        'department' => $user->department?->department_name,
+                        'account_status' => $user->account_status,
+                        'total_schedules' => $user->total_schedules,
+                        'last_activity' => $lastActivity?->created_at?->format('Y-m-d H:i:s'),
+                        'last_login' => $user->last_login_at?->format('Y-m-d H:i:s'),
+                    ];
+                });
 
-        return [
-            'period' => [
-                'start' => $startDate,
-                'end' => $endDate,
-            ],
-            'user_summary' => [
-                'total_users' => UserAccount::count(),
-                'active_users' => UserAccount::where('account_status', 'active')->count(),
-                'new_users' => UserAccount::whereBetween('created_at', [$startDate, $endDate])->count(),
-                'users_with_login' => UserAccount::whereNotNull('last_login_at')
-                    ->whereBetween('last_login_at', [$startDate, $endDate])
-                    ->count(),
-                'inactive_users' => UserAccount::where('account_status', 'inactive')->count(),
-            ],
-            'users' => $users,
-            'daily_activity' => $activityByDay,
-        ];
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'report_type' => 'User Activity',
+                    'period' => $startDate . ' to ' . $endDate,
+                    'generated_at' => now()->toDateTimeString(),
+                    'total_users_active' => $users->count(),
+                    'users' => $users,
+                ],
+                'message' => 'User activity report generated successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to generate report: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function generateScheduleReport($startDate, $endDate)
     {
-        $schedules = Schedule::whereBetween('date', [$startDate, $endDate])
-            ->with(['room:id,room_name', 'faculty:id,first_name,last_name'])
-            ->get();
+        try {
+            $schedules = Schedule::with(['room', 'faculty', 'requester', 'term'])
+                ->whereBetween('date', [$startDate, $endDate])
+                ->orderBy('date')
+                ->orderBy('start_time')
+                ->get()
+                ->map(function ($schedule) {
+                    return [
+                        'id' => $schedule->id,
+                        'event_title' => $schedule->event_title,
+                        'event_type' => $schedule->event_type,
+                        'room' => $schedule->room?->room_name,
+                        'building' => $schedule->room?->building?->building_name,
+                        'faculty' => $schedule->faculty?->full_name,
+                        'requester' => $schedule->requester?->full_name,
+                        'date' => $schedule->date,
+                        'start_time' => $schedule->start_time,
+                        'end_time' => $schedule->end_time,
+                        'status' => $schedule->status,
+                        'participants' => $schedule->number_of_participants,
+                        'course_code' => $schedule->course_code,
+                        'course_name' => $schedule->course_name,
+                    ];
+                });
 
-        $byEventType = $schedules->groupBy('event_type')->map->count();
-        $byStatus = $schedules->groupBy('status')->map->count();
-        $byRoom = $schedules->groupBy('room.room_name')->map->count()->sortDesc()->take(10);
-        $byFaculty = $schedules->whereNotNull('faculty')
-            ->groupBy(function ($schedule) {
-                return $schedule->faculty ? $schedule->faculty->first_name . ' ' . $schedule->faculty->last_name : 'Unknown';
-            })
-            ->map->count()
-            ->sortDesc()
-            ->take(10);
+            $summary = [
+                'total_schedules' => $schedules->count(),
+                'approved' => $schedules->where('status', 'approved')->count(),
+                'pending' => $schedules->where('status', 'pending')->count(),
+                'cancelled' => $schedules->where('status', 'cancelled')->count(),
+                'by_event_type' => $schedules->groupBy('event_type')->map->count(),
+                'by_status' => $schedules->groupBy('status')->map->count(),
+            ];
 
-        return [
-            'period' => [
-                'start' => $startDate,
-                'end' => $endDate,
-            ],
-            'total_schedules' => $schedules->count(),
-            'by_event_type' => $byEventType,
-            'by_status' => $byStatus,
-            'top_rooms' => $byRoom,
-            'top_faculty' => $byFaculty,
-            'daily_count' => $schedules->groupBy('date')->map->count()->sortKeys(),
-            'hourly_distribution' => $this->getHourlyDistribution($schedules),
-        ];
-    }
-
-    private function getHourlyDistribution($schedules)
-    {
-        $hourly = array_fill(0, 24, 0);
-
-        foreach ($schedules as $schedule) {
-            $startHour = (int) date('H', strtotime($schedule->start_time));
-            $endHour = (int) date('H', strtotime($schedule->end_time));
-
-            for ($hour = $startHour; $hour < $endHour; $hour++) {
-                if ($hour >= 0 && $hour < 24) {
-                    $hourly[$hour]++;
-                }
-            }
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'report_type' => 'Schedule Report',
+                    'period' => $startDate . ' to ' . $endDate,
+                    'generated_at' => now()->toDateTimeString(),
+                    'summary' => $summary,
+                    'schedules' => $schedules,
+                ],
+                'message' => 'Schedule report generated successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to generate report: ' . $e->getMessage()
+            ], 500);
         }
-
-        return $hourly;
     }
 
     public function generateBuildingReport()
     {
-        $buildings = Building::withCount(['rooms', 'equipment'])
-            ->with(['college:id,college_name'])
-            ->get()
-            ->map(function ($building) {
-                $roomStats = DB::table('rooms')
-                    ->where('building_id', $building->id)
-                    ->select(
-                        DB::raw('count(*) as total'),
-                        DB::raw('sum(case when status = "available" then 1 else 0 end) as available'),
-                        DB::raw('sum(case when status = "occupied" then 1 else 0 end) as occupied'),
-                        DB::raw('sum(case when status = "maintenance" then 1 else 0 end) as maintenance'),
-                        DB::raw('sum(capacity) as total_capacity')
-                    )
-                    ->first();
+        try {
+            $buildings = Building::with(['college', 'rooms', 'equipment'])
+                ->get()
+                ->map(function ($building) {
+                    return [
+                        'id' => $building->id,
+                        'building_name' => $building->building_name,
+                        'address' => $building->address,
+                        'college' => $building->college?->college_name,
+                        'total_floors' => $building->total_floors,
+                        'total_rooms' => $building->rooms->count(),
+                        'available_rooms' => $building->rooms->where('status', 'available')->count(),
+                        'occupied_rooms' => $building->rooms->where('status', 'occupied')->count(),
+                        'total_equipment' => $building->equipment->count(),
+                        'available_equipment' => $building->equipment->where('status', 'available')->count(),
+                        'features' => [
+                            'has_elevator' => $building->has_elevator,
+                            'has_parking' => $building->has_parking,
+                            'restroom_count' => $building->restroom_count,
+                            'ramp_count' => $building->ramp_count,
+                        ],
+                    ];
+                });
 
-                return [
-                    'id' => $building->id,
-                    'name' => $building->building_name,
-                    'college' => $building->college ? $building->college->college_name : null,
-                    'address' => $building->address,
-                    'total_rooms' => $building->rooms_count,
-                    'total_equipment' => $building->equipment_count,
-                    'room_stats' => [
-                        'available' => $roomStats->available ?? 0,
-                        'occupied' => $roomStats->occupied ?? 0,
-                        'maintenance' => $roomStats->maintenance ?? 0,
-                        'total_capacity' => $roomStats->total_capacity ?? 0,
-                    ],
-                    'occupancy_rate' => $building->rooms_count > 0 ?
-                        round(($roomStats->occupied ?? 0) / $building->rooms_count * 100, 2) : 0,
-                ];
-            });
+            $summary = [
+                'total_buildings' => $buildings->count(),
+                'total_rooms' => $buildings->sum('total_rooms'),
+                'total_equipment' => $buildings->sum('total_equipment'),
+                'buildings_with_elevator' => $buildings->where('features.has_elevator', true)->count(),
+                'buildings_with_parking' => $buildings->where('features.has_parking', true)->count(),
+            ];
 
-        return [
-            'total_buildings' => $buildings->count(),
-            'total_rooms' => $buildings->sum('total_rooms'),
-            'total_equipment' => $buildings->sum('total_equipment'),
-            'avg_occupancy_rate' => $buildings->avg('occupancy_rate'),
-            'buildings' => $buildings,
-        ];
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'report_type' => 'Building Report',
+                    'generated_at' => now()->toDateTimeString(),
+                    'summary' => $summary,
+                    'buildings' => $buildings,
+                ],
+                'message' => 'Building report generated successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to generate report: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

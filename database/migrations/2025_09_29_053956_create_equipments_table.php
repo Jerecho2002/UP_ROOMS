@@ -1,4 +1,5 @@
 <?php
+// database/migrations/xxxx_xx_xx_create_equipment_table.php
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -12,13 +13,13 @@ return new class extends Migration
             $table->id();
             $table->string('equipment_name', 100);
             $table->string('inventory_id', 50)->unique();
-            $table->string('property_id', 50)->nullable();
+            $table->string('property_id', 50)->nullable()->unique();
             $table->text('description')->nullable();
             $table->integer('quantity')->default(1);
-            $table->unsignedBigInteger('room_id')->nullable(); // Will be foreign key later
-            $table->unsignedBigInteger('building_id')->nullable(); // Will be foreign key later
-            $table->unsignedBigInteger('college_id')->nullable(); // Will be foreign key later
-            $table->unsignedBigInteger('department_id')->nullable(); // Will be foreign key later
+            $table->unsignedBigInteger('room_id')->nullable();
+            $table->unsignedBigInteger('building_id')->nullable();
+            $table->unsignedBigInteger('college_id')->nullable();
+            $table->unsignedBigInteger('department_id')->nullable();
             $table->string('cfic_id', 100)->nullable();
             $table->enum('status', ['available', 'in_use', 'maintenance', 'damaged', 'retired'])->default('available');
             $table->string('brand')->nullable();
@@ -26,11 +27,12 @@ return new class extends Migration
             $table->string('serial_number')->nullable();
             $table->date('purchase_date')->nullable();
             $table->decimal('purchase_price', 10, 2)->nullable();
-            $table->unsignedBigInteger('assigned_user_id')->nullable(); // Will be foreign key later
+            $table->unsignedBigInteger('assigned_user_id')->nullable();
             $table->json('specifications')->nullable();
             $table->timestamps();
             $table->softDeletes();
-            // NO FOREIGN KEYS HERE - add later
+
+            // Foreign keys will be added in separate migration
         });
     }
 

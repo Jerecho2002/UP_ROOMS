@@ -96,6 +96,8 @@ Route::middleware(['auth.session'])->group(function () {
     Route::delete('/rooms/{room}', [RoomController::class, 'destroy']);
 
     // Equipment Management
+    // In web.php, make sure this route exists and returns Inertia::render()
+
     Route::get('/equipment', [EquipmentController::class, 'index'])->name('equipment.index');
     Route::get('/api/equipment', [EquipmentController::class, 'getAll']);
     Route::get('/api/equipment/stats', [EquipmentController::class, 'getStats']);
@@ -171,51 +173,40 @@ Route::middleware(['auth.session'])->group(function () {
     });
 });
 
-// Fallback routes for Inertia rendering (compatibility)
-Route::middleware(['auth.session'])->group(function () {
-    // These routes render the Inertia components
-    Route::get('/MainDashboard', function (Request $request) {
-        return Inertia::render('MainDashboard');
-    });
+// **PROBLEM**: You have duplicate routes defined for the same paths
+// Remove the duplicate fallback routes section below, OR
+// Make sure the controller routes above are properly rendering Inertia components
 
-    Route::get('/BuildingDashboard', function (Request $request) {
-        return Inertia::render('BuildingDashboard');
-    });
+// Alternative solution: Keep both but ensure controllers return Inertia::render()
+// Here's what each controller's index() method should return:
 
-    Route::get('/Terms', function (Request $request) {
-        return Inertia::render('Terms');
-    });
+/*
+// In EquipmentController::index()
+public function index()
+{
+    return Inertia::render('Equipment');
+}
 
-    Route::get('/CollegeDashboard', function (Request $request) {
-        return Inertia::render('CollegeDashboard');
-    });
+// In RoomController::index()
+public function index()
+{
+    return Inertia::render('Room');
+}
 
-    Route::get('/UserAccountPage', function (Request $request) {
-        return Inertia::render('UserAccountPage');
-    });
+// In RoomTypeController::index()
+public function index()
+{
+    return Inertia::render('RoomTypes');
+}
 
-    Route::get('/Department', function (Request $request) {
-        return Inertia::render('Department');
-    });
+// In ScheduleController::index()
+public function index()
+{
+    return Inertia::render('Schedule');
+}
+*/
 
-    Route::get('/equipment', function (Request $request) {
-        return Inertia::render('Equipment');
-    });
-
-    Route::get('/roomtypes', function (Request $request) {
-        return Inertia::render('RoomTypes');
-    });
-
-    Route::get('/room', function (Request $request) {
-        return Inertia::render('Room');
-    });
-
-    Route::get('/schedule', function (Request $request) {
-        return Inertia::render('Schedule');
-    });
-});
-
-// Catch-all route for SPA (Single Page Application)
+// Catch-all route for SPA (Single Page Application) - should be LAST
 Route::get('/{any}', function () {
     return Inertia::render('NotFound');
 })->where('any', '.*');

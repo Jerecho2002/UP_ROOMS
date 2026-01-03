@@ -19,7 +19,7 @@ class User extends Authenticatable
         'role',
         'department',
         'college',
-        'permissions'
+        'permissions',
     ];
 
     protected $hidden = [
@@ -29,36 +29,5 @@ class User extends Authenticatable
 
     protected $casts = [
         'permissions' => 'array',
-        'email_verified_at' => 'datetime',
     ];
-
-    // Role check methods
-    public function isAdmin()
-    {
-        return in_array($this->role, ['Admin', 'SYSADMIN']);
-    }
-
-    public function isStaff()
-    {
-        return $this->role === 'Staff';
-    }
-
-    public function isFaculty()
-    {
-        return $this->role === 'Faculty';
-    }
-
-    public function hasPermission($permission)
-    {
-        if ($this->isAdmin()) {
-            return true;
-        }
-
-        return in_array($permission, $this->permissions ?? []);
-    }
-
-    public function hasAnyRole(array $roles)
-    {
-        return in_array($this->role, $roles);
-    }
 }

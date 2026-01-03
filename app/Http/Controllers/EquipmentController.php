@@ -13,8 +13,12 @@ use Illuminate\Support\Facades\DB;
 
 class EquipmentController extends Controller
 {
-    public function index(Request $request)
+    /**
+     * Display the equipment management page
+     */
+    public function index()
     {
+        // Return JSON response for now (for testing)
         $equipment = Equipment::with(['room', 'building', 'college', 'department', 'assignedUser'])
             ->orderBy('equipment_name')
             ->paginate(20);
@@ -36,6 +40,138 @@ class EquipmentController extends Controller
         ]);
     }
 
+    /**
+     * Get equipment statistics for charts
+     */
+    public function getEquipmentStats()
+    {
+        $total = Equipment::count();
+        $available = Equipment::where('status', 'available')->count();
+        $inUse = Equipment::where('status', 'in_use')->count();
+        $maintenance = Equipment::where('status', 'maintenance')->count();
+        $retired = Equipment::where('status', 'retired')->count();
+
+        $totalValue = Equipment::sum('purchase_price');
+        $avgValue = $total > 0 ? $totalValue / $total : 0;
+
+        // Equipment by person (assigned user)
+        $personStats = Equipment::select('assigned_user_id', DB::raw('COUNT(*) as equipment_count'))
+            ->whereNotNull('assigned_user_id')
+            ->with(['assignedUser:id,first_name,last_name'])
+            ->groupBy('assigned_user_id')
+            ->get()
+            ->map(function($item) {
+                return [
+                    'name' => $item->assignedUser ? $item->assignedUser->first_name . ' ' . $item->assignedUser->last_name : 'Unassigned',
+                    'equipmentCount' => $item->equipment_count
+                ];
+            });
+
+        // Equipment by building
+        $buildingStats = Equipment::select('building_id', DB::raw('COUNT(*) as equipment_count'))
+            ->whereNotNull('building_id')
+            ->with(['building:id,building_name'])
+            ->groupBy('building_id')
+            ->get()
+            ->map(function($item) {
+                return [
+                    'building' => $item->building ? $item->building->building_name : 'Unknown',
+                    'equipmentCount' => $item->equipment_count
+                ];
+            });
+
+        return response()->json([
+            'total' => $total,
+            'available' => $available,
+            'in_use' => $inUse,
+            'maintenance' => $maintenance,
+            'retired' => $retired,
+            'total_value' => $totalValue,
+            'average_value' => round($avgValue, 2),
+            'person_stats' => $personStats,
+            'building_stats' => $buildingStats,
+        ]);
+    }
+
+    /**
+     * Get equipment usage details for Vue components
+     */
+    public function getEquipmentUsage(Request $request)
+    {
+        $search = $request->get('search', '');
+
+        $query = Equipment::with([
+            'room:id,room_name,room_code',
+            'building:id,building_name',
+            'college:id,college_name',
+            'assignedUser:id,first_name,last_name,middle_name,username'
+        ])
+        ->whereNotNull('assigned_user_id');
+
+        // Apply search filter if provided
+        if (!empty($search)) {
+            $query->where(function($q) use ($search) {
+                $q->where('equipment_name', 'like', "%{$search}%")
+                  ->orWhere('inventory_id', 'like', "%{$search}%")
+                  ->orWhere('property_id', 'like', "%{$search}%")
+                  ->orWhereHas('assignedUser', function($q) use ($search) {
+                      $q->where('first_name', 'like', "%{$search}%")
+                        ->orWhere('last_name', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('room', function($q) use ($search) {
+                      $q->where('room_code', 'like', "%{$search}%")
+                        ->orWhere('room_name', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('building', function($q) use ($search) {
+                      $q->where('building_name', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('college', function($q) use ($search) {
+                      $q->where('college_name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        // Group by assigned user to get aggregated view
+        $equipmentByUser = $query->get()
+            ->groupBy('assigned_user_id')
+            ->map(function($equipments, $userId) {
+                $user = $equipments->first()->assignedUser;
+                $room = $equipments->first()->room;
+                $building = $equipments->first()->building;
+                $college = $equipments->first()->college;
+
+                return [
+                    'id' => $userId,
+                    'name' => $user ? $user->first_name . ' ' . $user->last_name : 'Unknown User',
+                    'room' => $room ? $room->room_code : 'N/A',
+                    'building' => $building ? $building->building_name : 'N/A',
+                    'college' => $college ? $college->college_name : 'N/A',
+                    'equipmentUsed' => $equipments->map(function($eq) {
+                        return [
+                            'inventory_id' => $eq->inventory_id,
+                            'property_id' => $eq->property_id,
+                            'name' => $eq->equipment_name,
+                            'cfic' => $eq->cfic_id,
+                            'status' => ucfirst(str_replace('_', ' ', $eq->status)),
+                            'description' => $eq->description
+                        ];
+                    })->toArray()
+                ];
+            })
+            ->values();
+
+        return response()->json([
+            'usage_list' => $equipmentByUser,
+            'total' => $equipmentByUser->count(),
+            'total_equipment' => $equipmentByUser->sum(function($user) {
+                return count($user['equipmentUsed']);
+            })
+        ]);
+    }
+
+    /**
+     * Get all equipment with filters
+     */
     public function getAll(Request $request)
     {
         $query = Equipment::with(['room', 'building', 'college', 'department', 'assignedUser']);
@@ -82,138 +218,5 @@ class EquipmentController extends Controller
         return response()->json($query->paginate($request->get('per_page', 20)));
     }
 
-    public function getStats()
-    {
-        $total = Equipment::count();
-        $available = Equipment::where('status', 'available')->count();
-        $inUse = Equipment::where('status', 'in_use')->count();
-        $maintenance = Equipment::where('status', 'maintenance')->count();
-        $retired = Equipment::where('status', 'retired')->count();
-
-        $totalValue = Equipment::sum('purchase_price');
-        $avgValue = $total > 0 ? $totalValue / $total : 0;
-
-        $recentAdditions = Equipment::orderBy('created_at', 'desc')
-            ->limit(5)
-            ->get(['id', 'equipment_name', 'created_at']);
-
-        $statusDistribution = Equipment::select('status', DB::raw('COUNT(*) as count'))
-            ->groupBy('status')
-            ->get();
-
-        return [
-            'total' => $total,
-            'available' => $available,
-            'in_use' => $inUse,
-            'maintenance' => $maintenance,
-            'retired' => $retired,
-            'total_value' => $totalValue,
-            'average_value' => round($avgValue, 2),
-            'status_distribution' => $statusDistribution,
-            'recent_additions' => $recentAdditions,
-        ];
-    }
-
-    public function transfer($id, Request $request)
-    {
-        $equipment = Equipment::findOrFail($id);
-
-        $validated = $request->validate([
-            'room_id' => 'nullable|exists:rooms,id',
-            'building_id' => 'nullable|exists:buildings,id',
-            'college_id' => 'nullable|exists:colleges,id',
-            'department_id' => 'nullable|exists:departments,id',
-            'assigned_user_id' => 'nullable|exists:user_accounts,id',
-            'transfer_notes' => 'nullable|string',
-        ]);
-
-        // Log the transfer
-        $oldLocation = $equipment->location;
-
-        $equipment->update($validated);
-
-        $newLocation = $equipment->location;
-
-        return response()->json([
-            'message' => 'Equipment transferred successfully',
-            'equipment' => $equipment->load(['room', 'building', 'college', 'department', 'assignedUser']),
-            'transfer_info' => [
-                'from' => $oldLocation,
-                'to' => $newLocation,
-                'notes' => $request->get('transfer_notes'),
-                'transferred_at' => now(),
-            ]
-        ]);
-    }
-
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'equipment_name' => 'required|string|max:255',
-            'inventory_id' => 'required|string|max:100|unique:equipment,inventory_id',
-            'property_id' => 'nullable|string|max:100|unique:equipment,property_id',
-            'description' => 'nullable|string',
-            'quantity' => 'required|integer|min:1',
-            'room_id' => 'nullable|exists:rooms,id',
-            'building_id' => 'nullable|exists:buildings,id',
-            'college_id' => 'nullable|exists:colleges,id',
-            'department_id' => 'nullable|exists:departments,id',
-            'cfic_id' => 'nullable|string|max:50',
-            'status' => 'required|in:available,in_use,maintenance,retired',
-            'brand' => 'nullable|string|max:100',
-            'model' => 'nullable|string|max:100',
-            'serial_number' => 'nullable|string|max:100',
-            'purchase_date' => 'nullable|date',
-            'purchase_price' => 'nullable|numeric|min:0',
-            'assigned_user_id' => 'nullable|exists:user_accounts,id',
-            'specifications' => 'nullable|array',
-        ]);
-
-        $equipment = Equipment::create($validated);
-
-        return response()->json([
-            'message' => 'Equipment created successfully',
-            'equipment' => $equipment->load(['room', 'building', 'college', 'department', 'assignedUser']),
-        ], 201);
-    }
-
-    public function update(Request $request, Equipment $equipment)
-    {
-        $validated = $request->validate([
-            'equipment_name' => 'sometimes|required|string|max:255',
-            'inventory_id' => 'sometimes|required|string|max:100|unique:equipment,inventory_id,' . $equipment->id,
-            'property_id' => 'nullable|string|max:100|unique:equipment,property_id,' . $equipment->id,
-            'description' => 'nullable|string',
-            'quantity' => 'sometimes|required|integer|min:1',
-            'room_id' => 'nullable|exists:rooms,id',
-            'building_id' => 'nullable|exists:buildings,id',
-            'college_id' => 'nullable|exists:colleges,id',
-            'department_id' => 'nullable|exists:departments,id',
-            'cfic_id' => 'nullable|string|max:50',
-            'status' => 'sometimes|required|in:available,in_use,maintenance,retired',
-            'brand' => 'nullable|string|max:100',
-            'model' => 'nullable|string|max:100',
-            'serial_number' => 'nullable|string|max:100',
-            'purchase_date' => 'nullable|date',
-            'purchase_price' => 'nullable|numeric|min:0',
-            'assigned_user_id' => 'nullable|exists:user_accounts,id',
-            'specifications' => 'nullable|array',
-        ]);
-
-        $equipment->update($validated);
-
-        return response()->json([
-            'message' => 'Equipment updated successfully',
-            'equipment' => $equipment->load(['room', 'building', 'college', 'department', 'assignedUser']),
-        ]);
-    }
-
-    public function destroy(Equipment $equipment)
-    {
-        $equipment->delete();
-
-        return response()->json([
-            'message' => 'Equipment deleted successfully'
-        ]);
-    }
+    // ... keep your existing store, update, destroy, transfer methods as they are
 }

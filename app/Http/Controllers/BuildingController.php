@@ -5,192 +5,202 @@ namespace App\Http\Controllers;
 use App\Models\Building;
 use App\Models\College;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
+use Illuminate\Support\Facades\Validator;
 
 class BuildingController extends Controller
 {
-    public function index(Request $request)
+    /**
+     * Display a listing of the resource.
+     */
+    public function index()
     {
-        $buildings = Building::with('college')
-            ->orderBy('building_name')
-            ->paginate(20);
-
-        $colleges = College::all();
-
-        return response()->json([
-            'buildings' => $buildings,
-            'colleges' => $colleges,
-            'stats' => [
-                'total' => Building::count(),
-                'with_elevator' => Building::where('has_elevator', true)->count(),
-                'with_parking' => Building::where('has_parking', true)->count(),
-                'avg_rooms' => round(Building::avg('total_rooms'), 2),
-            ]
-        ]);
+        return Inertia::render('BuildingDashboard');
     }
 
+    /**
+     * Get all buildings with college relationship
+     */
     public function getAll(Request $request)
     {
-        $query = Building::with('college');
+        try {
+            $query = Building::with(['college:id,college_name'])
+                ->orderBy('created_at', 'desc');
 
-        if ($request->has('search')) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('building_name', 'like', "%{$search}%")
-                  ->orWhere('address', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
-            });
+            // Search functionality
+            if ($request->has('search') && $request->search) {
+                $search = $request->search;
+                $query->where(function ($q) use ($search) {
+                    $q->where('building_name', 'like', "%{$search}%")
+                      ->orWhere('address', 'like', "%{$search}%")
+                      ->orWhereHas('college', function ($q2) use ($search) {
+                          $q2->where('college_name', 'like', "%{$search}%");
+                      });
+                });
+            }
+
+            // Pagination
+            $perPage = $request->get('per_page', 10);
+            $buildings = $query->paginate($perPage);
+
+            return response()->json([
+                'success' => true,
+                'data' => $buildings,
+                'message' => 'Buildings fetched successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch buildings: ' . $e->getMessage()
+            ], 500);
         }
-
-        if ($request->has('college_id')) {
-            $query->where('college_id', $request->college_id);
-        }
-
-        if ($request->has('has_elevator')) {
-            $query->where('has_elevator', filter_var($request->has_elevator, FILTER_VALIDATE_BOOLEAN));
-        }
-
-        if ($request->has('has_parking')) {
-            $query->where('has_parking', filter_var($request->has_parking, FILTER_VALIDATE_BOOLEAN));
-        }
-
-        $sortField = $request->get('sort_field', 'building_name');
-        $sortOrder = $request->get('sort_order', 'asc');
-        $query->orderBy($sortField, $sortOrder);
-
-        return response()->json($query->paginate($request->get('per_page', 20)));
     }
 
-    public function getStats(Building $building)
-    {
-        $rooms = $building->rooms()->count();
-        $equipment = $building->equipment()->count();
-        $availableRooms = $building->rooms()->where('status', 'available')->count();
-
-        return response()->json([
-            'building' => $building->load('college'),
-            'stats' => [
-                'total_rooms' => $rooms,
-                'available_rooms' => $availableRooms,
-                'total_equipment' => $equipment,
-                'occupancy_rate' => $rooms > 0 ? round(($availableRooms / $rooms) * 100, 2) : 0,
-                'room_types' => DB::table('rooms')
-                    ->join('room_types', 'rooms.room_type_id', '=', 'room_types.id')
-                    ->where('rooms.building_id', $building->id)
-                    ->select('room_types.room_type_name', DB::raw('COUNT(*) as count'))
-                    ->groupBy('room_types.room_type_name')
-                    ->get(),
-            ],
-            'recent_activities' => $this->getBuildingActivities($building),
-        ]);
-    }
-
+    /**
+     * Store a newly created resource in storage.
+     */
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $validator = Validator::make($request->all(), [
             'building_name' => 'required|string|max:255',
             'address' => 'required|string|max:500',
             'description' => 'nullable|string',
-            'total_floors' => 'required|integer|min:1',
-            'total_rooms' => 'required|integer|min:0',
+            'total_floors' => 'nullable|integer|min:1',
+            'total_rooms' => 'nullable|integer|min:0',
             'has_elevator' => 'boolean',
             'has_parking' => 'boolean',
-            'restroom_count' => 'integer|min:0',
-            'ramp_count' => 'integer|min:0',
-            'college_id' => 'required|exists:colleges,id',
+            'restroom_count' => 'nullable|integer|min:0',
+            'ramp_count' => 'nullable|integer|min:0',
+            'college_id' => 'nullable|exists:colleges,id',
         ]);
 
-        $building = Building::create($validated);
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors(),
+                'message' => 'Validation failed'
+            ], 422);
+        }
 
-        return response()->json([
-            'message' => 'Building created successfully',
-            'building' => $building->load('college'),
-        ], 201);
+        try {
+            $building = Building::create($validator->validated());
+
+            return response()->json([
+                'success' => true,
+                'data' => $building->load('college'),
+                'message' => 'Building created successfully'
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create building: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
+    /**
+     * Update the specified resource in storage.
+     */
     public function update(Request $request, Building $building)
     {
-        $validated = $request->validate([
-            'building_name' => 'sometimes|required|string|max:255',
-            'address' => 'sometimes|required|string|max:500',
+        $validator = Validator::make($request->all(), [
+            'building_name' => 'required|string|max:255',
+            'address' => 'required|string|max:500',
             'description' => 'nullable|string',
-            'total_floors' => 'sometimes|required|integer|min:1',
-            'total_rooms' => 'sometimes|required|integer|min:0',
+            'total_floors' => 'nullable|integer|min:1',
+            'total_rooms' => 'nullable|integer|min:0',
             'has_elevator' => 'boolean',
             'has_parking' => 'boolean',
-            'restroom_count' => 'integer|min:0',
-            'ramp_count' => 'integer|min:0',
-            'college_id' => 'sometimes|required|exists:colleges,id',
+            'restroom_count' => 'nullable|integer|min:0',
+            'ramp_count' => 'nullable|integer|min:0',
+            'college_id' => 'nullable|exists:colleges,id',
         ]);
 
-        $building->update($validated);
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors(),
+                'message' => 'Validation failed'
+            ], 422);
+        }
 
-        return response()->json([
-            'message' => 'Building updated successfully',
-            'building' => $building->load('college'),
-        ]);
+        try {
+            $building->update($validator->validated());
+
+            return response()->json([
+                'success' => true,
+                'data' => $building->load('college'),
+                'message' => 'Building updated successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update building: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
+    /**
+     * Remove the specified resource from storage.
+     */
     public function destroy(Building $building)
     {
-        // Check if building has rooms or equipment
-        if ($building->rooms()->count() > 0) {
+        try {
+            // Check if building has rooms or equipment
+            if ($building->rooms()->exists()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot delete building that has rooms. Please delete rooms first.'
+                ], 422);
+            }
+
+            if ($building->equipment()->exists()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot delete building that has equipment. Please transfer equipment first.'
+                ], 422);
+            }
+
+            $building->delete();
+
             return response()->json([
-                'message' => 'Cannot delete building with existing rooms'
-            ], 422);
-        }
-
-        if ($building->equipment()->count() > 0) {
+                'success' => true,
+                'message' => 'Building deleted successfully'
+            ]);
+        } catch (\Exception $e) {
             return response()->json([
-                'message' => 'Cannot delete building with existing equipment'
-            ], 422);
+                'success' => false,
+                'message' => 'Failed to delete building: ' . $e->getMessage()
+            ], 500);
         }
-
-        $building->delete();
-
-        return response()->json([
-            'message' => 'Building deleted successfully'
-        ]);
     }
 
-    private function getBuildingActivities(Building $building)
+    /**
+     * Get building statistics
+     */
+    public function getStats(Building $building)
     {
-        $activities = [];
-
-        // Recent room changes in this building
-        $recentRooms = $building->rooms()
-            ->orderBy('updated_at', 'desc')
-            ->limit(5)
-            ->get();
-
-        foreach ($recentRooms as $room) {
-            $activities[] = [
-                'type' => 'room',
-                'action' => 'updated',
-                'description' => "Room {$room->room_name} was updated",
-                'time' => $room->updated_at->diffForHumans(),
+        try {
+            $stats = [
+                'total_rooms' => $building->rooms()->count(),
+                'available_rooms' => $building->rooms()->where('status', 'available')->count(),
+                'occupied_rooms' => $building->rooms()->where('status', 'occupied')->count(),
+                'total_equipment' => $building->equipment()->count(),
+                'available_equipment' => $building->equipment()->where('status', 'available')->count(),
+                'floors' => $building->total_floors,
+                'total_room_capacity' => $building->rooms()->sum('capacity'),
             ];
+
+            return response()->json([
+                'success' => true,
+                'data' => $stats,
+                'message' => 'Building stats fetched successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch building stats: ' . $e->getMessage()
+            ], 500);
         }
-
-        // Recent equipment changes
-        $recentEquipment = $building->equipment()
-            ->orderBy('updated_at', 'desc')
-            ->limit(5)
-            ->get();
-
-        foreach ($recentEquipment as $equipment) {
-            $activities[] = [
-                'type' => 'equipment',
-                'action' => 'updated',
-                'description' => "Equipment {$equipment->equipment_name} was updated",
-                'time' => $equipment->updated_at->diffForHumans(),
-            ];
-        }
-
-        usort($activities, function($a, $b) {
-            return strtotime($b['time']) - strtotime($a['time']);
-        });
-
-        return array_slice($activities, 0, 10);
     }
 }

@@ -12,14 +12,14 @@ const toggleSidebar = () => (sidebarVisible.value = !sidebarVisible.value);
 const showCreateSuccess = ref(false);
 const showEditSuccess = ref(false);
 const showDeleteSuccess = ref(false);
-const deletedRoomName = ref("");
+const deletedCollegeName = ref("");
 
 // Toast duration handler
 const triggerToast = (type, name = "") => {
   if (type === "create") showCreateSuccess.value = true;
   if (type === "edit") showEditSuccess.value = true;
   if (type === "delete") {
-    deletedRoomName.value = name;
+    deletedCollegeName.value = name;
     showDeleteSuccess.value = true;
   }
 
@@ -83,7 +83,10 @@ const handleDeleted = (name) => triggerToast("delete", name);
       :showCreateSuccess="showCreateSuccess"
       :showEditSuccess="showEditSuccess"
       :showDeleteSuccess="showDeleteSuccess"
-      :deletedRoomName="deletedRoomName"
+      :deletedItemName="deletedCollegeName"
+      createMessage="College created successfully!"
+      editMessage="College updated successfully!"
+      deleteMessage="College deleted successfully!"
     />
   </div>
 </template>
