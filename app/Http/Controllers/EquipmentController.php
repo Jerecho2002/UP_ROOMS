@@ -173,51 +173,6 @@ class EquipmentController extends Controller
     /**
      * Get all equipment with filters
      */
-    public function getAll(Request $request)
-    {
-        $query = Equipment::with(['room', 'building', 'college', 'department', 'assignedUser']);
-
-        if ($request->has('search')) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('equipment_name', 'like', "%{$search}%")
-                  ->orWhere('inventory_id', 'like', "%{$search}%")
-                  ->orWhere('property_id', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%")
-                  ->orWhere('serial_number', 'like', "%{$search}%");
-            });
-        }
-
-        if ($request->has('room_id')) {
-            $query->where('room_id', $request->room_id);
-        }
-
-        if ($request->has('building_id')) {
-            $query->where('building_id', $request->building_id);
-        }
-
-        if ($request->has('college_id')) {
-            $query->where('college_id', $request->college_id);
-        }
-
-        if ($request->has('department_id')) {
-            $query->where('department_id', $request->department_id);
-        }
-
-        if ($request->has('status')) {
-            $query->where('status', $request->status);
-        }
-
-        if ($request->has('cfic_id')) {
-            $query->where('cfic_id', $request->cfic_id);
-        }
-
-        $sortField = $request->get('sort_field', 'equipment_name');
-        $sortOrder = $request->get('sort_order', 'asc');
-        $query->orderBy($sortField, $sortOrder);
-
-        return response()->json($query->paginate($request->get('per_page', 20)));
-    }
 
     // ... keep your existing store, update, destroy, transfer methods as they are
 }

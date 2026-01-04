@@ -90,3 +90,30 @@ const handleDeleted = (name) => triggerToast("delete", name);
     />
   </div>
 </template>
+
+<style scoped>
+/* Ensure main content area doesn't overflow */
+#mainContent {
+    overflow-x: hidden;
+}
+
+/* Fix layout for smaller screens */
+@media (max-width: 768px) {
+    .ml-8 {
+        margin-left: 1rem !important;
+    }
+
+    .ml-10 {
+        margin-left: 1rem !important;
+    }
+
+    .absolute.right-6 {
+        right: 1rem !important;
+    }
+}
+
+/* Prevent content shifting */
+.bg-white.shadow-lg.rounded-lg {
+    min-height: 500px;
+}
+</style>

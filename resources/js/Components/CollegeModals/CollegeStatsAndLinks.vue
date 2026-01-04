@@ -109,6 +109,62 @@ const resetPagination = () => {
     currentPage.value = 1;
 };
 
+// Calculate visible page buttons with ellipsis
+const visiblePages = computed(() => {
+    const total = totalPages.value;
+    const current = currentPage.value;
+    const delta = 2; // Number of pages to show on each side of current page
+    const range = [];
+
+    if (total <= 7) {
+        // Show all pages if total pages is 7 or less
+        for (let i = 1; i <= total; i++) {
+            range.push(i);
+        }
+    } else {
+        // Always show first page
+        range.push(1);
+
+        // Calculate start and end of middle range
+        let start = Math.max(2, current - delta);
+        let end = Math.min(total - 1, current + delta);
+
+        // Adjust if we're near the beginning
+        if (current <= delta + 2) {
+            end = delta * 2 + 2;
+        }
+
+        // Adjust if we're near the end
+        if (current >= total - delta - 1) {
+            start = total - delta * 2 - 1;
+        }
+
+        // Add ellipsis after first page if needed
+        if (start > 2) {
+            range.push('...');
+        }
+
+        // Add middle pages
+        for (let i = start; i <= end; i++) {
+            if (i > 1 && i < total) {
+                range.push(i);
+            }
+        }
+
+        // Add ellipsis before last page if needed
+        if (end < total - 1) {
+            range.push('...');
+        }
+
+        // Always show last page
+        if (total > 1) {
+            range.push(total);
+        }
+    }
+
+    return range;
+});
+
 // --- MODAL FUNCTIONS ---
 const openAddModal = () => {
     currentCollege.value = {
@@ -376,7 +432,7 @@ const handleDeleteDetails = async (details) => {
                                 color="gray"
                                 outlined
                                 :class="[
-                                    'px-3 py-1.5 rounded text-sm font-medium transition-colors duration-150',
+                                    'px-3 py-1.5 rounded text-sm font-medium transition-colors duration-150 min-w-[80px]',
                                     currentPage === 1
                                         ? 'bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed'
                                         : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
@@ -385,20 +441,23 @@ const handleDeleteDetails = async (details) => {
                                 Previous
                             </IconButton>
 
-                            <!-- Page numbers -->
-                            <div class="flex items-center space-x-1">
+                            <!-- Page numbers with ellipsis -->
+                            <div class="flex items-center space-x-1 overflow-hidden">
                                 <button
-                                    v-for="page in totalPages"
-                                    :key="page"
-                                    @click="goToPage(page)"
+                                    v-for="pageNum in visiblePages"
+                                    :key="pageNum"
+                                    @click="pageNum !== '...' ? goToPage(pageNum) : null"
+                                    :disabled="pageNum === '...'"
                                     :class="[
                                         'px-3 py-1.5 rounded border text-sm font-medium min-w-[36px] transition-colors duration-150',
-                                        currentPage === page
-                                            ? 'bg-[#7A0C23] text-white border-[#7A0C23]'
-                                            : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                                        pageNum === '...'
+                                            ? 'bg-transparent border-transparent text-gray-500 cursor-default'
+                                            : currentPage === pageNum
+                                                ? 'bg-[#7A0C23] text-white border-[#7A0C23]'
+                                                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                                     ]"
                                 >
-                                    {{ page }}
+                                    {{ pageNum }}
                                 </button>
                             </div>
 
@@ -412,7 +471,7 @@ const handleDeleteDetails = async (details) => {
                                 color="gray"
                                 outlined
                                 :class="[
-                                    'px-3 py-1.5 rounded text-sm font-medium transition-colors duration-150',
+                                    'px-3 py-1.5 rounded text-sm font-medium transition-colors duration-150 min-w-[80px]',
                                     currentPage === totalPages
                                         ? 'bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed'
                                         : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
@@ -423,7 +482,7 @@ const handleDeleteDetails = async (details) => {
                         </div>
 
                         <!-- Page indicator -->
-                        <div class="text-sm text-gray-600">
+                        <div class="text-sm text-gray-600 whitespace-nowrap">
                             Page {{ currentPage }} of {{ totalPages }}
                         </div>
                     </div>
@@ -651,28 +710,22 @@ button:not(:disabled):hover {
     transition: transform 0.2s ease;
 }
 
-/* Ensure pagination controls are properly spaced */
-.space-x-1 > * + * {
-    margin-left: 0.25rem;
+/* Ensure table maintains its width */
+table {
+    table-layout: fixed;
+    width: 100%;
 }
 
-.space-x-2 > * + * {
-    margin-left: 0.5rem;
-}
+/* Fixed column widths */
+th:nth-child(1), td:nth-child(1) { width: 30%; }
+th:nth-child(2), td:nth-child(2) { width: 30%; }
+th:nth-child(3), td:nth-child(3) { width: 20%; }
+th:nth-child(4), td:nth-child(4) { width: 20%; }
 
-.space-x-3 > * + * {
-    margin-left: 0.75rem;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .flex-col.md\:flex-row {
-        gap: 1rem;
-    }
-
-    .space-x-2 {
-        justify-content: center;
-    }
+/* Prevent pagination from breaking layout */
+.flex.items-center.space-x-1.overflow-hidden {
+    max-width: 300px;
+    flex-wrap: nowrap;
 }
 
 /* Custom scrollbar for modal */
@@ -697,5 +750,55 @@ button:not(:disabled):hover {
 
 .modal-scroll::-webkit-scrollbar-thumb:hover {
     background: #5a061a;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .flex-col.md\:flex-row {
+        gap: 1rem;
+    }
+
+    .space-x-2 {
+        justify-content: center;
+    }
+
+    /* Adjust table for mobile */
+    th, td {
+        padding: 0.5rem 0.25rem;
+        font-size: 0.875rem;
+    }
+
+    .px-6 {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+
+    /* Adjust pagination for mobile */
+    .flex.items-center.space-x-1.overflow-hidden {
+        max-width: 200px;
+    }
+
+    .px-3 {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+}
+
+/* Prevent content overflow */
+td {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+/* Ensure table border stays fixed */
+.border-yellow-400 {
+    border-width: 1px;
+}
+
+/* Pagination button ellipsis styling */
+button[disabled].bg-transparent {
+    background-color: transparent !important;
+    border-color: transparent !important;
+    cursor: default;
 }
 </style>
