@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Inertia\Inertia;
 use App\Models\RoomType;
 use Illuminate\Http\Request;
 
@@ -13,7 +14,7 @@ class RoomTypeController extends Controller
             ->orderBy('room_type_name')
             ->paginate(20);
 
-        return response()->json([
+        return Inertia::render('roomtypes', [
             'room_types' => $roomTypes,
             'stats' => [
                 'total' => RoomType::count(),

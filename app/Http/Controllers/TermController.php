@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Term;
+use Inertia\Inertia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -15,7 +16,7 @@ class TermController extends Controller
 
         $currentTerm = Term::where('is_current', true)->first();
 
-        return response()->json([
+        return Inertia::render('Terms',[
             'terms' => $terms,
             'current_term' => $currentTerm,
             'stats' => [

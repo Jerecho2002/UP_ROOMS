@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Equipment;
 use App\Models\Room;
-use App\Models\Building;
+use Inertia\Inertia;
 use App\Models\College;
+use App\Models\Building;
+use App\Models\Equipment;
 use App\Models\Department;
 use App\Models\UserAccount;
 use Illuminate\Http\Request;
@@ -29,7 +30,7 @@ class EquipmentController extends Controller
         $departments = Department::all();
         $users = UserAccount::whereIn('user_type', ['faculty', 'staff'])->get();
 
-        return response()->json([
+        return Inertia::render('equipment',[
             'equipment' => $equipment,
             'rooms' => $rooms,
             'buildings' => $buildings,

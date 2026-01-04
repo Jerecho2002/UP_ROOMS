@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Schedule;
-use App\Models\Room;
-use App\Models\UserAccount;
-use App\Models\Term;
-use Illuminate\Http\Request;
 use Carbon\Carbon;
+use App\Models\Room;
+use App\Models\Term;
+use Inertia\Inertia;
+use App\Models\Schedule;
+use App\Models\UserAccount;
+use Illuminate\Http\Request;
 
 class ScheduleController extends Controller
 {
@@ -23,13 +24,13 @@ class ScheduleController extends Controller
         $requesters = UserAccount::whereIn('user_type', ['faculty', 'staff'])->get();
         $terms = Term::where('status', 'active')->get();
 
-        return response()->json([
+        return Inertia::render('schedule',[
             'schedules' => $schedules,
             'rooms' => $rooms,
             'faculty' => $faculty,
             'requesters' => $requesters,
             'terms' => $terms,
-            'stats' => $this->getScheduleStats(),
+            // 'stats' => $this->getScheduleStats(),
         ]);
     }
 

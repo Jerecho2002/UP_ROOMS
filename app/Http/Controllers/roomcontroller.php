@@ -2,15 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Room;
-use App\Models\Building;
-use App\Models\College;
-use App\Models\Department;
-use App\Models\RoomType;
-use App\Models\UserAccount;
-use App\Models\Schedule;
-use Illuminate\Http\Request;
 use Carbon\Carbon;
+use App\Models\Room;
+use Inertia\Inertia;
+use App\Models\College;
+use App\Models\Building;
+use App\Models\RoomType;
+use App\Models\Schedule;
+use App\Models\Department;
+use App\Models\UserAccount;
+use Illuminate\Http\Request;
 
 class RoomController extends Controller
 {
@@ -26,7 +27,7 @@ class RoomController extends Controller
         $roomTypes = RoomType::all();
         $users = UserAccount::whereIn('user_type', ['faculty', 'staff'])->get();
 
-        return response()->json([
+        return Inertia::render('room', [
             'rooms' => $rooms,
             'buildings' => $buildings,
             'colleges' => $colleges,
