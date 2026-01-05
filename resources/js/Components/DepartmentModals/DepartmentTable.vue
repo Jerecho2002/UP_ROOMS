@@ -27,141 +27,152 @@
           size="sm"
           color="green"
           outlined
-          class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-150"
+          class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-150 flex items-center justify-center"
         >
-          Add Department
+          <span>Add Department</span>
         </IconButton>
       </div>
 
-      <div class="overflow-x-auto border rounded-lg border-yellow-400">
-        <table class="min-w-full divide-y divide-yellow-300">
-          <thead class="bg-[#7A0C23] text-white">
-            <tr>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Department Code</th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Department Name</th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">College</th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Dean/Head</th>
-              <th scope="col" class="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider">Action</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-yellow-400 bg-white">
-            <tr v-for="item in departments" :key="item.id" class="hover:bg-gray-300">
-              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ item.department_code || 'N/A' }}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ item.department_name }}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ item.college }}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ item.dean }}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-center space-x-3">
-                <IconButton
-                  @click="handleViewDetails(item)"
-                  icon="eye"
-                  title="View Details"
-                  size="sm"
-                  color="blue"
-                  class="hover:scale-110 transition-transform"
-                />
-                <IconButton
-                  @click="handleEditDetails(item)"
-                  icon="edit"
-                  title="Edit Department"
-                  size="sm"
-                  color="green"
-                  class="hover:scale-110 transition-transform"
-                />
-                <IconButton
-                  @click="handleDeleteDetails(item)"
-                  icon="delete"
-                  title="Delete Department"
-                  size="sm"
-                  color="red"
-                  class="hover:scale-110 transition-transform"
-                />
-              </td>
-            </tr>
-            <tr v-if="loading">
-              <td colspan="5" class="px-6 py-4 text-center">
-                <div class="flex justify-center">
-                  <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-[#7A0C23]"></div>
-                </div>
-              </td>
-            </tr>
-            <tr v-else-if="departments.length === 0 && !loading">
-              <td colspan="5" class="px-6 py-4 text-center text-gray-500">
-                No departments found{{ searchTerm ? ' matching "' + searchTerm + '"' : '' }}.
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <!-- Fixed Width Table Container -->
+      <div class="border rounded-lg border-yellow-400 overflow-hidden">
+        <div class="overflow-x-hidden"> <!-- Changed from overflow-x-auto to overflow-x-hidden -->
+          <table class="min-w-full divide-y divide-yellow-300">
+            <thead class="bg-[#7A0C23] text-white">
+              <tr>
+                <th scope="col" class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider w-[12%]">Dept Code</th>
+                <th scope="col" class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider w-[28%]">Department Name</th>
+                <th scope="col" class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider w-[25%]">College</th>
+                <th scope="col" class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider w-[20%]">Dean/Head</th>
+                <th scope="col" class="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider w-[15%]">Action</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-yellow-400 bg-white">
+              <tr v-for="item in departments" :key="item.id" class="hover:bg-gray-300">
+                <td class="px-4 py-3 text-sm font-medium text-gray-900 truncate">{{ item.department_code || 'N/A' }}</td>
+                <td class="px-4 py-3 text-sm font-medium text-gray-900 truncate">{{ item.department_name }}</td>
+                <td class="px-4 py-3 text-sm text-gray-700 truncate">{{ item.college }}</td>
+                <td class="px-4 py-3 text-sm text-gray-700 truncate">{{ item.dean }}</td>
+                <td class="px-4 py-3 whitespace-nowrap">
+                  <div class="flex items-center justify-center space-x-1">
+                    <IconButton
+                      @click="handleViewDetails(item)"
+                      icon="eye"
+                      title="View Details"
+                      size="xs"
+                      color="blue"
+                      class="inline-flex items-center justify-center hover:scale-110 transition-transform"
+                    />
+                    <IconButton
+                      @click="handleEditDetails(item)"
+                      icon="edit"
+                      title="Edit Department"
+                      size="xs"
+                      color="green"
+                      class="inline-flex items-center justify-center hover:scale-110 transition-transform"
+                    />
+                    <IconButton
+                      @click="handleDeleteDetails(item)"
+                      icon="delete"
+                      title="Delete Department"
+                      size="xs"
+                      color="red"
+                      class="inline-flex items-center justify-center hover:scale-110 transition-transform"
+                    />
+                  </div>
+                </td>
+              </tr>
+              <tr v-if="loading">
+                <td colspan="5" class="px-4 py-4 text-center">
+                  <div class="flex justify-center">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-[#7A0C23]"></div>
+                  </div>
+                </td>
+              </tr>
+              <tr v-else-if="departments.length === 0 && !loading">
+                <td colspan="5" class="px-4 py-4 text-center text-gray-500">
+                  No departments found{{ searchTerm ? ' matching "' + searchTerm + '"' : '' }}.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      <!-- Pagination -->
-      <div v-if="pagination.total > 0" class="bg-gray-50 px-6 py-4 border-t border-yellow-400">
-        <div class="flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
-          <div class="text-sm text-gray-600">
-            Showing {{ pagination.from }} to {{ pagination.to }} of {{ pagination.total }} entries
+      <!-- Horizontal Pagination - Fixed at Bottom -->
+      <div v-if="pagination.total > 0" class="mt-4">
+        <div class="flex flex-col sm:flex-row items-center justify-between space-y-3 sm:space-y-0">
+          <div class="text-sm text-gray-600 whitespace-nowrap">
+            Showing <span class="font-semibold">{{ pagination.from }}</span> to
+            <span class="font-semibold">{{ pagination.to }}</span> of
+            <span class="font-semibold">{{ pagination.total }}</span> entries
           </div>
 
-          <div class="flex items-center space-x-2">
-            <select
-              v-model="pagination.perPage"
-              @change="changePerPage"
-              class="text-sm border border-gray-300 rounded px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-[#7A0C23]"
-            >
-              <option value="5">5</option>
-              <option value="10">10</option>
-              <option value="20">20</option>
-              <option value="50">50</option>
-            </select>
-            <span class="text-sm text-gray-600">per page</span>
-          </div>
+          <div class="flex items-center space-x-3">
+            <div class="flex items-center space-x-2">
+              <span class="text-sm text-gray-600 whitespace-nowrap">Show:</span>
+              <select
+                v-model="pagination.perPage"
+                @change="changePerPage"
+                class="text-sm border border-gray-300 rounded px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-[#7A0C23]"
+              >
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="15">15</option>
+                <option value="20">20</option>
+              </select>
+              <span class="text-sm text-gray-600 whitespace-nowrap">per page</span>
+            </div>
 
-          <div class="flex items-center space-x-2">
-            <IconButton
-              @click="prevPage"
-              :disabled="pagination.currentPage === 1"
-              icon="chevronLeft"
-              title="Previous Page"
-              size="sm"
-              color="gray"
-              outlined
-              :class="[
-                'px-3 py-1.5 rounded text-sm font-medium',
-                pagination.currentPage === 1 ? 'opacity-50 cursor-not-allowed' : ''
-              ]"
-            >
-              Previous
-            </IconButton>
-
+            <!-- Horizontal Page Numbers -->
             <div class="flex items-center space-x-1">
+              <!-- Previous Button -->
               <button
-                v-for="page in pagination.lastPage"
+                @click="prevPage"
+                :disabled="pagination.currentPage === 1"
+                :class="[
+                  'flex items-center justify-center w-8 h-8 rounded border border-gray-300 text-sm font-medium',
+                  pagination.currentPage === 1
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-400'
+                ]"
+                title="Previous Page"
+              >
+                &lt;
+              </button>
+
+              <!-- Page Numbers -->
+              <button
+                v-for="page in getDisplayPages()"
                 :key="page"
                 @click="goToPage(page)"
                 :class="[
-                  'px-3 py-1.5 rounded border text-sm font-medium min-w-[36px]',
-                  pagination.currentPage === page
+                  'flex items-center justify-center w-8 h-8 rounded border text-sm font-medium',
+                  page === '...'
+                    ? 'border-transparent text-gray-500 cursor-default'
+                    : pagination.currentPage === page
                     ? 'bg-[#7A0C23] text-white border-[#7A0C23]'
-                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
                 ]"
+                :disabled="page === '...'"
               >
                 {{ page }}
               </button>
-            </div>
 
-            <IconButton
-              @click="nextPage"
-              :disabled="pagination.currentPage === pagination.lastPage"
-              icon="chevronRight"
-              title="Next Page"
-              size="sm"
-              color="gray"
-              outlined
-              :class="[
-                'px-3 py-1.5 rounded text-sm font-medium',
-                pagination.currentPage === pagination.lastPage ? 'opacity-50 cursor-not-allowed' : ''
-              ]"
-            >
-              Next
-            </IconButton>
+              <!-- Next Button -->
+              <button
+                @click="nextPage"
+                :disabled="pagination.currentPage === pagination.lastPage"
+                :class="[
+                  'flex items-center justify-center w-8 h-8 rounded border border-gray-300 text-sm font-medium',
+                  pagination.currentPage === pagination.lastPage
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-400'
+                ]"
+                title="Next Page"
+              >
+                &gt;
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -209,7 +220,7 @@
               size="sm"
               color="gray"
               outlined
-              class="mt-4 bg-gray-400 hover:bg-gray-500 text-white py-2 px-4 rounded"
+              class="mt-4 bg-gray-400 hover:bg-gray-500 text-white py-2 px-4 rounded flex items-center justify-center"
             >
               Close
             </IconButton>
@@ -296,7 +307,7 @@
               size="sm"
               color="gray"
               outlined
-              class="bg-gray-400 hover:bg-gray-500 text-white py-2 px-4 rounded"
+              class="bg-gray-400 hover:bg-gray-500 text-white py-2 px-4 rounded flex items-center justify-center"
             >
               Cancel
             </IconButton>
@@ -307,7 +318,7 @@
               size="sm"
               color="green"
               outlined
-              class="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded"
+              class="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded flex items-center justify-center"
             >
               Save Changes
             </IconButton>
@@ -395,7 +406,7 @@
               size="sm"
               color="gray"
               outlined
-              class="bg-gray-400 hover:bg-gray-500 text-white py-2 px-4 rounded"
+              class="bg-gray-400 hover:bg-gray-500 text-white py-2 px-4 rounded flex items-center justify-center"
             >
               Cancel
             </IconButton>
@@ -406,7 +417,7 @@
               size="sm"
               color="green"
               outlined
-              class="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded"
+              class="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded flex items-center justify-center"
             >
               Add Department
             </IconButton>
@@ -418,13 +429,11 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, watch } from 'vue'
+import { ref, reactive, onMounted, watch, computed } from 'vue'
 import axios from 'axios'
 import IconButton from '@/Components/IconButton.vue'
 
-const props = defineProps({
-  // Remove hardcoded data prop since we'll fetch from API
-})
+const props = defineProps({})
 
 const emit = defineEmits(['created', 'edited', 'deleted'])
 
@@ -475,6 +484,61 @@ const pagination = reactive({
   from: 0,
   to: 0
 })
+
+// Get pages to display in horizontal format
+const getDisplayPages = () => {
+  const pages = []
+  const current = pagination.currentPage
+  const last = pagination.lastPage
+  const maxVisible = 7 // Show maximum 7 page numbers including ellipsis
+
+  if (last <= maxVisible) {
+    // Show all pages
+    for (let i = 1; i <= last; i++) {
+      pages.push(i)
+    }
+    return pages
+  }
+
+  // Always show first page
+  pages.push(1)
+
+  // Calculate start and end
+  let start = Math.max(2, current - 2)
+  let end = Math.min(last - 1, current + 2)
+
+  // Adjust if near start
+  if (current <= 3) {
+    end = Math.min(last - 1, maxVisible - 1)
+  }
+
+  // Adjust if near end
+  if (current >= last - 2) {
+    start = Math.max(2, last - (maxVisible - 2))
+  }
+
+  // Add ellipsis after first page if needed
+  if (start > 2) {
+    pages.push('...')
+  }
+
+  // Add middle pages
+  for (let i = start; i <= end; i++) {
+    pages.push(i)
+  }
+
+  // Add ellipsis before last page if needed
+  if (end < last - 1) {
+    pages.push('...')
+  }
+
+  // Always show last page if more than 1 page
+  if (last > 1) {
+    pages.push(last)
+  }
+
+  return pages
+}
 
 // Fetch data on mount
 onMounted(() => {
@@ -564,8 +628,10 @@ const nextPage = () => {
 }
 
 const goToPage = (page) => {
-  pagination.currentPage = page
-  fetchDepartments()
+  if (page !== '...' && page >= 1 && page <= pagination.lastPage) {
+    pagination.currentPage = page
+    fetchDepartments()
+  }
 }
 
 // Action Handlers
@@ -713,5 +779,40 @@ input:focus, select:focus, textarea:focus {
 
 .transition-transform {
   transition: transform 0.2s ease;
+}
+
+/* Prevent text overflow in table cells */
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Align icons properly */
+.flex.items-center.justify-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Pagination button styles */
+button:disabled {
+  cursor: not-allowed;
+}
+
+/* Ensure consistent button heights */
+button {
+  min-height: 32px;
+  transition: all 0.2s ease;
+}
+
+/* Table cell styles */
+td, th {
+  padding: 12px 16px;
+}
+
+/* Fixed table layout to prevent overflow */
+.overflow-x-hidden {
+  overflow-x: hidden !important;
 }
 </style>

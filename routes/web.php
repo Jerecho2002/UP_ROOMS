@@ -98,14 +98,19 @@ Route::middleware(['auth.session'])->group(function () {
     // Equipment Management
     // In web.php, make sure this route exists and returns Inertia::render()
 
-    Route::get('/equipment', [EquipmentController::class, 'index'])->name('equipment.index');
-    Route::get('/api/equipment', [EquipmentController::class, 'getAll']);
-    Route::get('/api/equipment/stats', [EquipmentController::class, 'getStats']);
-    Route::get('/api/equipment/{id}/transfer', [EquipmentController::class, 'transfer']);
-    Route::post('/equipment', [EquipmentController::class, 'store']);
-    Route::put('/equipment/{equipment}', [EquipmentController::class, 'update']);
-    Route::delete('/equipment/{equipment}', [EquipmentController::class, 'destroy']);
+  // Equipment Management Routes
+Route::get('/equipment', [EquipmentController::class, 'index'])->name('equipment.index');
 
+// Equipment API Routes
+Route::prefix('/api/equipment')->group(function () {
+    Route::get('/', [EquipmentController::class, 'getAll']);
+    Route::get('/stats', [EquipmentController::class, 'getStats']);
+    Route::get('/usage', [EquipmentController::class, 'getEquipmentUsage']);
+    Route::post('/', [EquipmentController::class, 'store']);
+    Route::put('/{equipment}', [EquipmentController::class, 'update']);
+    Route::post('/{equipment}/transfer', [EquipmentController::class, 'transfer']);
+    Route::delete('/{equipment}', [EquipmentController::class, 'destroy']);
+});
     // Schedule Management
     Route::get('/schedule', [ScheduleController::class, 'index'])->name('schedules.index');
     Route::get('/api/schedules', [ScheduleController::class, 'getAll']);
@@ -129,17 +134,14 @@ Route::middleware(['auth.session'])->group(function () {
     Route::delete('/terms/{term}', [TermController::class, 'destroy']);
 
     // User Account Management
-    Route::get('/UserAccountPage', [UserAccountController::class, 'index'])->name('users.index');
-    Route::get('/api/user-accounts', [UserAccountController::class, 'getAll']);
-    Route::get('/api/user-accounts/stats', [UserAccountController::class, 'getStats']);
-    Route::get('/api/user-accounts/{id}/stats', [UserAccountController::class, 'getUserStats']);
-    Route::get('/api/user-accounts/{id}/change-status', [UserAccountController::class, 'changeStatus']);
-    Route::post('/user-accounts', [UserAccountController::class, 'store']);
-    Route::put('/user-accounts/{userAccount}', [UserAccountController::class, 'update']);
-    Route::put('/user-accounts/{id}/profile', [UserAccountController::class, 'updateProfile']);
-    Route::put('/user-accounts/{id}/password', [UserAccountController::class, 'changePassword']);
-    Route::delete('/user-accounts/{userAccount}', [UserAccountController::class, 'destroy']);
-
+   // User Account Management
+Route::get('/UserAccountPage', [UserAccountController::class, 'index'])->name('users.index');
+Route::get('/api/user-accounts', [UserAccountController::class, 'getAll']);
+Route::get('/api/user-accounts/stats', [UserAccountController::class, 'getStats']);
+Route::get('/api/user-accounts/{id}/stats', [UserAccountController::class, 'getUserStats']);
+Route::post('/user-accounts', [UserAccountController::class, 'store']);
+Route::put('/user-accounts/{userAccount}', [UserAccountController::class, 'update']);
+Route::delete('/user-accounts/{userAccount}', [UserAccountController::class, 'destroy']);
     // Report Generation
     Route::prefix('/api/reports')->group(function () {
         Route::get('/room-utilization', function (Request $request) {
