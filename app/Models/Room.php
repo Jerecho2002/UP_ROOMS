@@ -24,10 +24,13 @@ class Room extends Model
         'facilities',
         'status',
         'notes',
+        'description',
+        'equipments' // Add this
     ];
 
     protected $casts = [
         'facilities' => 'array',
+        'equipments' => 'array' // Add this cast
     ];
 
     // Relationships
@@ -56,27 +59,9 @@ class Room extends Model
         return $this->belongsTo(UserAccount::class, 'assigned_user_id');
     }
 
-    public function equipment()
-    {
-        return $this->hasMany(Equipment::class);
-    }
-
     public function schedules()
     {
         return $this->hasMany(Schedule::class);
-    }
-
-    // Accessor for room with building
-    public function getFullRoomAttribute()
-    {
-        $building = $this->building ? $this->building->building_name : 'No Building';
-        return "{$building} - {$this->room_name} ({$this->room_code})";
-    }
-
-    // Scope for available rooms
-    public function scopeAvailable($query)
-    {
-        return $query->where('status', 'available');
     }
 
     // New method to get room utilization statistics
@@ -89,5 +74,24 @@ class Room extends Model
             'total_schedules' => $this->schedules()->count(),
             'upcoming_schedules' => $this->schedules()->where('date', '>=', $today)->count(),
         ];
+    }
+
+    // Accessor for full room name
+    public function getFullRoomAttribute()
+    {
+        $building = $this->building ? $this->building->building_name : 'No Building';
+        return "{$building} - {$this->room_name} ({$this->room_code})";
+    }
+
+    // Scope for available rooms
+    public function scopeAvailable($query)
+    {
+        return $query->where('status', 'available');
+    }
+
+    // Scope for occupied rooms
+    public function scopeOccupied($query)
+    {
+        return $query->where('status', 'occupied');
     }
 }

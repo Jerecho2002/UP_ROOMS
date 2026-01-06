@@ -1,189 +1,11 @@
-<script setup>
-import { defineProps, defineEmits, ref, watch } from 'vue';
-
-const props = defineProps({
-    // Controls whether the modal is visible
-    isVisible: {
-        type: Boolean,
-        required: true,
-    },
-    // The data for the room being edited (passed from the main component)
-    roomData: {
-        type: Object,
-        default: () => ({ 
-            schedules: [],
-            equipments: [], // Ensure equipments property exists for deep watch
-        }),
-    }
-});
-
-// Events this component can emit
-const emit = defineEmits(['close', 'save', 'reset', 'upload']);
-
-// --- Equipment Options (Static List - COPIED from AddRoomModal) ---
-const equipmentOptions = [
-    'Table', 'Chair', 'Computer', 'Keyboard', 'Mouse', 
-    'Head Set', 'Laptop', 'Projector', 'Monitor', 'Whiteboard'
-];
-
-// LOCAL STATE: A reactive copy of the roomData to be bound to the form inputs
-const editableRoom = ref({});
-
-// State for the temporary schedule being added
-const tempSchedule = ref({
-    name: '',
-    time: '',
-    college: '',
-    isAvailable: false
-});
-
-// State for the temporary equipment being added (NEW)
-const tempEquipment = ref({
-    name: '',
-    quantity: 1, // Default quantity
-});
-
-// --- Reset Functions ---
-
-const resetTempSchedule = () => {
-    tempSchedule.value = {
-        name: '',
-        time: '',
-        college: '',
-        isAvailable: false
-    };
-}
-
-const resetTempEquipment = () => { // NEW
-    tempEquipment.value = {
-        name: '',
-        quantity: 1
-    };
-}
-
-// --- Schedule Management Functions (Existing) ---
-
-// Function to add a schedule item
-const addSchedule = () => {
-    if (tempSchedule.value.name && tempSchedule.value.time) {
-        const college = tempSchedule.value.college || editableRoom.value.college || 'N/A';
-        if (!Array.isArray(editableRoom.value.schedules)) {
-             editableRoom.value.schedules = [];
-        }
-        editableRoom.value.schedules.push({ ...tempSchedule.value, college: college });
-        resetTempSchedule();
-    } else {
-        alert('Please fill out the Schedule Name and Time.');
-    }
-}
-
-// Function to remove a schedule item
-const removeSchedule = (index) => {
-    editableRoom.value.schedules.splice(index, 1);
-}
-
-// --- Equipment Management Functions (NEW - COPIED from AddRoomModal) ---
-
-/**
- * Adds the temporary equipment item to the room's equipment list.
- */
-const addEquipment = () => {
-    // Basic validation
-    if (!tempEquipment.value.name) {
-        alert('Please select an Equipment Item.');
-        return;
-    }
-    if (tempEquipment.value.quantity <= 0 || !Number.isInteger(tempEquipment.value.quantity)) {
-        alert('Quantity must be a positive whole number.');
-        return;
-    }
-
-    // Ensure array exists
-    if (!Array.isArray(editableRoom.value.equipments)) {
-         editableRoom.value.equipments = [];
-    }
-    
-    // Check if the item already exists to avoid duplicates
-    const existingIndex = editableRoom.value.equipments.findIndex(
-        item => item.name === tempEquipment.value.name
-    );
-
-    if (existingIndex !== -1) {
-        alert(`Equipment "${tempEquipment.value.name}" is already listed. Please remove it first to modify the quantity.`);
-    } else {
-        // Add a clean copy of the equipment
-        editableRoom.value.equipments.push({ 
-            name: tempEquipment.value.name,
-            quantity: tempEquipment.value.quantity 
-        });
-        resetTempEquipment(); // Reset for next entry
-    }
-}
-
-/**
- * Removes an equipment item by its index.
- * @param {number} index - The index of the item to remove.
- */
-const removeEquipment = (index) => {
-    editableRoom.value.equipments.splice(index, 1);
-}
-
-// LOGICAL FIX: Use 'watch' to update the local editableRoom state whenever the parent passes a new room (via props.roomData)
-watch(() => props.roomData, (newRoomData) => {
-    // Deep copy for schedules and *equipments* to ensure we don't mutate parent data
-    editableRoom.value = { 
-        ...newRoomData, 
-        schedules: newRoomData.schedules ? [...newRoomData.schedules] : [],
-        equipments: newRoomData.equipments ? [...newRoomData.equipments] : [] // INITIALIZE equipments
-    }; 
-    resetTempSchedule();
-    resetTempEquipment(); // Reset temp equipment state too
-}, { deep: true, immediate: true });
-
-
-// --- Action Handlers ---
-
-const handleSave = () => {
-    // Basic validation before saving
-    if (!editableRoom.value.room || !editableRoom.value.capacity || editableRoom.value.capacity <= 0) {
-        alert('Please fill out the Room name and ensure Capacity is a positive number.');
-        return;
-    }
-    emit('save', editableRoom.value);
-    emit('close'); // Close modal after successful save/update
-};
-
-const handleReset = () => {
-    // Revert changes by copying the original roomData again
-    editableRoom.value = { 
-        ...props.roomData, 
-        schedules: props.roomData.schedules ? [...props.roomData.schedules] : [],
-        equipments: props.roomData.equipments ? [...props.roomData.equipments] : [] // Reset equipments
-    };
-    resetTempSchedule();
-    resetTempEquipment();
-    console.log("Form reset.");
-};
-const handleClose = () => {
-    emit('close');
-}
-
-const handleUpload = () => {
-    // Placeholder for actual file selection/upload logic
-    console.log("Upload/Photo clicked. (Trigger file dialog)");
-    emit('upload');
-};
-
-</script>
-
 <template>
     <div v-if="isVisible" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
         <div class="bg-white rounded-lg shadow-2xl overflow-hidden max-w-4xl w-full mx-auto my-auto max-h-[95vh]">
-            
-            <header class="bg-maroon-dark text-white p-3 flex justify-between items-center sticky top-0 z-10">
+
+            <header class="bg-[#7A0C23] text-white p-3 flex justify-between items-center sticky top-0 z-10">
                 <div class="flex items-center space-x-2">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.467 9.5 3.5 7.5 3.5m4.5 2.753C13.168 5.467 14.5 3.5 16.5 3.5m-4.5 2.753v13m-4.5-5.5h9"></path></svg>
-                    <h2 class="text-xl font-semibold">EDIT ROOM: {{ editableRoom.room }}</h2>
+                    <h2 class="text-xl font-semibold">EDIT ROOM: {{ editableRoom.room_name || editableRoom.room_code }}</h2>
                 </div>
                 <button @click="handleClose" class="text-white hover:text-gray-200">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
@@ -191,114 +13,265 @@ const handleUpload = () => {
             </header>
 
             <div class="p-8 bg-gray-100 overflow-y-auto max-h-[85vh]">
-                <div class="flex flex-col lg:flex-row space-y-6 lg:space-y-0 lg:space-x-8">
-                    
-                    <div class="flex-1 space-y-4 text-lg font-medium text-gray-700">
-                        <div class="flex space-x-2 items-center">
-                            <span class="w-24 font-bold text-gray-800">ROOM:</span>
-                            <input v-model="editableRoom.room" type="text" class="border-b border-gray-300 bg-transparent focus:outline-none w-full p-1 text-base" required />
-                        </div>
-                        <div class="flex space-x-2 items-center">
-                            <span class="w-24 font-bold text-gray-800">Building:</span>
-                            <input v-model="editableRoom.building" type="text" class="border-b border-gray-300 bg-transparent focus:outline-none w-full p-1 text-base" />
-                        </div>
-                        <div class="flex space-x-2 items-center">
-                            <span class="w-24 font-bold text-gray-800">College:</span>
-                            <input v-model="editableRoom.college" type="text" class="border-b border-gray-300 bg-transparent focus:outline-none w-full p-1 text-base" />
-                        </div>
-                        <div class="flex space-x-2 items-center">
-                            <span class="w-24 font-bold text-gray-800">Capacity:</span>
-                            <input v-model.number="editableRoom.capacity" type="number" min="1" class="border-b border-gray-300 bg-transparent focus:outline-none w-full p-1 text-base" required />
-                        </div>
-                        <div class="flex space-x-2 items-center">
-                            <span class="w-24 font-bold text-gray-800">Location:</span>
-                            <input v-model="editableRoom.location" type="text" class="border-b border-gray-300 bg-transparent focus:outline-none w-full p-1 text-base" />
-                        </div>
-                        <div class="flex space-x-2 items-center">
-                            <span class="w-24 font-bold text-gray-800">Room Type:</span>
-                            <input v-model="editableRoom.roomType" type="text" class="border-b border-gray-300 bg-transparent focus:outline-none w-full p-1 text-base" />
-                        </div>
-                        <div class="flex space-x-2 items-center">
-                            <span class="w-24 font-bold text-gray-800">Description:</span>
-                            <input v-model="editableRoom.description" type="text" class="border-b border-gray-300 bg-transparent focus:outline-none w-full p-1 text-base" />
-                        </div>
-                    </div>
+                <form @submit.prevent="handleSave" class="space-y-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Left Column -->
+                        <div class="space-y-4">
+                            <!-- Room Code -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Room Code *</label>
+                                <input v-model="editableRoom.room_code" type="text" required
+                                       class="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-[#7A0C23] focus:border-transparent">
+                            </div>
 
-                    <div class="flex-shrink-0 w-full lg:w-64 flex flex-col items-center space-y-3">
-                        <div class="w-full h-48 bg-gray-300 rounded-lg overflow-hidden flex justify-center items-center">
-                            <img 
-                                src="https://via.placeholder.com/256x192.png?text=Room+Photo" 
-                                alt="Room Photo" 
-                                class="object-cover w-full h-full"
-                            >
-                        </div>
-                        <span class="text-gray-600 font-semibold">Current Photo</span>
-                        <button @click="handleUpload" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-8 rounded-lg transition duration-150 w-full text-sm">
-                            UPLOAD / PHOTO
-                        </button>
-                    </div>
-                </div>
-                
-                <div class="border-t pt-4 mt-8">
-                    <h4 class="text-xl font-semibold text-gray-800 mb-3">Manage Room Equipments 🛠️</h4>
+                            <!-- Room Name -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Room Name *</label>
+                                <input v-model="editableRoom.room_name" type="text" required
+                                       class="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-[#7A0C23] focus:border-transparent">
+                            </div>
 
-                    <div class="space-y-3 p-3 border border-dashed rounded-lg bg-white shadow-inner">
-                        <div class="flex space-x-2 items-end">
-                            <div class="w-2/3">
-                                <label for="tempEquipment" class="block text-xs font-medium text-gray-600">Select Item</label>
-                                <select id="tempEquipment" v-model="tempEquipment.name"
-                                        class="block w-full border-gray-300 rounded-md shadow-sm sm:text-sm p-2">
-                                    <option value="">Select Equipment</option>
-                                    <option v-for="item in equipmentOptions" :key="item" :value="item">{{ item }}</option>
+                            <!-- Building -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Building</label>
+                                <select v-model="editableRoom.building_id"
+                                        class="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-[#7A0C23] focus:border-transparent">
+                                    <option value="">Select Building</option>
+                                    <option v-for="building in buildings" :key="building.id" :value="building.id">
+                                        {{ building.building_name }}
+                                    </option>
                                 </select>
                             </div>
-                            <div class="w-1/6">
-                                <label for="tempQuantity" class="block text-xs font-medium text-gray-600">Qty</label>
-                                <input type="number" id="tempQuantity" v-model.number="tempEquipment.quantity" min="1"
-                                        class="block w-full border-gray-300 rounded-md shadow-sm sm:text-sm p-2 text-center">
+
+                            <!-- College -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">College</label>
+                                <select v-model="editableRoom.college_id"
+                                        class="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-[#7A0C23] focus:border-transparent">
+                                    <option value="">Select College</option>
+                                    <option v-for="college in colleges" :key="college.id" :value="college.id">
+                                        {{ college.college_name }}
+                                    </option>
+                                </select>
                             </div>
-                            <button type="button" @click="addEquipment"
-                                    class="w-1/6 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2.5 px-3 rounded-md transition duration-150 text-sm h-[42px] flex items-center justify-center">
-                                + Add
-                            </button>
+
+                            <!-- Department -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                                <select v-model="editableRoom.department_id"
+                                        class="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-[#7A0C23] focus:border-transparent">
+                                    <option value="">Select Department</option>
+                                    <option v-for="department in departments" :key="department.id" :value="department.id">
+                                        {{ department.department_name }}
+                                    </option>
+                                </select>
+                            </div>
+
+                            <!-- Room Type -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Room Type</label>
+                                <select v-model="editableRoom.room_type_id"
+                                        class="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-[#7A0C23] focus:border-transparent">
+                                    <option value="">Select Type</option>
+                                    <option v-for="type in roomTypes" :key="type.id" :value="type.id">
+                                        {{ type.type_name }}
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Right Column -->
+                        <div class="space-y-4">
+                            <!-- Capacity -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Capacity *</label>
+                                <input v-model.number="editableRoom.capacity" type="number" required min="1"
+                                       class="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-[#7A0C23] focus:border-transparent">
+                            </div>
+
+                            <!-- Floor Number -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Floor Number</label>
+                                <input v-model.number="editableRoom.floor_number" type="number"
+                                       class="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-[#7A0C23] focus:border-transparent">
+                            </div>
+
+                            <!-- Location -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                                <input v-model="editableRoom.location" type="text"
+                                       class="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-[#7A0C23] focus:border-transparent">
+                            </div>
+
+                            <!-- Area -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Area (sqm)</label>
+                                <input v-model.number="editableRoom.area_sqm" type="number"
+                                       class="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-[#7A0C23] focus:border-transparent">
+                            </div>
+
+                            <!-- Status -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                                <select v-model="editableRoom.status"
+                                        class="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-[#7A0C23] focus:border-transparent">
+                                    <option value="available">Available</option>
+                                    <option value="occupied">Occupied</option>
+                                    <option value="maintenance">Maintenance</option>
+                                    <option value="closed">Closed</option>
+                                </select>
+                            </div>
+
+                            <!-- Assigned User -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Assigned User</label>
+                                <select v-model="editableRoom.assigned_user_id"
+                                        class="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-[#7A0C23] focus:border-transparent">
+                                    <option value="">Select User</option>
+                                    <option v-for="user in users" :key="user.id" :value="user.id">
+                                        {{ user.first_name }} {{ user.last_name }}
+                                    </option>
+                                </select>
+                            </div>
                         </div>
                     </div>
 
-                    <div v-if="editableRoom.equipments && editableRoom.equipments.length > 0" class="mt-4 space-y-2 max-h-40 overflow-y-auto">
-                        <div v-for="(item, index) in editableRoom.equipments" :key="index"
-                                class="flex items-center justify-between p-2 text-sm rounded-md bg-purple-100 text-purple-800">
-                            <span>
-                                <strong>{{ item.name }}</strong> 
-                                <span class="ml-2 px-2 py-0.5 text-xs font-bold bg-purple-500 text-white rounded-full">{{ item.quantity }} pc(s)</span>
-                            </span>
-                            <button type="button" @click="removeEquipment(index)"
-                                    class="text-red-500 hover:text-red-700 ml-3 transition">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                            </button>
+                    <!-- Full Width Fields -->
+                    <div class="space-y-4">
+                        <!-- Facilities -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Facilities (comma-separated)</label>
+                            <input v-model="facilitiesInput" type="text" placeholder="Projector, Whiteboard, AC, etc."
+                                   class="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-[#7A0C23] focus:border-transparent">
+                        </div>
+
+                        <!-- Notes -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                            <textarea v-model="editableRoom.notes" rows="3"
+                                      class="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-[#7A0C23] focus:border-transparent"></textarea>
                         </div>
                     </div>
-                    <div v-else class="mt-4 text-center text-gray-500 text-sm italic">No equipment added yet.</div>
-                </div>
 
-                <div class="flex justify-center space-x-4 mt-8 pt-4 border-t border-gray-300">
-                    <button @click="handleSave" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-8 rounded-lg transition duration-150">
-                        SAVE CHANGES
-                    </button>
-                    <button @click="handleReset" class="bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-8 rounded-lg transition duration-150">
-                        RESET FORM
-                    </button>
-                </div>
+                    <!-- Equipment Section -->
+                    <div class="border-t pt-4 mt-4">
+                        <h4 class="text-lg font-semibold text-gray-800 mb-3">Equipment ⚙️</h4>
+
+                        <div class="space-y-3" v-for="(equipment, index) in editableRoom.equipments" :key="index">
+                            <div class="flex gap-2 items-center">
+                                <input type="text" v-model="equipment.name" placeholder="Equipment name"
+                                       class="flex-1 border rounded p-2">
+                                <input type="number" v-model.number="equipment.quantity" placeholder="Qty" min="1"
+                                       class="w-20 border rounded p-2">
+                                <button type="button" @click="removeEquipment(index)"
+                                        class="bg-red-500 text-white px-3 py-2 rounded">
+                                    Remove
+                                </button>
+                            </div>
+                        </div>
+
+                        <button type="button" @click="addEquipment"
+                                class="mt-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+                            + Add Equipment
+                        </button>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex justify-center space-x-4 mt-8 pt-4 border-t border-gray-300">
+                        <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-8 rounded-lg transition duration-150">
+                            SAVE CHANGES
+                        </button>
+                        <button type="button" @click="handleReset" class="bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-8 rounded-lg transition duration-150">
+                            RESET FORM
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 </template>
 
-<style scoped>
-.bg-maroon-dark { 
-    background-color: #7B0025; 
-}
-input[type="text"], input[type="number"] {
-    /* Ensure border bottom is styled */
-    border-bottom-width: 2px;
-}
-</style>
+<script setup>
+import { ref, watch, computed } from 'vue';
+
+const props = defineProps({
+    isVisible: Boolean,
+    roomData: Object,
+    buildings: Array,
+    colleges: Array,
+    departments: Array,
+    roomTypes: Array,
+    users: Array
+});
+
+const emit = defineEmits(['close', 'save']);
+
+// Local editable copy
+const editableRoom = ref({});
+const originalRoomData = ref({});
+const facilitiesInput = ref('');
+
+// Watch for roomData changes
+watch(() => props.roomData, (newRoomData) => {
+    if (newRoomData) {
+        editableRoom.value = { ...newRoomData };
+        originalRoomData.value = { ...newRoomData };
+
+        // Convert facilities array to string for input
+        if (newRoomData.facilities && Array.isArray(newRoomData.facilities)) {
+            facilitiesInput.value = newRoomData.facilities.join(', ');
+        } else {
+            facilitiesInput.value = '';
+        }
+
+        // Ensure equipments array exists
+        if (!editableRoom.value.equipments) {
+            editableRoom.value.equipments = [];
+        }
+    }
+}, { immediate: true });
+
+// Watch facilities input
+watch(facilitiesInput, (newValue) => {
+    if (newValue.trim()) {
+        editableRoom.value.facilities = newValue.split(',').map(item => item.trim()).filter(item => item);
+    } else {
+        editableRoom.value.facilities = [];
+    }
+});
+
+const addEquipment = () => {
+    editableRoom.value.equipments.push({
+        name: '',
+        quantity: 1
+    });
+};
+
+const removeEquipment = (index) => {
+    editableRoom.value.equipments.splice(index, 1);
+};
+
+const handleSave = () => {
+    if (!editableRoom.value.room_code || !editableRoom.value.room_name || !editableRoom.value.capacity) {
+        alert('Please fill in all required fields (Room Code, Room Name, and Capacity).');
+        return;
+    }
+
+    emit('save', editableRoom.value);
+};
+
+const handleReset = () => {
+    editableRoom.value = { ...originalRoomData.value };
+
+    // Reset facilities input
+    if (originalRoomData.value.facilities && Array.isArray(originalRoomData.value.facilities)) {
+        facilitiesInput.value = originalRoomData.value.facilities.join(', ');
+    } else {
+        facilitiesInput.value = '';
+    }
+};
+
+const handleClose = () => {
+    emit('close');
+};
+</script>

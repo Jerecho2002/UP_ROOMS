@@ -1,31 +1,226 @@
+<template>
+    <transition name="modal-fade">
+        <div v-if="isVisible" class="fixed inset-0 z-[60] flex items-center justify-center bg-gray-900 bg-opacity-50" @click.self="handleClose">
+            <div class="bg-white rounded-lg shadow-2xl w-full max-w-lg mx-4 p-6 max-h-[90vh] overflow-y-auto">
+                <!-- HEADER -->
+                <div class="flex justify-between items-center border-b pb-3 mb-4">
+                    <h3 class="text-2xl font-semibold text-gray-800">Add New Room ➕</h3>
+                    <button @click="handleClose" class="text-gray-400 hover:text-gray-600 transition" title="Close Modal">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- FORM CONTENT -->
+                <form @submit.prevent="handleSubmit" class="space-y-4">
+                    <!-- Basic Information -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Room Name *</label>
+                        <input type="text" v-model="newRoom.room_name" required class="mt-1 block w-full border-gray-300 rounded-md p-2 shadow-sm">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Room Code *</label>
+                        <input type="text" v-model="newRoom.room_code" required class="mt-1 block w-full border-gray-300 rounded-md p-2 shadow-sm">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Building</label>
+                            <select v-model="newRoom.building_id" class="mt-1 w-full border-gray-300 rounded-md p-2 shadow-sm">
+                                <option value="">Select Building</option>
+                                <option v-for="building in buildings" :key="building.id" :value="building.id">
+                                    {{ building.building_name }}
+                                </option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">College</label>
+                            <select v-model="newRoom.college_id" class="mt-1 w-full border-gray-300 rounded-md p-2 shadow-sm">
+                                <option value="">Select College</option>
+                                <option v-for="college in colleges" :key="college.id" :value="college.id">
+                                    {{ college.college_name }}
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Department</label>
+                            <select v-model="newRoom.department_id" class="mt-1 w-full border-gray-300 rounded-md p-2 shadow-sm">
+                                <option value="">Select Department</option>
+                                <option v-for="department in departments" :key="department.id" :value="department.id">
+                                    {{ department.department_name }}
+                                </option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Room Type</label>
+                            <select v-model="newRoom.room_type_id" class="mt-1 w-full border-gray-300 rounded-md p-2 shadow-sm">
+                                <option value="">Select Type</option>
+                                <option v-for="type in roomTypes" :key="type.id" :value="type.id">
+                                    {{ type.type_name }}
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Floor Number</label>
+                            <input type="number" v-model.number="newRoom.floor_number" min="0" class="mt-1 w-full border-gray-300 rounded-md p-2 shadow-sm">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Capacity *</label>
+                            <input type="number" v-model.number="newRoom.capacity" required min="1" class="mt-1 w-full border-gray-300 rounded-md p-2 shadow-sm">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Location</label>
+                        <input type="text" v-model="newRoom.location" class="mt-1 w-full border-gray-300 rounded-md p-2 shadow-sm">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Description</label>
+                        <textarea v-model="newRoom.description" rows="2" class="mt-1 w-full border-gray-300 rounded-md p-2 shadow-sm"></textarea>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Status</label>
+                            <select v-model="newRoom.status" class="mt-1 w-full border-gray-300 rounded-md p-2 shadow-sm">
+                                <option value="available">Available</option>
+                                <option value="occupied">Occupied</option>
+                                <option value="maintenance">Maintenance</option>
+                                <option value="closed">Closed</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Assigned User</label>
+                            <select v-model="newRoom.assigned_user_id" class="mt-1 w-full border-gray-300 rounded-md p-2 shadow-sm">
+                                <option value="">Select User</option>
+                                <option v-for="user in users" :key="user.id" :value="user.id">
+                                    {{ user.name }} ({{ user.user_type }})
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Notes</label>
+                        <textarea v-model="newRoom.notes" rows="2" class="mt-1 w-full border-gray-300 rounded-md p-2 shadow-sm"></textarea>
+                    </div>
+
+                    <!-- Equipment Section -->
+                    <div class="border-t pt-4 mt-4">
+                        <h4 class="text-lg font-semibold text-gray-800 mb-3">Room Equipments 🛠️</h4>
+
+                        <div class="space-y-3 p-3 border border-dashed rounded-lg bg-gray-50">
+                            <div class="flex space-x-2 items-end">
+                                <div class="w-2/3">
+                                    <label class="block text-xs font-medium text-gray-600">Equipment Name</label>
+                                    <input type="text" v-model="tempEquipment.name" placeholder="e.g., Projector, Chair, Table" class="w-full border-gray-300 rounded-md p-2">
+                                </div>
+
+                                <div class="w-1/6">
+                                    <label class="block text-xs font-medium text-gray-600">Qty</label>
+                                    <input type="number" v-model.number="tempEquipment.quantity" min="1" class="w-full border-gray-300 rounded-md p-2 text-center">
+                                </div>
+
+                                <button type="button" @click="addEquipment" class="w-1/6 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-md">
+                                    + Add
+                                </button>
+                            </div>
+                        </div>
+
+                        <div v-if="newRoom.equipments && newRoom.equipments.length > 0" class="mt-4 space-y-2 max-h-40 overflow-y-auto">
+                            <div v-for="(item, index) in newRoom.equipments" :key="index" class="flex items-center justify-between p-2 bg-purple-100 text-purple-800 rounded-md text-sm">
+                                <span>
+                                    <strong>{{ item.name }}</strong>
+                                    <span class="ml-2 px-2 py-0.5 bg-purple-500 text-white rounded-full text-xs font-bold">
+                                        {{ item.quantity }} pc(s)
+                                    </span>
+                                </span>
+                                <button type="button" @click="removeEquipment(index)" class="text-red-500 hover:text-red-700">
+                                    ✕
+                                </button>
+                            </div>
+                        </div>
+
+                        <div v-else class="text-center text-gray-500 text-sm italic mt-3">
+                            No equipment added yet.
+                        </div>
+                    </div>
+
+                    <!-- Submit Buttons -->
+                    <div class="flex justify-end space-x-3 pt-4 border-t">
+                        <button type="button" @click="handleClose" class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">
+                            Cancel
+                        </button>
+                        <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                            Create Room
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </transition>
+</template>
+
 <script setup>
-import { ref, watch } from 'vue';
+import { defineProps, defineEmits, ref, watch } from 'vue';
 
 const props = defineProps({
     isVisible: {
         type: Boolean,
-        default: false
+        required: true,
+    },
+    buildings: {
+        type: Array,
+        default: () => []
+    },
+    colleges: {
+        type: Array,
+        default: () => []
+    },
+    departments: {
+        type: Array,
+        default: () => []
+    },
+    roomTypes: {
+        type: Array,
+        default: () => []
+    },
+    users: {
+        type: Array,
+        default: () => []
     }
 });
 
 const emit = defineEmits(['close', 'save']);
 
-const equipmentOptions = [
-    'Table', 'Chair', 'Computer', 'Keyboard', 'Mouse',
-    'Head Set', 'Laptop', 'Projector', 'Monitor', 'Whiteboard'
-];
-
-const showSuccessMessage = ref(false);
-
 const newRoom = ref({
-    room: '',
-    building: '',
-    college: '',
-    capacity: null,
+    room_name: '',
+    room_code: '',
+    building_id: null,
+    college_id: null,
+    department_id: null,
+    room_type_id: null,
+    assigned_user_id: null,
+    floor_number: null,
     location: '',
-    roomType: '',
+    capacity: 30,
+    area_sqm: null,
     description: '',
-    comment: '',
+    status: 'available',
+    notes: '',
     equipments: [],
 });
 
@@ -34,29 +229,9 @@ const tempEquipment = ref({
     quantity: 1,
 });
 
-const resetTempEquipment = () => {
-    tempEquipment.value = { name: '', quantity: 1 };
-};
-
-const resetForm = () => {
-    newRoom.value = {
-        room: '',
-        building: '',
-        college: '',
-        capacity: null,
-        location: '',
-        roomType: '',
-        description: '',
-        comment: '',
-        equipments: [],
-    };
-    resetTempEquipment();
-    showSuccessMessage.value = false;
-};
-
 const addEquipment = () => {
     if (!tempEquipment.value.name) {
-        alert('Please select an Equipment Item.');
+        alert('Please enter equipment name.');
         return;
     }
     if (tempEquipment.value.quantity <= 0 || !Number.isInteger(tempEquipment.value.quantity)) {
@@ -64,19 +239,16 @@ const addEquipment = () => {
         return;
     }
 
-    const existingIndex = newRoom.value.equipments.findIndex(
-        item => item.name === tempEquipment.value.name
-    );
-
-    if (existingIndex !== -1) {
-        alert(`Equipment "${tempEquipment.value.name}" is already listed.`);
-    } else {
-        newRoom.value.equipments.push({
-            name: tempEquipment.value.name,
-            quantity: tempEquipment.value.quantity
-        });
-        resetTempEquipment();
+    if (!newRoom.value.equipments) {
+        newRoom.value.equipments = [];
     }
+
+    newRoom.value.equipments.push({
+        name: tempEquipment.value.name,
+        quantity: tempEquipment.value.quantity
+    });
+
+    tempEquipment.value = { name: '', quantity: 1 };
 };
 
 const removeEquipment = (index) => {
@@ -89,25 +261,42 @@ watch(() => props.isVisible, (newVal) => {
     }
 });
 
+const resetForm = () => {
+    newRoom.value = {
+        room_name: '',
+        room_code: '',
+        building_id: null,
+        college_id: null,
+        department_id: null,
+        room_type_id: null,
+        assigned_user_id: null,
+        floor_number: null,
+        location: '',
+        capacity: 30,
+        area_sqm: null,
+        description: '',
+        status: 'available',
+        notes: '',
+        equipments: [],
+    };
+    tempEquipment.value = { name: '', quantity: 1 };
+};
+
 const handleSubmit = () => {
-    if (!newRoom.value.room || !newRoom.value.capacity || newRoom.value.capacity <= 0) {
-        alert('Please fill out the Room name and ensure Capacity is a positive number.');
+    if (!newRoom.value.room_name || !newRoom.value.room_code || !newRoom.value.capacity) {
+        alert('Please fill out all required fields.');
         return;
     }
 
-    const roomData = {
+    // Format data for submission
+    const submitData = {
         ...newRoom.value,
-        capacity: Number(newRoom.value.capacity)
+        capacity: Number(newRoom.value.capacity),
+        floor_number: newRoom.value.floor_number ? Number(newRoom.value.floor_number) : null,
+        equipments: newRoom.value.equipments || []
     };
 
-    emit('save', roomData);
-
-    showSuccessMessage.value = true;
-
-    setTimeout(() => {
-        resetForm();
-        emit('close');
-    }, 1500);
+    emit('save', submitData);
 };
 
 const handleClose = () => {
@@ -115,178 +304,6 @@ const handleClose = () => {
     emit('close');
 };
 </script>
-
-<template>
-    <transition name="modal-fade">
-        <div
-            v-if="isVisible"
-            class="fixed inset-0 z-[60] flex items-center justify-center bg-gray-900 bg-opacity-50"
-            @click.self="handleClose"
-        >
-            <div class="bg-white rounded-lg shadow-2xl w-full max-w-lg mx-4 p-6 max-h-[90vh] overflow-y-auto">
-
-                <!-- HEADER -->
-                <div class="flex justify-between items-center border-b pb-3 mb-4">
-                    <h3 class="text-2xl font-semibold text-gray-800">Add New Room ➕</h3>
-                    <button @click="handleClose" class="text-gray-400 hover:text-gray-600 transition"
-                            title="Close Modal (Resets form)">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                    </button>
-                </div>
-
-                <!-- SUCCESS MESSAGE -->
-                <transition name="success-fade">
-                    <div v-if="showSuccessMessage" class="fixed inset-0 z-[80] flex items-center justify-center">
-                        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded shadow-lg text-center">
-                            <strong class="font-bold block text-xl mb-1">Success! 🎉</strong>
-                            <span>Room '{{ newRoom.room }}' created successfully! Closing in 1.5 seconds...</span>
-                        </div>
-                    </div>
-                </transition>
-
-                <!-- FORM CONTENT -->
-                <div :class="{ 'hidden': showSuccessMessage }">
-                    <form @submit.prevent="handleSubmit" class="space-y-4">
-
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Room Name *</label>
-                            <input type="text" v-model="newRoom.room" required
-                                   class="mt-1 block w-full border-gray-300 rounded-md p-2 shadow-sm">
-                        </div>
-
-                        <div class="flex space-x-4">
-                            <div class="flex-1">
-                                <label class="block text-sm font-medium text-gray-700">Buildings</label>
-                                <select v-model="newRoom.building"
-                                        class="mt-1 w-full border-gray-300 rounded-md p-2 shadow-sm">
-                                    <option value="">Select Type</option>
-                                    <option value="Building arts">Building arts</option>
-                                    <option value="Building UP Mains">Building UP Mains</option>
-                                    <option value="Building Law">Building Law</option>
-                                    <option value="Building Rooms">Building Rooms</option>
-                                </select>
-                            </div>
-
-                            <div class="flex-1">
-                                <label class="block text-sm font-medium text-gray-700">College</label>
-                                <select v-model="newRoom.college"
-                                        class="mt-1 w-full border-gray-300 rounded-md p-2 shadow-sm">
-                                    <option value="">Select Type</option>
-                                    <option value="College IT-Department">College IT-Departments</option>
-                                    <option value="College of Law">College of Law</option>
-                                    <option value="College of HTM">College of HTM</option>
-                                    <option value="College of Criminilogy">College of Criminology</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="flex space-x-4">
-                            <div class="flex-1">
-                                <label class="block text-sm font-medium text-gray-700">Capacity *</label>
-                                <input type="number" v-model.number="newRoom.capacity" required min="1"
-                                       class="mt-1 w-full border-gray-300 rounded-md p-2 shadow-sm">
-                            </div>
-
-                            <div class="flex-1">
-                                <label class="block text-sm font-medium text-gray-700">Room Type</label>
-                                <select v-model="newRoom.roomType"
-                                        class="mt-1 w-full border-gray-300 rounded-md p-2 shadow-sm">
-                                    <option value="">Select Type</option>
-                                    <option value="Lecture Hall">Lecture Hall</option>
-                                    <option value="Classroom">Classroom</option>
-                                    <option value="Computer Lab">Computer Lab</option>
-                                    <option value="Science Lab">Science Lab</option>
-                                    <option value="Conference Room">Conference Room</option>
-                                    <option value="Study Area">Study Area</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Location</label>
-                            <input type="text" v-model="newRoom.location"
-                                   class="mt-1 w-full border-gray-300 rounded-md p-2 shadow-sm">
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Description</label>
-                            <textarea v-model="newRoom.description" rows="2"
-                                      class="mt-1 w-full border-gray-300 rounded-md p-2 shadow-sm"></textarea>
-                        </div>
-
-                        <div class="border-t pt-4 mt-4">
-                            <h4 class="text-lg font-semibold text-gray-800 mb-3">Room Equipments 🛠️</h4>
-
-                            <div class="space-y-3 p-3 border border-dashed rounded-lg bg-gray-50">
-                                <div class="flex space-x-2 items-end">
-                                    <div class="w-2/3">
-                                        <label class="block text-xs font-medium text-gray-600">Select Item</label>
-                                        <select v-model="tempEquipment.name"
-                                                class="w-full border-gray-300 rounded-md p-2">
-                                            <option value="">Select Equipment</option>
-                                            <option v-for="item in equipmentOptions" :key="item" :value="item">
-                                                {{ item }}
-                                            </option>
-                                        </select>
-                                    </div>
-
-                                    <div class="w-1/6">
-                                        <label class="block text-xs font-medium text-gray-600">Qty</label>
-                                        <input type="number" v-model.number="tempEquipment.quantity" min="1"
-                                               class="w-full border-gray-300 rounded-md p-2 text-center">
-                                    </div>
-
-                                    <button type="button" @click="addEquipment"
-                                            class="w-1/6 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-md">
-                                        + Add
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div v-if="newRoom.equipments.length > 0" class="mt-4 space-y-2 max-h-40 overflow-y-auto">
-                                <div v-for="(item, index) in newRoom.equipments" :key="index"
-                                     class="flex items-center justify-between p-2 bg-purple-100 text-purple-800 rounded-md text-sm">
-                                    <span>
-                                        <strong>{{ item.name }}</strong>
-                                        <span
-                                            class="ml-2 px-2 py-0.5 bg-purple-500 text-white rounded-full text-xs font-bold">
-                                            {{ item.quantity }} pc(s)
-                                        </span>
-                                    </span>
-
-                                    <button type="button" @click="removeEquipment(index)"
-                                            class="text-red-500 hover:text-red-700">
-                                        ✕
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div v-else class="text-center text-gray-500 text-sm italic mt-3">
-                                No equipment added yet.
-                            </div>
-                        </div>
-
-                        <div class="flex justify-end space-x-3 pt-4 border-t">
-                            <button type="button" @click="handleClose"
-                                    class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">
-                                Cancel
-                            </button>
-                            <button type="submit"
-                                    class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
-                                Create Room
-                            </button>
-                        </div>
-
-                    </form>
-                </div>
-
-            </div>
-        </div>
-    </transition>
-</template>
 
 <style scoped>
 .modal-fade-enter-active,
@@ -296,15 +313,5 @@ const handleClose = () => {
 .modal-fade-enter-from,
 .modal-fade-leave-to {
     opacity: 0;
-}
-
-.success-fade-enter-active,
-.success-fade-leave-active {
-    transition: opacity 0.5s ease, transform 0.5s ease;
-}
-.success-fade-enter-from,
-.success-fade-leave-to {
-    opacity: 0;
-    transform: translateY(20px);
 }
 </style>
