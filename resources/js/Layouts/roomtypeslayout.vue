@@ -1,6 +1,7 @@
-<!-- Layouts/RoomTypeLayout.vue -->
+
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
+import { router } from '@inertiajs/vue3';
 import Navbar from '@/Components/Navbar.vue';
 import Sidebar from '@/Components/Sidebar.vue';
 import AddRoomTypeModal from '@/Components/RoomTypeModal/AddRoom.vue';
@@ -8,18 +9,38 @@ import EditRoomTypeModal from '@/Components/RoomTypeModal/EditRoom.vue';
 import Messagefunction from '@/Components/MessageFunction.vue';
 import IconButton from '@/Components/IconButton.vue';
 
+// Props from Laravel/Inertia
+const props = defineProps({
+  room_types: {
+    type: Object,
+    default: () => ({ data: [], links: {}, meta: {} })
+  },
+  stats: {
+    type: Object,
+    default: () => ({})
+  }
+});
+
 // Sidebar state
 const sidebarOpen = ref(true);
 function toggleSidebar() {
   sidebarOpen.value = !sidebarOpen.value;
 }
 
+// Data states
+const roomTypes = ref(props.room_types.data || []);
+const totalCount = ref(props.room_types.meta?.total || 0);
+const filteredCount = ref(totalCount.value);
+const loading = ref(false);
+const searchQuery = ref('');
+const searchTimeout = ref(null);
+
 // Modal states
 const isAddModalOpen = ref(false);
 const isEditModalOpen = ref(false);
 const isViewModalOpen = ref(false);
-const selectedRoomType = ref(null);
 const isDeleteModalOpen = ref(false);
+const selectedRoomType = ref(null);
 const roomToDelete = ref(null);
 
 // Toast notification states
@@ -32,102 +53,175 @@ const deletedRoomName = ref('');
 const errorMessage = ref('');
 const infoMessage = ref('');
 
-// Room types data
-const roomTypes = ref([
-  { id: 1, name: 'Audio Visual Room', slug: 'audio-visual-room' },
-  { id: 2, name: 'Bioassay Laboratory', slug: 'bioassay-laboratory' },
-  { id: 3, name: 'Biology and Chemistry Laboratory', slug: 'biology-and-chemistry-laboratory' },
-  { id: 4, name: 'Botany Laboratory', slug: 'botany-laboratory' },
-  { id: 5, name: 'Chemistry Laboratory', slug: 'chemistry-laboratory' },
-  { id: 6, name: 'Computer Laboratory', slug: 'computer-laboratory' },
-  { id: 7, name: 'Conference Room', slug: 'conference-room' },
-  { id: 8, name: 'Consultation Room', slug: 'consultation-room' },
-  { id: 9, name: 'Deans Office', slug: 'deans-office' },
-  { id: 10, name: 'Drawing Room', slug: 'drawing-room' },
-  { id: 11, name: 'Faculty Room', slug: 'faculty-room' },
-  { id: 12, name: 'Film Room', slug: 'film-room' },
-  { id: 13, name: 'Laboratory', slug: 'laboratory' },
-  { id: 14, name: 'Lecture Room', slug: 'lecture-room' },
-  { id: 15, name: 'Lounge Room', slug: 'lounge-room' },
-  { id: 16, name: 'Meeting Room', slug: 'meeting-room' },
-  { id: 17, name: 'Microbiology Laboratory', slug: 'microbiology-laboratory' },
-  { id: 18, name: 'Music Room', slug: 'music-room' },
-  { id: 19, name: 'Office', slug: 'office' },
-  { id: 20, name: 'Physics Laboratory', slug: 'physics-laboratory' },
-  { id: 21, name: 'Prayer Room', slug: 'prayer-room' },
-  { id: 22, name: 'Science Laboratory', slug: 'science-laboratory' },
-  { id: 23, name: 'Seminar Room', slug: 'seminar-room' },
-  { id: 24, name: 'Sound Room', slug: 'sound-room' },
-  { id: 25, name: 'Special Room', slug: 'special-room' },
-  { id: 26, name: 'Speech Laboratory', slug: 'speech-laboratory' },
-  { id: 27, name: 'Store Room', slug: 'store-room' },
-  { id: 28, name: 'Theatre', slug: 'theatre' },
-  { id: 29, name: 'Training Room', slug: 'training-room' },
-  { id: 30, name: 'Zoology Laboratory', slug: 'zoology-laboratory' }
-]);
-
-// Search functionality
-const searchQuery = ref('');
-
-// Filtered room types
-const filteredRoomTypes = computed(() => {
-  if (!searchQuery.value.trim()) {
-    return roomTypes.value;
-  }
-
-  const query = searchQuery.value.toLowerCase();
-  return roomTypes.value.filter(room =>
-    room.name.toLowerCase().includes(query) ||
-    room.slug.toLowerCase().includes(query) ||
-    room.id.toString().includes(query)
-  );
-});
-
-// === PAGINATION STATE ===
-const itemsPerPage = ref(10);
+// Pagination state
+const itemsPerPage = ref(20);
 const currentPage = ref(1);
+const totalPages = ref(props.room_types.meta?.last_page || 1);
 
-// Paginated room types
-const paginatedRoomTypes = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage.value;
-  const end = start + itemsPerPage.value;
-  return filteredRoomTypes.value.slice(start, end);
-});
+// Fetch room types from API
+const fetchRoomTypes = async () => {
+  loading.value = true;
+  try {
+    const params = new URLSearchParams({
+      page: currentPage.value,
+      per_page: itemsPerPage.value,
+      search: searchQuery.value
+    });
 
-// Total pages
-const totalPages = computed(() => {
-  return Math.ceil(filteredRoomTypes.value.length / itemsPerPage.value);
-});
+    const response = await fetch(`/api/room-types?${params}`);
+    const data = await response.json();
 
-// Showing range
-const showingRange = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage.value + 1;
-  const end = Math.min(currentPage.value * itemsPerPage.value, filteredRoomTypes.value.length);
-  const total = filteredRoomTypes.value.length;
-  return { start, end, total };
-});
+    roomTypes.value = data.data;
+    totalCount.value = data.meta.total;
+    filteredCount.value = data.meta.total;
+    totalPages.value = data.meta.last_page;
+  } catch (error) {
+    console.error('Error fetching room types:', error);
+    errorMessage.value = 'Failed to load room types';
+    showError.value = true;
+  } finally {
+    loading.value = false;
+  }
+};
 
-// === PAGINATION METHODS ===
+// Search room types with debounce
+const searchRoomTypes = () => {
+  clearTimeout(searchTimeout.value);
+  searchTimeout.value = setTimeout(() => {
+    currentPage.value = 1;
+    fetchRoomTypes();
+  }, 300);
+};
+
+// Open modals
+const openAddModal = () => {
+  isAddModalOpen.value = true;
+};
+
+const openEditModal = (room) => {
+  selectedRoomType.value = { ...room };
+  isEditModalOpen.value = true;
+};
+
+const openViewModal = async (room) => {
+  try {
+    const response = await fetch(`/api/room-types/${room.id}`);
+    const data = await response.json();
+    selectedRoomType.value = data.room_type;
+    isViewModalOpen.value = true;
+  } catch (error) {
+    console.error('Error fetching room type details:', error);
+    errorMessage.value = 'Failed to load room type details';
+    showError.value = true;
+  }
+};
+
+const openDeleteModal = (room) => {
+  roomToDelete.value = room;
+  isDeleteModalOpen.value = true;
+};
+
+// Handle CRUD operations
+const handleAddRoomType = async (roomData) => {
+  try {
+    const response = await fetch('/api/room-types', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+      },
+      body: JSON.stringify(roomData)
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to create room type');
+    }
+
+    isAddModalOpen.value = false;
+    showCreateSuccess.value = true;
+    fetchRoomTypes(); // Refresh the list
+  } catch (error) {
+    errorMessage.value = error.message;
+    showError.value = true;
+  }
+};
+
+const handleEditRoomType = async (roomData) => {
+  try {
+    const response = await fetch(`/api/room-types/${roomData.id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+      },
+      body: JSON.stringify(roomData)
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to update room type');
+    }
+
+    isEditModalOpen.value = false;
+    showEditSuccess.value = true;
+    fetchRoomTypes(); // Refresh the list
+  } catch (error) {
+    errorMessage.value = error.message;
+    showError.value = true;
+  }
+};
+
+const handleDeleteRoomType = async () => {
+  try {
+    const response = await fetch(`/api/room-types/${roomToDelete.value.id}`, {
+      method: 'DELETE',
+      headers: {
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+      }
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to delete room type');
+    }
+
+    isDeleteModalOpen.value = false;
+    deletedRoomName.value = roomToDelete.value.room_type_name;
+    roomToDelete.value = null;
+    showDeleteSuccess.value = true;
+    fetchRoomTypes(); // Refresh the list
+  } catch (error) {
+    errorMessage.value = error.message;
+    showError.value = true;
+    isDeleteModalOpen.value = false;
+    roomToDelete.value = null;
+  }
+};
+
+// Pagination methods
 const nextPage = () => {
   if (currentPage.value < totalPages.value) {
     currentPage.value++;
+    fetchRoomTypes();
   }
 };
 
 const prevPage = () => {
   if (currentPage.value > 1) {
     currentPage.value--;
+    fetchRoomTypes();
   }
 };
 
 const goToPage = (page) => {
   if (page >= 1 && page <= totalPages.value) {
     currentPage.value = page;
+    fetchRoomTypes();
   }
-};
-
-const resetPagination = () => {
-  currentPage.value = 1;
 };
 
 // Generate page numbers for pagination
@@ -136,28 +230,23 @@ const pageNumbers = computed(() => {
   const maxVisiblePages = 5;
 
   if (totalPages.value <= maxVisiblePages) {
-    // Show all pages
     for (let i = 1; i <= totalPages.value; i++) {
       pages.push(i);
     }
   } else {
-    // Show limited pages with ellipsis
     if (currentPage.value <= 3) {
-      // Near the beginning
       for (let i = 1; i <= 4; i++) {
         pages.push(i);
       }
       pages.push('...');
       pages.push(totalPages.value);
     } else if (currentPage.value >= totalPages.value - 2) {
-      // Near the end
       pages.push(1);
       pages.push('...');
       for (let i = totalPages.value - 3; i <= totalPages.value; i++) {
         pages.push(i);
       }
     } else {
-      // In the middle
       pages.push(1);
       pages.push('...');
       for (let i = currentPage.value - 1; i <= currentPage.value + 1; i++) {
@@ -171,116 +260,30 @@ const pageNumbers = computed(() => {
   return pages;
 });
 
-// Watch for search changes to reset pagination
-watch(searchQuery, () => {
-  resetPagination();
+// Paginated room types (client-side for filtered results)
+const paginatedRoomTypes = computed(() => {
+  if (searchQuery.value) {
+    const start = (currentPage.value - 1) * itemsPerPage.value;
+    const end = start + itemsPerPage.value;
+    return filteredRoomTypes.value.slice(start, end);
+  }
+  return roomTypes.value;
 });
 
-// Watch for items per page changes
-watch(itemsPerPage, () => {
-  resetPagination();
+// Filtered room types (client-side filtering for search)
+const filteredRoomTypes = computed(() => {
+  if (!searchQuery.value.trim()) {
+    return roomTypes.value;
+  }
+
+  const query = searchQuery.value.toLowerCase();
+  return roomTypes.value.filter(room =>
+    room.room_type_name.toLowerCase().includes(query) ||
+    room.slug.toLowerCase().includes(query) ||
+    (room.description && room.description.toLowerCase().includes(query)) ||
+    room.id.toString().includes(query)
+  );
 });
-
-// Open add modal
-const openAddModal = () => {
-  isAddModalOpen.value = true;
-};
-
-// Open edit modal
-const openEditModal = (room) => {
-  selectedRoomType.value = { ...room };
-  isEditModalOpen.value = true;
-};
-
-// Open view modal
-const openViewModal = (room) => {
-  selectedRoomType.value = { ...room };
-  isViewModalOpen.value = true;
-};
-
-// Open delete confirmation
-const openDeleteModal = (room) => {
-  roomToDelete.value = room;
-  isDeleteModalOpen.value = true;
-};
-
-// Handle adding new room type
-const handleAddRoomType = (newRoom) => {
-  try {
-    if (!newRoom.name || !newRoom.slug) {
-      throw new Error('Room name and slug are required');
-    }
-
-    const newId = roomTypes.value.length > 0 ? Math.max(...roomTypes.value.map(r => r.id)) + 1 : 1;
-
-    roomTypes.value.unshift({
-      id: newId,
-      name: newRoom.name,
-      slug: newRoom.slug.toLowerCase().replace(/\s+/g, '-')
-    });
-
-    isAddModalOpen.value = false;
-    showCreateSuccess.value = true;
-    resetPagination(); // Reset to page 1 to show new item
-  } catch (error) {
-    errorMessage.value = error.message || 'Failed to create room type';
-    showError.value = true;
-  }
-};
-
-// Handle editing room type
-const handleEditRoomType = (updatedRoom) => {
-  try {
-    if (!updatedRoom.name || !updatedRoom.slug) {
-      throw new Error('Room name and slug are required');
-    }
-
-    const index = roomTypes.value.findIndex(r => r.id === updatedRoom.id);
-    if (index !== -1) {
-      roomTypes.value[index] = {
-        ...updatedRoom,
-        slug: updatedRoom.slug.toLowerCase().replace(/\s+/g, '-')
-      };
-
-      isEditModalOpen.value = false;
-      showEditSuccess.value = true;
-    } else {
-      throw new Error('Room not found');
-    }
-  } catch (error) {
-    errorMessage.value = error.message || 'Failed to update room type';
-    showError.value = true;
-  }
-};
-
-// Handle deleting room type
-const handleDeleteRoomType = () => {
-  try {
-    if (roomToDelete.value) {
-      const index = roomTypes.value.findIndex(r => r.id === roomToDelete.value.id);
-      if (index !== -1) {
-        deletedRoomName.value = roomToDelete.value.name;
-        roomTypes.value.splice(index, 1);
-
-        isDeleteModalOpen.value = false;
-        roomToDelete.value = null;
-        showDeleteSuccess.value = true;
-
-        // Reset pagination if needed
-        if (paginatedRoomTypes.value.length === 0 && currentPage.value > 1) {
-          prevPage();
-        }
-      } else {
-        throw new Error('Room not found');
-      }
-    }
-  } catch (error) {
-    errorMessage.value = error.message || 'Failed to delete room type';
-    showError.value = true;
-    isDeleteModalOpen.value = false;
-    roomToDelete.value = null;
-  }
-};
 
 // Close toast functions
 const closeCreateToast = () => showCreateSuccess.value = false;
@@ -298,21 +301,6 @@ const closeInfoToast = () => {
   infoMessage.value = '';
 };
 
-// Handle icon button clicks
-const handleIconClick = (action, room) => {
-  switch(action) {
-    case 'view':
-      openViewModal(room);
-      break;
-    case 'edit':
-      openEditModal(room);
-      break;
-    case 'delete':
-      openDeleteModal(room);
-      break;
-  }
-};
-
 // Handle edit from view modal
 const handleEditFromView = () => {
   if (selectedRoomType.value) {
@@ -322,8 +310,10 @@ const handleEditFromView = () => {
 };
 
 // Format date
-const formatDate = () => {
-  return new Date().toLocaleDateString('en-US', {
+const formatDate = (dateString) => {
+  if (!dateString) return 'N/A';
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
@@ -339,18 +329,50 @@ const closeViewModalOutside = (event) => {
   }
 };
 
-// Close view modal with Escape key
-const handleEscapeKey = (event) => {
-  if (event.key === 'Escape' && isViewModalOpen.value) {
-    isViewModalOpen.value = false;
-  }
-};
+// Watch for pagination changes
+watch(currentPage, fetchRoomTypes);
+watch(itemsPerPage, () => {
+  currentPage.value = 1;
+  fetchRoomTypes();
+});
 
-// Add event listener for Escape key
+// Initialize on mount
 onMounted(() => {
-  document.addEventListener('keydown', handleEscapeKey);
+  // Initial data is already loaded from Inertia props
+  // We can optionally fetch fresh data
+  fetchRoomTypes();
 });
 </script>
+
+<style scoped>
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
+}
+
+.transition-colors {
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+button:not(:disabled):hover {
+  transform: translateY(-1px);
+  transition: transform 0.2s ease;
+}
+</style>
+
+
 
 <template>
   <div class="bg-gray-100 font-sans antialiased flex flex-col min-h-screen">
@@ -392,22 +414,10 @@ onMounted(() => {
           <!-- Header -->
           <div class="mb-6">
             <h1 class="text-1xl md:text-2xl font-bold text-[#7A0C23] mb-1">Room Types Management</h1>
-           <div class="absolute right-6 top-6 z-20">
-                    <div class="text-sm text-gray-500 whitespace-nowrap ">
-
-        </div>
-
-<div class="mt-8 absolute right-6 top-6 z-20">
-                    <div class="text-sm text-gray-500 whitespace-nowrap ">
-                        <span>UPCEBU > ROOM TYPES</span>
-                    </div>
-                </div>
-     </div>
-
-                </div>
-
-
-
+            <div class="text-sm text-gray-500 whitespace-nowrap mt-8 absolute right-6 top-6 z-20">
+              <span>UPCEBU > ROOM TYPES</span>
+            </div>
+          </div>
 
           <!-- Controls -->
           <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-4">
@@ -424,7 +434,8 @@ onMounted(() => {
               <input
                 type="text"
                 v-model="searchQuery"
-                placeholder="Search by ID, name, or slug..."
+                @input="searchRoomTypes"
+                placeholder="Search by name, description, or slug..."
                 class="pl-10 pr-4 py-2 w-full border border-yellow-400 rounded-lg focus:ring-2 focus:ring-[#7A0C23] focus:border-transparent outline-none bg-white shadow-sm"
               />
             </div>
@@ -432,7 +443,7 @@ onMounted(() => {
             <!-- Add Button -->
             <button
               @click="openAddModal"
-              class="flex items-center px-4 py-2 bg-green-700 text-white rounded-lg bg-green-800 transition-colors duration-200 font-medium shadow-sm w-full md:w-auto mt-2 md:mt-0"
+              class="flex items-center px-4 py-2 bg-green-700 text-white rounded-lg bg-green-800 hover:bg-green-900 transition-colors duration-200 font-medium shadow-sm w-full md:w-auto mt-2 md:mt-0"
             >
               <IconButton
                 icon="plus"
@@ -461,6 +472,12 @@ onMounted(() => {
                       Slug
                     </th>
                     <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">
+                      Default Capacity
+                    </th>
+                    <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">
+                      Rooms Count
+                    </th>
+                    <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
@@ -473,10 +490,19 @@ onMounted(() => {
                       </span>
                     </td>
                     <td class="px-4 py-3">
-                      <div class="text-sm font-medium text-gray-900">{{ room.name }}</div>
+                      <div class="text-sm font-medium text-gray-900">{{ room.room_type_name }}</div>
+                      <div v-if="room.description" class="text-xs text-gray-500 truncate max-w-xs">{{ room.description }}</div>
                     </td>
                     <td class="px-4 py-3">
                       <div class="text-sm text-gray-500 font-mono">{{ room.slug }}</div>
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                      <div class="text-sm text-gray-900">{{ room.default_capacity }}</div>
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        {{ room.rooms_count || 0 }}
+                      </span>
                     </td>
                     <td class="px-4 py-3 whitespace-nowrap">
                       <div class="flex items-center space-x-2">
@@ -485,7 +511,7 @@ onMounted(() => {
                           icon="eye"
                           title="View Room Type Details"
                           size="sm"
-                          @click="handleIconClick('view', room)"
+                          @click="openViewModal(room)"
                           class="p-1.5 rounded hover:bg-blue-50 transition-colors"
                         />
 
@@ -494,7 +520,7 @@ onMounted(() => {
                           icon="edit"
                           title="Edit Room Type"
                           size="sm"
-                          @click="handleIconClick('edit', room)"
+                          @click="openEditModal(room)"
                           class="p-1.5 rounded hover:bg-green-50 transition-colors"
                         />
 
@@ -503,16 +529,29 @@ onMounted(() => {
                           icon="delete"
                           title="Delete Room Type"
                           size="sm"
-                          @click="handleIconClick('delete', room)"
+                          @click="openDeleteModal(room)"
                           class="p-1.5 rounded hover:bg-red-50 transition-colors"
                         />
                       </div>
                     </td>
                   </tr>
 
+                  <!-- Loading State -->
+                  <tr v-if="loading">
+                    <td colspan="6" class="px-4 py-8 text-center">
+                      <div class="flex justify-center items-center">
+                        <svg class="animate-spin h-5 w-5 text-[#7A0C23] mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span>Loading room types...</span>
+                      </div>
+                    </td>
+                  </tr>
+
                   <!-- Empty State -->
-                  <tr v-if="filteredRoomTypes.length === 0">
-                    <td colspan="4" class="px-4 py-8 text-center">
+                  <tr v-if="!loading && roomTypes.length === 0">
+                    <td colspan="6" class="px-4 py-8 text-center">
                       <div class="text-gray-500">
                         <IconButton
                           icon="search"
@@ -544,12 +583,12 @@ onMounted(() => {
             </div>
 
             <!-- Enhanced Pagination Controls -->
-            <div v-if="filteredRoomTypes.length > 0" class="bg-gray-50 px-6 py-4 border-t border-gray-200">
+            <div v-if="roomTypes.length > 0" class="bg-gray-50 px-6 py-4 border-t border-gray-200">
               <div class="flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
-
                 <!-- Showing range -->
                 <div class="text-sm text-gray-600">
-                  Showing {{ showingRange.start }} to {{ showingRange.end }} of {{ showingRange.total }} entries
+                  Showing {{ paginatedRoomTypes.length }} of {{ filteredCount }} entries
+                  <span v-if="searchQuery">(filtered from {{ totalCount }} total)</span>
                 </div>
 
                 <!-- Items per page selector -->
@@ -557,6 +596,7 @@ onMounted(() => {
                   <span class="text-sm text-gray-600">Show:</span>
                   <select
                     v-model="itemsPerPage"
+                    @change="fetchRoomTypes"
                     class="text-sm border border-gray-300 rounded px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-[#7A0C23] focus:border-transparent"
                   >
                     <option value="5">5</option>
@@ -571,23 +611,25 @@ onMounted(() => {
                 <!-- Page navigation -->
                 <div class="flex items-center space-x-2">
                   <!-- Previous button -->
-                  <IconButton
+                  <button
                     @click="prevPage"
                     :disabled="currentPage === 1"
-                    icon="chevronLeft"
-                    title="Previous Page"
-                    size="sm"
-                    color="gray"
-                    outlined
                     :class="[
-                      'px-3 py-1.5 rounded text-sm font-medium transition-colors duration-150',
+                      'px-3 py-1.5 rounded text-sm font-medium transition-colors duration-150 flex items-center',
                       currentPage === 1
                         ? 'bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed'
                         : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
                     ]"
                   >
+                    <IconButton
+                      icon="chevronLeft"
+                      title="Previous Page"
+                      size="sm"
+                      color="gray"
+                      outlined
+                    />
                     Previous
-                  </IconButton>
+                  </button>
 
                   <!-- Page numbers -->
                   <div class="flex items-center space-x-1">
@@ -610,23 +652,26 @@ onMounted(() => {
                   </div>
 
                   <!-- Next button -->
-                  <IconButton
+                  <button
                     @click="nextPage"
                     :disabled="currentPage === totalPages"
-                    icon="chevronRight"
-                    title="Next Page"
-                    size="sm"
-                    color="gray"
-                    outlined
                     :class="[
-                      'px-3 py-1.5 rounded text-sm font-medium transition-colors duration-150',
+                      'px-3 py-1.5 rounded text-sm font-medium transition-colors duration-150 flex items-center',
                       currentPage === totalPages
                         ? 'bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed'
                         : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
                     ]"
                   >
                     Next
-                  </IconButton>
+                    <IconButton
+                      icon="chevronRight"
+                      title="Next Page"
+                      size="sm"
+                      color="gray"
+                      outlined
+                      class="ml-1"
+                    />
+                  </button>
                 </div>
 
                 <!-- Page indicator -->
@@ -634,15 +679,14 @@ onMounted(() => {
                   Page {{ currentPage }} of {{ totalPages }}
                 </div>
               </div>
-
-              <!-- Results summary -->
-              <div class="mt-4 pt-3 border-t border-gray-300 text-center">
-                <p class="text-sm text-gray-500">
-                  Filtered Results: <span class="font-semibold text-[#7A0C23]">{{ filteredRoomTypes.length }}</span>
-                  | Total Room Types: <span class="font-semibold text-[#7A0C23]">{{ roomTypes.length }}</span>
-                </p>
-              </div>
             </div>
+          </div>
+
+          <!-- Stats Summary -->
+          <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+
+
+
           </div>
         </div>
       </main>
@@ -663,7 +707,7 @@ onMounted(() => {
       @save="handleEditRoomType"
     />
 
-    <!-- VIEW MODAL - Shows all information (Read-only) -->
+    <!-- View Modal -->
     <div v-if="isViewModalOpen" class="fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center p-4" @click="closeViewModalOutside">
       <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
         <!-- Modal Header -->
@@ -679,11 +723,9 @@ onMounted(() => {
             </div>
             <div>
               <h2 class="text-xl font-semibold text-gray-900">Room Type Details</h2>
-              <p class="text-sm text-gray-600">Read-only information display</p>
+              <p class="text-sm text-gray-600">Complete information display</p>
             </div>
           </div>
-
-          <!-- Close Button -->
           <button
             @click="isViewModalOpen = false"
             class="text-gray-400 hover:text-gray-600 transition-colors duration-150"
@@ -699,158 +741,130 @@ onMounted(() => {
 
         <!-- Modal Content -->
         <div class="p-6 overflow-y-auto max-h-[calc(90vh-120px)]" v-if="selectedRoomType">
-          <!-- Room ID Section -->
-          <div class="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-            <div class="flex items-center mb-2">
-              <IconButton
-                icon="info"
-                title="Room ID"
-                size="sm"
-                disabled
-                class="mr-2"
-              />
-              <h3 class="text-lg font-medium text-gray-900">Room ID</h3>
-            </div>
-            <div class="flex items-center">
-              <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-                #{{ selectedRoomType.id }}
-              </span>
-              <span class="ml-3 text-sm text-gray-500">Unique identifier for this room type</span>
-            </div>
-          </div>
-
-          <!-- Room Information Grid -->
+          <!-- Room Type Information -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <!-- Room Name -->
+            <!-- Basic Info -->
             <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-              <div class="flex items-center mb-3">
-                <IconButton
-                  icon="edit"
-                  title="Room Name"
-                  size="sm"
-                  disabled
-                  class="mr-2"
-                />
-                <h4 class="text-md font-medium text-gray-900">Room Name</h4>
-              </div>
-              <div class="p-3 bg-gray-50 rounded border border-gray-200">
-                <p class="text-lg font-semibold text-gray-800">{{ selectedRoomType.name }}</p>
-                <p class="text-sm text-gray-500 mt-1">The display name of the room type</p>
-              </div>
-            </div>
-
-            <!-- Room Slug -->
-            <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-              <div class="flex items-center mb-3">
-                <IconButton
-                  icon="list"
-                  title="Room Slug"
-                  size="sm"
-                  disabled
-                  class="mr-2"
-                />
-                <h4 class="text-md font-medium text-gray-900">Room Slug</h4>
-              </div>
-              <div class="p-3 bg-gray-50 rounded border border-gray-200">
-                <code class="text-lg font-mono text-gray-800 bg-white px-2 py-1 rounded">{{ selectedRoomType.slug }}</code>
-                <p class="text-sm text-gray-500 mt-1">URL-friendly identifier</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- Additional Information -->
-          <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm mb-6">
-            <div class="flex items-center mb-3">
-              <IconButton
-                icon="info"
-                title="Additional Information"
-                size="sm"
-                disabled
-                class="mr-2"
-              />
-              <h4 class="text-md font-medium text-gray-900">Additional Information</h4>
-            </div>
-            <div class="space-y-3">
-              <!-- Created Date -->
-              <div class="flex items-center justify-between p-3 bg-gray-50 rounded">
-                <div>
-                  <p class="text-sm font-medium text-gray-700">Created Date</p>
-                  <p class="text-xs text-gray-500">When this room type was added</p>
-                </div>
-                <div class="text-sm text-gray-600">
-                  {{ formatDate() }}
-                </div>
-              </div>
-
-              <!-- Last Modified -->
-              <div class="flex items-center justify-between p-3 bg-gray-50 rounded">
-                <div>
-                  <p class="text-sm font-medium text-gray-700">Last Modified</p>
-                  <p class="text-xs text-gray-500">When this room type was last updated</p>
-                </div>
-                <div class="text-sm text-gray-600">
-                  {{ formatDate() }}
-                </div>
-              </div>
-
-              <!-- Status -->
-              <div class="flex items-center justify-between p-3 bg-gray-50 rounded">
-                <div>
-                  <p class="text-sm font-medium text-gray-700">Status</p>
-                  <p class="text-xs text-gray-500">Current status of the room type</p>
-                </div>
-                <div>
-                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                    <IconButton
-                      icon="check"
-                      title="Active"
-                      size="xs"
-                      disabled
-                      class="mr-1"
-                    />
-                    Active
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Info Box -->
-          <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
-            <div class="flex">
-              <div class="flex-shrink-0">
+              <h4 class="text-md font-medium text-gray-900 mb-4 flex items-center">
                 <IconButton
                   icon="info"
-                  title="Information"
+                  title="Basic Information"
                   size="sm"
                   disabled
+                  class="mr-2"
                 />
+                Basic Information
+              </h4>
+              <div class="space-y-4">
+                <div>
+                  <label class="block text-xs font-medium text-gray-500 mb-1">Room Type ID</label>
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                    #{{ selectedRoomType.id }}
+                  </span>
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-gray-500 mb-1">Name</label>
+                  <p class="text-lg font-semibold text-gray-800">{{ selectedRoomType.room_type_name }}</p>
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-gray-500 mb-1">Slug</label>
+                  <code class="text-sm font-mono text-gray-800 bg-gray-50 px-2 py-1 rounded">{{ selectedRoomType.slug }}</code>
+                </div>
               </div>
-              <div class="ml-3">
-                <h3 class="text-sm font-medium text-blue-800">View-Only Mode</h3>
-                <div class="mt-2 text-sm text-blue-700">
-                  <p>This is a read-only view. All fields are displayed for reference only and cannot be modified here.</p>
-                  <p class="mt-1">To make changes, please use the "Edit" button on the main page.</p>
+            </div>
+
+            <!-- Capacity & Rooms -->
+            <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+              <h4 class="text-md font-medium text-gray-900 mb-4 flex items-center">
+                <IconButton
+                  icon="capacity"
+                  title="Capacity Information"
+                  size="sm"
+                  disabled
+                  class="mr-2"
+                />
+                Capacity & Usage
+              </h4>
+              <div class="space-y-4">
+                <div>
+                  <label class="block text-xs font-medium text-gray-500 mb-1">Default Capacity</label>
+                  <div class="flex items-center">
+                    <span class="text-2xl font-bold text-gray-800 mr-2">{{ selectedRoomType.default_capacity }}</span>
+                    <span class="text-sm text-gray-500">persons</span>
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-gray-500 mb-1">Rooms Using This Type</label>
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                    {{ selectedRoomType.rooms_count || 0 }} rooms
+                  </span>
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-gray-500 mb-1">Created Date</label>
+                  <p class="text-sm text-gray-600">{{ formatDate(selectedRoomType.created_at) }}</p>
                 </div>
               </div>
             </div>
           </div>
+
+          <!-- Description -->
+          <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm mb-6" v-if="selectedRoomType.description">
+            <h4 class="text-md font-medium text-gray-900 mb-3 flex items-center">
+              <IconButton
+                icon="description"
+                title="Description"
+                size="sm"
+                disabled
+                class="mr-2"
+              />
+              Description
+            </h4>
+            <div class="bg-gray-50 p-3 rounded border border-gray-200">
+              <p class="text-gray-700 whitespace-pre-line">{{ selectedRoomType.description }}</p>
+            </div>
+          </div>
+
+          <!-- Features -->
+          <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm mb-6" v-if="selectedRoomType.features">
+            <h4 class="text-md font-medium text-gray-900 mb-3 flex items-center">
+              <IconButton
+                icon="features"
+                title="Features"
+                size="sm"
+                disabled
+                class="mr-2"
+              />
+              Features
+            </h4>
+            <div class="bg-gray-50 p-3 rounded border border-gray-200">
+              <div class="flex flex-wrap gap-2">
+                <span
+                  v-for="(feature, index) in selectedRoomType.features"
+                  :key="index"
+                  class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800"
+                >
+                  {{ feature }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+            <button
+              @click="isViewModalOpen = false"
+              class="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              Close
+            </button>
+            <button
+              @click="handleEditFromView"
+              class="px-4 py-2 bg-[#7A0C23] text-white rounded hover:bg-red-800 transition-colors"
+            >
+              Edit Room Type
+            </button>
+          </div>
         </div>
-
-        <!-- Loading State -->
-        <div v-else class="p-8 text-center">
-          <IconButton
-            icon="warning"
-            title="Loading"
-            size="lg"
-            disabled
-            class="mx-auto mb-3 opacity-50"
-          />
-          <p class="text-gray-500">Loading room information...</p>
-        </div>
-
-
-
       </div>
     </div>
 
@@ -883,8 +897,13 @@ onMounted(() => {
             </div>
             <div class="ml-3">
               <p class="text-sm text-yellow-700">
-                Delete <span class="font-semibold">"{{ roomToDelete?.name }}"</span>?
-                <span class="block text-yellow-600 text-xs mt-1">This action cannot be undone.</span>
+                Delete <span class="font-semibold">"{{ roomToDelete?.room_type_name }}"</span>?
+                <span class="block text-yellow-600 text-xs mt-1">
+                  This action cannot be undone.
+                  <span v-if="roomToDelete?.rooms_count > 0" class="text-red-600 font-medium">
+                    This room type is assigned to {{ roomToDelete?.rooms_count }} rooms and cannot be deleted.
+                  </span>
+                </span>
               </p>
             </div>
           </div>
@@ -905,70 +924,25 @@ onMounted(() => {
           </button>
           <button
             @click="handleDeleteRoomType"
-            class="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-150"
+            :disabled="roomToDelete?.rooms_count > 0"
+            :class="[
+              'flex items-center px-4 py-2 rounded-lg transition-colors duration-150',
+              roomToDelete?.rooms_count > 0
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                : 'bg-red-600 text-white hover:bg-red-700'
+            ]"
           >
             <IconButton
               icon="delete"
-              title="Delete"
-              color="white"
+              :title="roomToDelete?.rooms_count > 0 ? 'Cannot Delete' : 'Delete'"
+              :color="roomToDelete?.rooms_count > 0 ? 'gray' : 'white'"
               size="sm"
               class="mr-2"
             />
-            Delete
+            {{ roomToDelete?.rooms_count > 0 ? 'Cannot Delete' : 'Delete' }}
           </button>
         </div>
       </div>
     </div>
   </div>
 </template>
-
-<style scoped>
-/* Minimal custom scrollbar for better performance */
-::-webkit-scrollbar {
-  width: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: #f1f1f1;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #a1a1a1;
-}
-
-/* Smooth transitions */
-.transition-colors {
-  transition: background-color 0.2s ease, color 0.2s ease;
-}
-
-/* Custom styles for pagination */
-button:not(:disabled):hover {
-  transform: translateY(-1px);
-  transition: transform 0.2s ease;
-}
-
-/* Ensure pagination controls are properly spaced */
-.space-x-1 > * + * {
-  margin-left: 0.25rem;
-}
-
-.space-x-2 > * + * {
-  margin-left: 0.5rem;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .flex-col.md\:flex-row {
-    gap: 1rem;
-  }
-
-  .space-x-2 {
-    justify-content: center;
-  }
-}
-</style>

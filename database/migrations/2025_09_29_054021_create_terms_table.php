@@ -26,6 +26,7 @@ return new class extends Migration
             $table->integer('academic_year');
             $table->text('notes')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

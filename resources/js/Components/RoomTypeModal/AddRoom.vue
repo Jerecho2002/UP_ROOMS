@@ -30,111 +30,116 @@
       <!-- Form -->
       <form @submit.prevent="handleSubmit">
         <!-- Name Field -->
-        <div class="mb-6">
-          <label for="name" class="block text-sm font-medium text-gray-700 mb-2 flex items-center">
-            <IconButton
-              icon="info"
-              title="Required Field"
-              color="blue"
-              size="sm"
-              class="mr-2"
-              disabled
-            />
-            Room Type Name <span class="text-red-500 ml-1">*</span>
+        <div class="mb-4">
+          <label for="room_type_name" class="block text-sm font-medium text-gray-700 mb-2">
+            Room Type Name <span class="text-red-500">*</span>
           </label>
           <input
             type="text"
-            id="name"
-            v-model="form.name"
+            id="room_type_name"
+            v-model="form.room_type_name"
             required
             placeholder="e.g., Conference Room, Laboratory"
-            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7A0C23] focus:border-transparent outline-none transition duration-200"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7A0C23] focus:border-transparent outline-none transition duration-200"
           />
-          <p class="mt-2 text-sm text-gray-500 flex items-center">
-            <IconButton
-              icon="info"
-              title="Information"
-              color="gray"
-              size="xs"
-              class="mr-1"
-              disabled
-            />
+          <p class="mt-1 text-xs text-gray-500">
             Enter the display name for the room type
           </p>
         </div>
 
         <!-- Slug Field -->
-        <div class="mb-6">
-          <label for="slug" class="block text-sm font-medium text-gray-700 mb-2 flex items-center">
-            <IconButton
-              icon="info"
-              title="Required Field"
-              color="blue"
-              size="sm"
-              class="mr-2"
-              disabled
-            />
-            Slug <span class="text-red-500 ml-1">*</span>
+        <div class="mb-4">
+          <label for="slug" class="block text-sm font-medium text-gray-700 mb-2">
+            Slug
           </label>
           <div class="relative">
             <input
               type="text"
               id="slug"
               v-model="form.slug"
-              required
               placeholder="e.g., conference-room"
-              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7A0C23] focus:border-transparent outline-none transition duration-200 font-mono"
-              @input="generateSlug"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7A0C23] focus:border-transparent outline-none transition duration-200 font-mono"
             />
             <button
               type="button"
               @click="autoGenerateSlug"
-              class="absolute right-2 top-1/2 transform -translate-y-1/2 text-sm text-[#7A0C23] hover:text-red-800 font-medium flex items-center"
+              class="absolute right-2 top-1/2 transform -translate-y-1/2 text-xs text-[#7A0C23] hover:text-red-800 font-medium"
             >
-              <IconButton
-                icon="magic"
-                title="Auto-generate Slug"
-                color="purple"
-                size="sm"
-                class="mr-1"
-                disabled
-              />
               Auto-generate
             </button>
           </div>
-          <p class="mt-2 text-sm text-gray-500 flex items-center">
-            <IconButton
-              icon="info"
-              title="Information"
-              color="gray"
-              size="xs"
-              class="mr-1"
-              disabled
-            />
-            URL-friendly version of the name (lowercase, hyphens for spaces)
+          <p class="mt-1 text-xs text-gray-500">
+            URL-friendly version of the name (will be auto-generated if empty)
           </p>
         </div>
 
-        <!-- Description Field (Optional) -->
-        <div class="mb-8">
-          <label for="description" class="block text-sm font-medium text-gray-700 mb-2 flex items-center">
-            <IconButton
-              icon="info"
-              title="Optional Field"
-              color="gray"
-              size="sm"
-              class="mr-2"
-              disabled
-            />
-            Description (Optional)
+        <!-- Description Field -->
+        <div class="mb-4">
+          <label for="description" class="block text-sm font-medium text-gray-700 mb-2">
+            Description
           </label>
           <textarea
             id="description"
             v-model="form.description"
             rows="3"
             placeholder="Brief description of this room type..."
-            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7A0C23] focus:border-transparent outline-none transition duration-200 resize-none"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7A0C23] focus:border-transparent outline-none transition duration-200 resize-none"
           ></textarea>
+        </div>
+
+        <!-- Default Capacity -->
+        <div class="mb-4">
+          <label for="default_capacity" class="block text-sm font-medium text-gray-700 mb-2">
+            Default Capacity
+          </label>
+          <input
+            type="number"
+            id="default_capacity"
+            v-model.number="form.default_capacity"
+            min="1"
+            placeholder="30"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7A0C23] focus:border-transparent outline-none transition duration-200"
+          />
+          <p class="mt-1 text-xs text-gray-500">
+            Default number of seats for this room type
+          </p>
+        </div>
+
+        <!-- Features -->
+        <div class="mb-6">
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Features (Optional)
+          </label>
+          <div class="space-y-2">
+            <div v-for="(feature, index) in form.featuresList" :key="index" class="flex gap-2">
+              <input
+                type="text"
+                v-model="feature.key"
+                placeholder="Feature name"
+                class="flex-1 px-3 py-1 border border-gray-300 rounded focus:ring-1 focus:ring-[#7A0C23] focus:border-transparent outline-none text-sm"
+              />
+              <input
+                type="text"
+                v-model="feature.value"
+                placeholder="Value"
+                class="flex-1 px-3 py-1 border border-gray-300 rounded focus:ring-1 focus:ring-[#7A0C23] focus:border-transparent outline-none text-sm"
+              />
+              <button
+                type="button"
+                @click="removeFeature(index)"
+                class="px-2 py-1 text-red-600 hover:text-red-800"
+              >
+                ×
+              </button>
+            </div>
+            <button
+              type="button"
+              @click="addFeature"
+              class="text-sm text-[#7A0C23] hover:text-red-800 font-medium flex items-center"
+            >
+              + Add Feature
+            </button>
+          </div>
         </div>
 
         <!-- Form Actions -->
@@ -142,30 +147,20 @@
           <button
             type="button"
             @click="$emit('close')"
-            class="flex items-center px-5 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors duration-150 font-medium"
+            class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors duration-150 font-medium"
           >
-            <IconButton
-              icon="times"
-              title="Cancel"
-              color="gray"
-              size="sm"
-              class="mr-2"
-              disabled
-            />
             Cancel
           </button>
           <button
             type="submit"
-            class="flex items-center px-5 py-2.5 bg-[#7A0C23] text-white rounded-lg hover:bg-red-800 transition-colors duration-150 font-medium shadow-sm"
+            :disabled="!form.room_type_name"
+            :class="[
+              'px-4 py-2 rounded-lg transition-colors duration-150 font-medium shadow-sm',
+              form.room_type_name
+                ? 'bg-[#7A0C23] text-white hover:bg-red-800'
+                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            ]"
           >
-            <IconButton
-              icon="check"
-              title="Save Room Type"
-              color="white"
-              size="sm"
-              class="mr-2"
-              disabled
-            />
             Add Room Type
           </button>
         </div>
@@ -188,27 +183,29 @@ const props = defineProps({
 const emit = defineEmits(['close', 'save']);
 
 const form = ref({
-  name: '',
+  room_type_name: '',
   slug: '',
-  description: ''
+  description: '',
+  default_capacity: 30,
+  featuresList: []
 });
 
 // Auto-generate slug from name
-const generateSlug = () => {
-  if (form.value.name && !form.value.slug) {
-    form.value.slug = form.value.name
+watch(() => form.value.room_type_name, (newName) => {
+  if (newName && !form.value.slug) {
+    form.value.slug = newName
       .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
-      .replace(/\s+/g, '-') // Replace spaces with hyphens
-      .replace(/-+/g, '-') // Replace multiple hyphens with single
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
       .trim();
   }
-};
+});
 
 // Manual slug generation
 const autoGenerateSlug = () => {
-  if (form.value.name) {
-    form.value.slug = form.value.name
+  if (form.value.room_type_name) {
+    form.value.slug = form.value.room_type_name
       .toLowerCase()
       .replace(/[^a-z0-9\s-]/g, '')
       .replace(/\s+/g, '-')
@@ -217,12 +214,28 @@ const autoGenerateSlug = () => {
   }
 };
 
+// Feature management
+const addFeature = () => {
+  form.value.featuresList.push({ key: '', value: '' });
+};
+
+const removeFeature = (index) => {
+  form.value.featuresList.splice(index, 1);
+};
+
 // Handle form submission
 const handleSubmit = () => {
-  // Basic validation
-  if (!form.value.name.trim() || !form.value.slug.trim()) {
+  if (!form.value.room_type_name.trim()) {
     return;
   }
+
+  // Convert featuresList to object
+  const features = {};
+  form.value.featuresList.forEach(feature => {
+    if (feature.key && feature.value) {
+      features[feature.key.trim()] = feature.value.trim();
+    }
+  });
 
   // Clean up slug
   const cleanedSlug = form.value.slug
@@ -232,48 +245,32 @@ const handleSubmit = () => {
 
   // Emit the new room type data
   emit('save', {
-    name: form.value.name.trim(),
-    slug: cleanedSlug,
-    description: form.value.description.trim()
+    name: form.value.room_type_name.trim(),
+    slug: cleanedSlug || null,
+    description: form.value.description.trim() || null,
+    default_capacity: form.value.default_capacity,
+    features: Object.keys(features).length > 0 ? features : null
   });
 
   // Reset form
+  resetForm();
+};
+
+// Reset form
+const resetForm = () => {
   form.value = {
-    name: '',
+    room_type_name: '',
     slug: '',
-    description: ''
+    description: '',
+    default_capacity: 30,
+    featuresList: []
   };
 };
 
 // Watch for modal close and reset form
 watch(() => props.isOpen, (isOpen) => {
   if (!isOpen) {
-    form.value = {
-      name: '',
-      slug: '',
-      description: ''
-    };
+    resetForm();
   }
 });
 </script>
-
-<style scoped>
-/* Custom scrollbar for modal */
-::-webkit-scrollbar {
-  width: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #a1a1a1;
-}
-</style>

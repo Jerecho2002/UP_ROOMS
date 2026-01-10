@@ -1,5 +1,5 @@
 <script setup>
-import { defineProps, defineEmits, computed, ref, watch } from 'vue';
+import { defineProps, defineEmits, computed, ref, watch, onMounted } from 'vue';
 
 const props = defineProps({
     isVisible: {
@@ -14,6 +14,14 @@ const props = defineProps({
         type: Object,
         default: () => null,
     },
+    colleges: {
+        type: Array,
+        default: () => []
+    },
+    departments: {
+        type: Array,
+        default: () => []
+    }
 });
 
 const emit = defineEmits(['close', 'dataUpdated']);
@@ -23,40 +31,27 @@ const isLoading = ref(false);
 const formErrors = ref({});
 const passwordField = ref('');
 const confirmPassword = ref('');
+const showRawData = ref(false);
 
 // --- CONSTANTS ---
-const roles = ['Admin', 'Staff', 'Faculty', 'DPTAPR', 'AO', 'ADPD', 'OCS', 'SYSADMIN', 'USER'];
+const roles = ['admin', 'faculty', 'staff', 'student', 'guest'];
 const permissionsOptions = ['Can Approve', 'Can Edit', 'Can Book', 'Staff Work', 'User Type Only'];
-const collegeOptions = [
-    'College of Engineering (CoE)',
-    'College of Arts and Sciences (CAS)',
-    'College of Business and Accountancy (CBA)',
-    'College of Education (CoEd)',
-    'College of Information Technology (CIT)',
-    'Graduate School (GS)',
-];
-const departmentOptions = [
-    'Computer Science',
-    'Electrical Engineering',
-    'Mechanical Engineering',
-    'Physics',
-    'Mathematics',
-    'English/Literature',
-    'Accounting',
-    'Management',
-    'N/A - Administration',
-];
+
+// Map your user roles to display names
+const roleDisplayNames = {
+    'admin': 'Admin',
+    'faculty': 'Faculty',
+    'staff': 'Staff',
+    'student': 'Student',
+    'guest': 'Guest'
+};
 
 const defaultPermissionsMap = {
-    Admin: ['Can Approve', 'Can Edit', 'Can Book', 'Staff Work', 'User Type Only'],
-    Staff: ['Can Book', 'Staff Work'],
-    Faculty: ['Can Book', 'User Type Only'],
-    DPTAPR: ['Can Approve', 'Can Book', 'User Type Only'],
-    AO: ['Can Approve', 'Can Edit', 'Staff Work'],
-    ADPD: ['Can Approve', 'Can Edit'],
-    OCS: ['Can Approve', 'Can Edit', 'Can Book'],
-    SYSADMIN: ['Can Approve', 'Can Edit', 'Can Book', 'Staff Work', 'User Type Only'],
-    USER: ['Can Book', 'User Type Only'],
+    'admin': ['Can Approve', 'Can Edit', 'Can Book', 'Staff Work', 'User Type Only'],
+    'staff': ['Can Book', 'Staff Work'],
+    'faculty': ['Can Book', 'User Type Only'],
+    'student': ['Can Book', 'User Type Only'],
+    'guest': ['User Type Only']
 };
 
 // Form data
@@ -65,10 +60,39 @@ const formData = ref({
     email: '',
     first_name: '',
     last_name: '',
-    role: 'Staff',
+    middle_name: '',
+    role: 'staff',
     department: '',
     college: '',
+    account_status: 'active',
     permissions: [],
+});
+
+// Get college and department options from props
+const collegeOptions = computed(() => {
+    return props.colleges.map(college => ({
+        id: college.id,
+        name: college.college_name,
+        value: college.college_name
+    }));
+});
+
+const departmentOptions = computed(() => {
+    return props.departments.map(dept => ({
+        id: dept.id,
+        name: dept.department_name,
+        value: dept.department_name
+    }));
+});
+
+// Get all user fields for display
+const allUserFields = computed(() => {
+    if (!props.user) return [];
+    return Object.entries(props.user).map(([key, value]) => ({
+        field: key,
+        value: value,
+        type: typeof value
+    }));
 });
 
 // --- WATCHERS & LOGIC ---
@@ -82,14 +106,17 @@ watch(() => [props.user, props.type], ([newUser, newType]) => {
             email: '',
             first_name: '',
             last_name: '',
-            role: 'Staff',
+            middle_name: '',
+            role: 'staff',
             department: '',
             college: '',
-            permissions: defaultPermissionsMap['Staff'],
+            account_status: 'active',
+            permissions: defaultPermissionsMap['staff'],
         };
         passwordField.value = '';
         confirmPassword.value = '';
         formErrors.value = {};
+        showRawData.value = false;
     } else if (newUser) {
         // Deep copy the user object to formData for modification/view
         formData.value = {
@@ -97,9 +124,11 @@ watch(() => [props.user, props.type], ([newUser, newType]) => {
             email: newUser.email || '',
             first_name: newUser.first_name || '',
             last_name: newUser.last_name || '',
-            role: newUser.role || 'Staff',
+            middle_name: newUser.middle_name || '',
+            role: newUser.role || 'staff',
             department: newUser.department || '',
             college: newUser.college || '',
+            account_status: newUser.account_status || 'active',
             permissions: Array.isArray(newUser.permissions) ? newUser.permissions : (newUser.permissions ? [newUser.permissions] : []),
         };
         passwordField.value = '';
@@ -138,6 +167,14 @@ const isDelete = computed(() => props.type === 'delete');
 // Check if password is required
 const isPasswordRequired = computed(() => isAdd.value || (isEdit.value && passwordField.value));
 
+// Format value for display
+const formatValue = (value) => {
+    if (value === null || value === undefined) return 'N/A';
+    if (Array.isArray(value)) return value.join(', ');
+    if (typeof value === 'object') return JSON.stringify(value);
+    return value.toString();
+};
+
 // --- VALIDATION METHODS ---
 const validateForm = () => {
     formErrors.value = {};
@@ -152,18 +189,28 @@ const validateForm = () => {
         formErrors.value.email = 'Please enter a valid email address';
     }
 
-    if (!formData.value.department) {
-        formErrors.value.department = 'Department is required';
+    if (!formData.value.first_name.trim()) {
+        formErrors.value.first_name = 'First name is required';
     }
 
-    if (!formData.value.college) {
-        formErrors.value.college = 'College is required';
+    if (!formData.value.last_name.trim()) {
+        formErrors.value.last_name = 'Last name is required';
     }
 
-    if (isPasswordRequired.value) {
+    if (!formData.value.role) {
+        formErrors.value.role = 'Role is required';
+    }
+
+    if (isAdd.value) {
         if (!passwordField.value) {
             formErrors.value.password = 'Password is required';
         } else if (passwordField.value.length < 6) {
+            formErrors.value.password = 'Password must be at least 6 characters';
+        } else if (passwordField.value !== confirmPassword.value) {
+            formErrors.value.confirmPassword = 'Passwords do not match';
+        }
+    } else if (isEdit.value && passwordField.value) {
+        if (passwordField.value.length < 6) {
             formErrors.value.password = 'Password must be at least 6 characters';
         } else if (passwordField.value !== confirmPassword.value) {
             formErrors.value.confirmPassword = 'Passwords do not match';
@@ -239,12 +286,28 @@ const clearError = (field) => {
         delete formErrors.value[field];
     }
 };
+
+// Helper to get display name for role
+const getRoleDisplayName = (role) => {
+    return roleDisplayNames[role] || role.charAt(0).toUpperCase() + role.slice(1);
+};
+
+// Toggle raw data view
+const toggleRawData = () => {
+    showRawData.value = !showRawData.value;
+};
+
+onMounted(() => {
+    if (props.user) {
+        console.log('User data loaded in modal:', props.user);
+    }
+});
 </script>
 
 <template>
     <Transition name="modal-fade">
         <div v-if="isVisible" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" @click.self="emit('close')">
-            <div class="bg-white rounded-lg shadow-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto transform transition-all duration-300 scale-100 opacity-100">
+            <div class="bg-white rounded-lg shadow-2xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto transform transition-all duration-300 scale-100 opacity-100">
 
                 <!-- Loading overlay -->
                 <div v-if="isLoading" class="absolute inset-0 bg-white bg-opacity-70 flex items-center justify-center rounded-lg z-10">
@@ -257,26 +320,96 @@ const clearError = (field) => {
                 <!-- Header -->
                 <div class="flex justify-between items-center border-b pb-3 mb-4">
                     <h3 class="text-2xl font-semibold text-gray-800">{{ modalTitle }}</h3>
-                    <button @click="emit('close')" class="text-gray-400 hover:text-gray-600 transition" :disabled="isLoading">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
+                    <div class="flex items-center space-x-2">
+                        <button
+                            v-if="isView && user"
+                            @click="toggleRawData"
+                            class="text-gray-500 hover:text-gray-700 text-sm"
+                        >
+                            {{ showRawData ? 'Hide Raw Data' : 'Show Raw Data' }}
+                        </button>
+                        <button @click="emit('close')" class="text-gray-400 hover:text-gray-600 transition" :disabled="isLoading">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Raw Data View -->
+                <div v-if="isView && user && showRawData" class="mb-6">
+                    <h4 class="font-semibold text-lg text-gray-700 mb-3">Raw Database Data</h4>
+                    <div class="bg-gray-50 p-4 rounded-lg border">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div v-for="field in allUserFields" :key="field.field" class="border-b pb-2">
+                                <div class="text-xs text-gray-500 uppercase tracking-wider">{{ field.field }}</div>
+                                <div class="font-mono text-sm break-words mt-1">
+                                    {{ formatValue(field.value) }}
+                                    <span class="text-xs text-gray-400 ml-2">({{ field.type }})</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-4 text-sm text-gray-500">
+                            Total fields: {{ allUserFields.length }}
+                        </div>
+                    </div>
                 </div>
 
                 <!-- View Mode -->
-                <div v-if="isView && user" class="space-y-3 text-gray-700">
-                    <div class="grid grid-cols-2 gap-4">
-                        <p v-if="user.id"><strong>ID:</strong> {{ user.id }}</p>
-                        <p><strong>Username:</strong> {{ user.username }}</p>
-                        <p><strong>Email:</strong> {{ user.email }}</p>
-                        <p><strong>Role:</strong> {{ user.role }}</p>
-                        <p><strong>First Name:</strong> {{ user.first_name || 'N/A' }}</p>
-                        <p><strong>Last Name:</strong> {{ user.last_name || 'N/A' }}</p>
-                        <p><strong>Department:</strong> {{ user.department || 'N/A' }}</p>
-                        <p><strong>College:</strong> {{ user.college || 'N/A' }}</p>
-                        <p><strong>Created:</strong> {{ new Date(user.created_at).toLocaleDateString() }}</p>
-                        <p><strong>Last Updated:</strong> {{ new Date(user.updated_at).toLocaleDateString() }}</p>
+                <div v-if="isView && user && !showRawData" class="space-y-3 text-gray-700">
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <div>
+                            <p class="text-sm text-gray-500">ID</p>
+                            <p class="font-medium">{{ user.id || 'N/A' }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Username</p>
+                            <p class="font-medium">{{ user.username || 'N/A' }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Email</p>
+                            <p class="font-medium">{{ user.email || 'N/A' }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Role</p>
+                            <p class="font-medium">{{ getRoleDisplayName(user.role) }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">First Name</p>
+                            <p class="font-medium">{{ user.first_name || 'N/A' }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Last Name</p>
+                            <p class="font-medium">{{ user.last_name || 'N/A' }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Middle Name</p>
+                            <p class="font-medium">{{ user.middle_name || 'N/A' }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Employee ID</p>
+                            <p class="font-medium">{{ user.employee_id || 'N/A' }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Department</p>
+                            <p class="font-medium">{{ user.department || 'N/A' }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">College</p>
+                            <p class="font-medium">{{ user.college || 'N/A' }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Account Status</p>
+                            <p class="font-medium">{{ user.account_status || 'active' }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Created At</p>
+                            <p class="font-medium">{{ user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A' }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Updated At</p>
+                            <p class="font-medium">{{ user.updated_at ? new Date(user.updated_at).toLocaleDateString() : 'N/A' }}</p>
+                        </div>
                     </div>
 
                     <div class="mt-4 pt-4 border-t">
@@ -307,15 +440,27 @@ const clearError = (field) => {
                     <!-- Name Fields -->
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label for="first_name" class="block text-sm font-medium text-gray-700 text-left">First Name</label>
-                            <input type="text" id="first_name" v-model="formData.first_name"
+                            <label for="first_name" class="block text-sm font-medium text-gray-700 text-left">First Name <span class="text-red-500">*</span></label>
+                            <input type="text" id="first_name" v-model="formData.first_name" required
                                    @input="clearError('first_name')"
-                                   class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                   :class="['mt-1 block w-full border rounded-md shadow-sm p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
+                                            formErrors.first_name ? 'border-red-500' : 'border-gray-300']">
+                            <p v-if="formErrors.first_name" class="mt-1 text-sm text-red-600 text-left">{{ formErrors.first_name }}</p>
                         </div>
                         <div>
-                            <label for="last_name" class="block text-sm font-medium text-gray-700 text-left">Last Name</label>
-                            <input type="text" id="last_name" v-model="formData.last_name"
+                            <label for="last_name" class="block text-sm font-medium text-gray-700 text-left">Last Name <span class="text-red-500">*</span></label>
+                            <input type="text" id="last_name" v-model="formData.last_name" required
                                    @input="clearError('last_name')"
+                                   :class="['mt-1 block w-full border rounded-md shadow-sm p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
+                                            formErrors.last_name ? 'border-red-500' : 'border-gray-300']">
+                            <p v-if="formErrors.last_name" class="mt-1 text-sm text-red-600 text-left">{{ formErrors.last_name }}</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-4">
+                        <div>
+                            <label for="middle_name" class="block text-sm font-medium text-gray-700 text-left">Middle Name</label>
+                            <input type="text" id="middle_name" v-model="formData.middle_name"
                                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                         </div>
                     </div>
@@ -395,43 +540,65 @@ const clearError = (field) => {
                         </div>
                     </div>
 
+                    <!-- Role -->
+                    <div>
+                        <label for="role" class="block text-sm font-medium text-gray-700 text-left">
+                            Role <span class="text-red-500">*</span>
+                        </label>
+                        <select id="role" v-model="formData.role" required
+                                @change="clearError('role')"
+                                :class="['mt-1 block w-full border rounded-md shadow-sm p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
+                                         formErrors.role ? 'border-red-500' : 'border-gray-300']">
+                            <option value="" disabled>Select Role</option>
+                            <option v-for="role in roles" :key="role" :value="role">
+                                {{ getRoleDisplayName(role) }}
+                            </option>
+                        </select>
+                        <p v-if="formErrors.role" class="mt-1 text-sm text-red-600 text-left">{{ formErrors.role }}</p>
+                    </div>
+
                     <!-- Department & College -->
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label for="department" class="block text-sm font-medium text-gray-700 text-left">
-                                Department <span class="text-red-500">*</span>
+                                Department
                             </label>
-                            <select id="department" v-model="formData.department" required
+                            <select id="department" v-model="formData.department"
                                     @change="clearError('department')"
                                     :class="['mt-1 block w-full border rounded-md shadow-sm p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
                                              formErrors.department ? 'border-red-500' : 'border-gray-300']">
-                                <option value="" disabled>Select Department</option>
-                                <option v-for="dept in departmentOptions" :key="dept" :value="dept">{{ dept }}</option>
+                                <option value="">Select Department (Optional)</option>
+                                <option v-for="dept in departmentOptions" :key="dept.id" :value="dept.name">{{ dept.name }}</option>
                             </select>
                             <p v-if="formErrors.department" class="mt-1 text-sm text-red-600 text-left">{{ formErrors.department }}</p>
                         </div>
 
                         <div>
                             <label for="college" class="block text-sm font-medium text-gray-700 text-left">
-                                College <span class="text-red-500">*</span>
+                                College
                             </label>
-                            <select id="college" v-model="formData.college" required
+                            <select id="college" v-model="formData.college"
                                     @change="clearError('college')"
                                     :class="['mt-1 block w-full border rounded-md shadow-sm p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
                                              formErrors.college ? 'border-red-500' : 'border-gray-300']">
-                                <option value="" disabled>Select College</option>
-                                <option v-for="col in collegeOptions" :key="col" :value="col">{{ col }}</option>
+                                <option value="">Select College (Optional)</option>
+                                <option v-for="col in collegeOptions" :key="col.id" :value="col.name">{{ col.name }}</option>
                             </select>
                             <p v-if="formErrors.college" class="mt-1 text-sm text-red-600 text-left">{{ formErrors.college }}</p>
                         </div>
                     </div>
 
-                    <!-- Role -->
-                    <div>
-                        <label for="role" class="block text-sm font-medium text-gray-700 text-left">Role</label>
-                        <select id="role" v-model="formData.role"
+                    <!-- Account Status -->
+                    <div v-if="isEdit">
+                        <label for="account_status" class="block text-sm font-medium text-gray-700 text-left">
+                            Account Status <span class="text-red-500">*</span>
+                        </label>
+                        <select id="account_status" v-model="formData.account_status" required
                                 class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                            <option v-for="role in roles" :key="role" :value="role">{{ role }}</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                            <option value="suspended">Suspended</option>
+                            <option value="pending">Pending</option>
                         </select>
                     </div>
 
@@ -453,7 +620,7 @@ const clearError = (field) => {
                             </div>
                         </div>
                         <p class="mt-1 text-xs text-gray-500 text-left">
-                            Default permissions set for <strong>{{ formData.role }}</strong> role.
+                            Default permissions set for <strong>{{ getRoleDisplayName(formData.role) }}</strong> role.
                         </p>
                     </div>
 

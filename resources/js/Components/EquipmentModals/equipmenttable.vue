@@ -317,21 +317,26 @@ watch(searchTerm, () => {
                     <div class="flex flex-wrap items-center gap-4">
                         <div class="flex gap-2">
                             <div class="flex items-center px-4 py-2 bg-yellow-400 border rounded-lg text-sm font-semibold text-white">
-                                📅 {{ currentDate }}
+                            📄  {{ currentDate }}
                             </div>
                             <div class="flex items-center px-4 py-2 bg-green-400 border rounded-lg text-sm font-semibold text-white">
-                                {{ currentTime }}
+                              ⏱  {{ currentTime }}
                             </div>
                         </div>
 
-                        <div class="relative w-full lg:w-72">
+                    </div>
+                </div>
+
+                <div class=" grid grid-cols-2 md:grid-cols-4 gap-3 mt-6">
+
+ <div class="mr-10 mt-6 relative w-full lg:w-72">
                             <input
                                 type="text"
                                 v-model="searchTerm"
-                                placeholder="Search by name, room, building..."
-                                class="w-full pl-10 pr-4 py-2 border border-yellow-300 rounded-lg focus:ring-2 focus:ring-[#7A0C23] focus:border-transparent outline-none transition-all"
+                                placeholder="Search by name, room..."
+                                class="w-200 pl-10 pr-4 py-2 border border-yellow-500 rounded-lg focus:ring-2 focus:ring-[#7A0C23] focus:border-transparent outline-none transition-all"
                             />
-                            <div class="absolute left-3 top-2.5 text-gray-400">
+                            <div class=" absolute left-3 top-2.5 text-gray-400">
                                 <IconButton
                                     icon="search"
                                     size="sm"
@@ -340,10 +345,7 @@ watch(searchTerm, () => {
                                 />
                             </div>
                         </div>
-                    </div>
-                </div>
 
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
                     <div class="p-3 bg-[#7A0C23] rounded-lg border border-red-100">
                         <p class="text-xs text-white font-bold uppercase">Total Items</p>
                         <p class="text-xl font-bold text-white">{{ statistics.total || 0 }}</p>
@@ -359,16 +361,12 @@ watch(searchTerm, () => {
                         <p class="text-xl font-bold text-white">{{ statistics.in_use || 0 }}</p>
                     </div>
 
-                    <div class="p-3 bg-[#7A0C23] rounded-lg border border-yellow-100">
-                        <p class="text-xs text-white font-bold uppercase">Total Value</p>
-                        <p class="text-xl font-bold text-white">
-                            ₱{{ (statistics.total_value || 0).toLocaleString() }}
-                        </p>
-                    </div>
+
+
                 </div>
             </div>
 
-            <div class="bg-white shadow-lg rounded-xl overflow-hidden border border-yellow-400">
+            <div class="mt-10 bg-white shadow-lg rounded-xl overflow-hidden border border-yellow-400">
                 <div class="overflow-x-auto">
                     <table class="w-full text-left">
                         <thead class="bg-[#7A0C23] text-white sticky top-0 z-10">

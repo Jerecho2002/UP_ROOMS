@@ -13,11 +13,29 @@ use App\Models\Term;
 use App\Models\Schedule;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 
 class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        // Clear existing data
+        $this->command->info('Clearing existing data...');
+        DB::statement('SET FOREIGN_KEY_CHECKS=0');
+
+        // Clear tables in correct order (reverse of dependencies)
+        Schedule::truncate();
+        Equipment::truncate();
+        Room::truncate();
+        RoomType::truncate();
+        Building::truncate();
+        Term::truncate();
+        Department::truncate();
+        College::truncate();
+        UserAccount::truncate();
+
+        DB::statement('SET FOREIGN_KEY_CHECKS=1');
+
         // Create a default admin user
         $this->command->info('Creating admin user...');
         $admin = UserAccount::create([
@@ -31,6 +49,17 @@ class DatabaseSeeder extends Seeder
             'roles' => ['admin', 'super_admin'],
         ]);
 
+        // Create some faculty users
+        $this->command->info('Creating faculty users...');
+        UserAccount::factory()->count(5)->create([
+            'user_type' => 'faculty'
+        ]);
+
+        // Create some staff users
+        UserAccount::factory()->count(3)->create([
+            'user_type' => 'staff'
+        ]);
+
         // Create colleges
         $this->command->info('Creating colleges...');
         $colleges = College::factory()->count(4)->create();
@@ -41,15 +70,6 @@ class DatabaseSeeder extends Seeder
         // Create departments
         $this->command->info('Creating departments...');
         $departments = Department::factory()->count(6)->create();
-
-        // Create additional users
-        $this->command->info('Creating additional users...');
-        $users = UserAccount::factory()->count(9)->create();
-
-        // Assign some users as department heads
-        foreach ($departments->take(3) as $index => $department) {
-            $department->update(['department_head_id' => $users[$index]->id]);
-        }
 
         // Create buildings
         $this->command->info('Creating buildings...');
@@ -76,6 +96,10 @@ class DatabaseSeeder extends Seeder
             $terms->first()->update(['is_current' => true, 'status' => 'active']);
         }
 
+        // Create schedules
+        $this->command->info('Creating schedules...');
+        Schedule::factory()->count(20)->create();
+
         $this->command->info('Database seeded successfully!');
 
         // Show login credentials
@@ -85,5 +109,17 @@ class DatabaseSeeder extends Seeder
         $this->command->info('Username: admin');
         $this->command->info('Password: password123');
         $this->command->info('===========================');
+
+        // Show counts
+        $this->command->info('');
+        $this->command->info('SEEDED DATA COUNTS:');
+        $this->command->info('Users: ' . UserAccount::count());
+        $this->command->info('Colleges: ' . College::count());
+        $this->command->info('Departments: ' . Department::count());
+        $this->command->info('Buildings: ' . Building::count());
+        $this->command->info('Rooms: ' . Room::count());
+        $this->command->info('Equipment: ' . Equipment::count());
+        $this->command->info('Terms: ' . Term::count());
+        $this->command->info('Schedules: ' . Schedule::count());
     }
 }

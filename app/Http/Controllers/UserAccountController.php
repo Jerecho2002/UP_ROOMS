@@ -18,27 +18,57 @@ class UserAccountController extends Controller
         // Get paginated users with relationships
         $users = UserAccount::with(['college', 'department'])
             ->orderBy('last_name')
+            ->orderBy('first_name')
             ->paginate(20);
 
         // Get colleges and departments for dropdowns
-        $colleges = College::all();
-        $departments = Department::all();
+        $colleges = College::select('id', 'college_name')->get();
+        $departments = Department::select('id', 'department_name', 'college_id')->get();
 
         // Get stats
         $stats = $this->getStats();
 
-        return Inertia::render('UserAccount/Index', [
-            'users' => $users,
+        // Transform users for frontend
+        $transformedUsers = $users->getCollection()->map(function ($user) {
+            return [
+                'id' => $user->id,
+                'username' => $user->username,
+                'email' => $user->email,
+                'first_name' => $user->first_name,
+                'last_name' => $user->last_name,
+                'middle_name' => $user->middle_name,
+                'employee_id' => $user->employee_id,
+                'profile_picture' => $user->profile_picture,
+                'gender' => $user->gender,
+                'birth_date' => $user->birth_date,
+                'contact_number' => $user->contact_number,
+                'address' => $user->address,
+                'role' => $user->user_type,
+                'account_status' => $user->account_status,
+                'department' => $user->department ? $user->department->department_name : null,
+                'college' => $user->college ? $user->college->college_name : null,
+                'college_id' => $user->college_id,
+                'department_id' => $user->department_id,
+                'created_at' => $user->created_at ? $user->created_at->format('Y-m-d H:i:s') : null,
+                'updated_at' => $user->updated_at ? $user->updated_at->format('Y-m-d H:i:s') : null,
+                'permissions' => $user->roles ?? [],
+            ];
+        })->toArray();
+
+        return Inertia::render('UserAccountPage', [
+            'initialUsers' => $transformedUsers,
             'colleges' => $colleges,
             'departments' => $departments,
             'stats' => $stats,
-            'filters' => [
-                'search' => $request->input('search', ''),
-                'college_id' => $request->input('college_id', null),
-                'department_id' => $request->input('department_id', null),
-                'user_type' => $request->input('user_type', null),
-                'account_status' => $request->input('account_status', null),
-            ]
+            'pagination' => [
+                'total' => $users->total(),
+                'per_page' => $users->perPage(),
+                'current_page' => $users->currentPage(),
+                'last_page' => $users->lastPage(),
+                'from' => $users->firstItem(),
+                'to' => $users->lastItem(),
+            ],
+            'filters' => $request->only(['search', 'college_id', 'department_id', 'user_type', 'account_status'])
         ]);
     }
 
@@ -69,166 +99,103 @@ class UserAccountController extends Controller
             'first_name' => 'required|string|max:100',
             'last_name' => 'required|string|max:100',
             'middle_name' => 'nullable|string|max:100',
-            'employee_id' => 'required|string|max:50|unique:user_accounts,employee_id',
-            'profile_picture' => 'nullable|string|max:500',
-            'gender' => 'nullable|in:male,female,other',
-            'birth_date' => 'nullable|date',
-            'contact_number' => 'nullable|string|max:20',
-            'address' => 'nullable|string|max:500',
+            'employee_id' => 'nullable|string|max:50|unique:user_accounts,employee_id',
+            'user_type' => 'required|in:admin,faculty,staff,student,guest',
+            'account_status' => 'required|in:active,inactive,suspended,pending',
             'college_id' => 'nullable|exists:colleges,id',
             'department_id' => 'nullable|exists:departments,id',
-            'user_type' => 'required|in:admin,faculty,staff,student,guest',
-            'roles' => 'nullable|array',
-            'account_status' => 'required|in:active,inactive,suspended,pending',
         ]);
 
         $validated['password'] = Hash::make($validated['password']);
 
-        $user = UserAccount::create($validated);
+        // Add default permissions based on user type
+        $validated['roles'] = $this->getDefaultPermissions($validated['user_type']);
 
-        return redirect()->route('user-accounts.index')
-            ->with('success', 'User account created successfully!');
+        $user = UserAccount::create($validated);
+        $user->load(['college', 'department']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'User account created successfully!',
+            'user' => $this->transformUser($user)
+        ]);
     }
 
     // Update user
-    public function update(Request $request, UserAccount $userAccount)
+    public function update(Request $request, $id)
     {
+        $user = UserAccount::findOrFail($id);
+
         $validated = $request->validate([
-            'username' => 'sometimes|required|string|max:50|unique:user_accounts,username,' . $userAccount->id,
-            'email' => 'sometimes|required|email|max:255|unique:user_accounts,email,' . $userAccount->id,
-            'first_name' => 'sometimes|required|string|max:100',
-            'last_name' => 'sometimes|required|string|max:100',
+            'username' => 'required|string|max:50|unique:user_accounts,username,' . $user->id,
+            'email' => 'required|email|max:255|unique:user_accounts,email,' . $user->id,
+            'first_name' => 'required|string|max:100',
+            'last_name' => 'required|string|max:100',
             'middle_name' => 'nullable|string|max:100',
-            'employee_id' => 'sometimes|required|string|max:50|unique:user_accounts,employee_id,' . $userAccount->id,
-            'profile_picture' => 'nullable|string|max:500',
-            'gender' => 'nullable|in:male,female,other',
-            'birth_date' => 'nullable|date',
-            'contact_number' => 'nullable|string|max:20',
-            'address' => 'nullable|string|max:500',
+            'employee_id' => 'nullable|string|max:50|unique:user_accounts,employee_id,' . $user->id,
+            'user_type' => 'required|in:admin,faculty,staff,student,guest',
+            'account_status' => 'required|in:active,inactive,suspended,pending',
             'college_id' => 'nullable|exists:colleges,id',
             'department_id' => 'nullable|exists:departments,id',
-            'user_type' => 'sometimes|required|in:admin,faculty,staff,student,guest',
-            'roles' => 'nullable|array',
-            'account_status' => 'sometimes|required|in:active,inactive,suspended,pending',
         ]);
 
-        $userAccount->update($validated);
+        // Handle password update if provided
+        if ($request->filled('password')) {
+            $validated['password'] = Hash::make($request->password);
+        }
 
-        return redirect()->route('user-accounts.index')
-            ->with('success', 'User account updated successfully!');
+        $user->update($validated);
+        $user->load(['college', 'department']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'User account updated successfully!',
+            'user' => $this->transformUser($user)
+        ]);
     }
 
     // Delete user
-    public function destroy(UserAccount $userAccount)
+    public function destroy($id)
     {
-        // Check if user has dependencies
-        if ($userAccount->deanCollege()->count() > 0) {
-            return back()->with('error', 'Cannot delete user who is assigned as dean');
-        }
-
-        if ($userAccount->headDepartment()->count() > 0) {
-            return back()->with('error', 'Cannot delete user who is assigned as department head');
-        }
-
-        if ($userAccount->assignedRooms()->count() > 0) {
-            return back()->with('error', 'Cannot delete user with room assignments');
-        }
-
-        if ($userAccount->assignedEquipment()->count() > 0) {
-            return back()->with('error', 'Cannot delete user with equipment assignments');
-        }
-
-        $userAccount->delete();
-
-        return redirect()->route('user-accounts.index')
-            ->with('success', 'User account deleted successfully!');
-    }
-
-    // Change user status
-    public function changeStatus(UserAccount $userAccount, Request $request)
-    {
-        $request->validate([
-            'status' => 'required|in:active,inactive,suspended,pending',
-            'reason' => 'nullable|string|max:500',
-        ]);
-
-        $userAccount->update([
-            'account_status' => $request->status,
-        ]);
-
-        return redirect()->route('user-accounts.index')
-            ->with('success', 'User status updated successfully!');
-    }
-
-    // API endpoint for Vue component
-    public function apiIndex(Request $request)
-    {
-        $query = UserAccount::with(['college', 'department']);
-
-        // Search functionality
-        if ($request->has('search')) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('username', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('first_name', 'like', "%{$search}%")
-                  ->orWhere('last_name', 'like', "%{$search}%")
-                  ->orWhere('employee_id', 'like', "%{$search}%")
-                  ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$search}%"]);
-            });
-        }
-
-        // Filter by college
-        if ($request->has('college_id') && $request->college_id) {
-            $query->where('college_id', $request->college_id);
-        }
-
-        // Filter by department
-        if ($request->has('department_id') && $request->department_id) {
-            $query->where('department_id', $request->department_id);
-        }
-
-        // Filter by user type
-        if ($request->has('user_type') && $request->user_type) {
-            $query->where('user_type', $request->user_type);
-        }
-
-        // Filter by account status
-        if ($request->has('account_status') && $request->account_status) {
-            $query->where('account_status', $request->account_status);
-        }
-
-        // Sorting
-        $sortField = $request->get('sort_field', 'last_name');
-        $sortOrder = $request->get('sort_order', 'asc');
-
-        // Handle special sorting for relationships
-        if ($sortField === 'college') {
-            $query->join('colleges', 'user_accounts.college_id', '=', 'colleges.id')
-                  ->orderBy('colleges.name', $sortOrder)
-                  ->select('user_accounts.*');
-        } elseif ($sortField === 'department') {
-            $query->join('departments', 'user_accounts.department_id', '=', 'departments.id')
-                  ->orderBy('departments.name', $sortOrder)
-                  ->select('user_accounts.*');
-        } else {
-            $query->orderBy($sortField, $sortOrder);
-        }
-
-        $perPage = $request->get('per_page', 20);
-        $users = $query->paginate($perPage);
+        $user = UserAccount::findOrFail($id);
+        $username = $user->username;
+        $user->delete();
 
         return response()->json([
-            'data' => $users->items(),
-            'meta' => [
-                'current_page' => $users->currentPage(),
-                'last_page' => $users->lastPage(),
-                'per_page' => $users->perPage(),
-                'total' => $users->total(),
-                'from' => $users->firstItem(),
-                'to' => $users->lastItem(),
-            ],
-            'stats' => $this->getStats(),
+            'success' => true,
+            'message' => 'User account deleted successfully!',
+            'username' => $username
         ]);
+    }
+
+    // Helper method to transform user for response
+    private function transformUser($user)
+    {
+        return [
+            'id' => $user->id,
+            'username' => $user->username,
+            'email' => $user->email,
+            'first_name' => $user->first_name,
+            'last_name' => $user->last_name,
+            'role' => $user->user_type,
+            'department' => $user->department ? $user->department->department_name : null,
+            'college' => $user->college ? $user->college->college_name : null,
+            'account_status' => $user->account_status,
+            'permissions' => $user->roles ?? [],
+        ];
+    }
+
+    // Get default permissions based on user type
+    private function getDefaultPermissions($userType)
+    {
+        $permissions = [
+            'admin' => ['Can Approve', 'Can Edit', 'Can Book', 'Staff Work', 'User Type Only'],
+            'staff' => ['Can Book', 'Staff Work'],
+            'faculty' => ['Can Book', 'User Type Only'],
+            'student' => ['Can Book', 'User Type Only'],
+            'guest' => ['User Type Only']
+        ];
+
+        return $permissions[$userType] ?? ['User Type Only'];
     }
 }

@@ -135,13 +135,13 @@ Route::prefix('/api/equipment')->group(function () {
 
     // User Account Management
    // User Account Management
-Route::get('/UserAccountPage', [UserAccountController::class, 'index'])->name('users.index');
-Route::get('/api/user-accounts', [UserAccountController::class, 'getAll']);
-Route::get('/api/user-accounts/stats', [UserAccountController::class, 'getStats']);
-Route::get('/api/user-accounts/{id}/stats', [UserAccountController::class, 'getUserStats']);
-Route::post('/user-accounts', [UserAccountController::class, 'store']);
-Route::put('/user-accounts/{userAccount}', [UserAccountController::class, 'update']);
-Route::delete('/user-accounts/{userAccount}', [UserAccountController::class, 'destroy']);
+
+Route::get('/UserAccountPage', [UserAccountController::class, 'index'])->name('user-accounts.index');
+Route::post('/user-accounts', [UserAccountController::class, 'store'])->name('user-accounts.store');
+Route::put('/user-accounts/{userAccount}', [UserAccountController::class, 'update'])->name('user-accounts.update');
+Route::delete('/user-accounts/{userAccount}', [UserAccountController::class, 'destroy'])->name('user-accounts.destroy');
+Route::post('/user-accounts/{userAccount}/change-status', [UserAccountController::class, 'changeStatus'])->name('user-accounts.change-status');
+Route::post('/user-accounts/bulk-actions', [UserAccountController::class, 'bulkActions'])->name('user-accounts.bulk-actions');
     // Report Generation
     Route::prefix('/api/reports')->group(function () {
         Route::get('/room-utilization', function (Request $request) {

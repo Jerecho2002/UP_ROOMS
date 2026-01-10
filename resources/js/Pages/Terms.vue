@@ -1,9 +1,7 @@
 <script setup>
-    import Termslayout from '@/Layouts/TermsLayout.vue';
+import Layout from '@/Layouts/Termslayout.vue';
 </script>
 
 <template>
- <div> 
-    <Termslayout/>
- </div>
+  <Layout />
 </template>
