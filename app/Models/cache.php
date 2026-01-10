@@ -9,7 +9,7 @@ class Cache extends Model
 {
     use HasFactory;
 
-    protected $table = 'cache';
+    protected $table = 'Cache';
 
     protected $primaryKey = 'key';
     public $incrementing = false;

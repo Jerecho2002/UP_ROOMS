@@ -3,62 +3,27 @@
 namespace App\Http\Controllers;
 
 use App\Models\Building;
-use App\Models\College;
+use App\Services\BuildingService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Validator;
 
 class BuildingController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function __construct(
+        protected BuildingService $buildingService,
+    ){}
+     public function index(Request $request)
     {
-        return Inertia::render('BuildingDashboard');
+        $perPage = 10;
+        $search = $request->input('search');
+        $builds = $this->buildingService->getBuildings($perPage, $search);
+
+        return Inertia::render('BuildingDashboard', [
+            'builds' => $builds,
+        ]);
     }
 
-    /**
-     * Get all buildings with college relationship
-     */
-    public function getAll(Request $request)
-    {
-        try {
-            $query = Building::with(['college:id,college_name'])
-                ->orderBy('created_at', 'desc');
-
-            // Search functionality
-            if ($request->has('search') && $request->search) {
-                $search = $request->search;
-                $query->where(function ($q) use ($search) {
-                    $q->where('building_name', 'like', "%{$search}%")
-                      ->orWhere('address', 'like', "%{$search}%")
-                      ->orWhereHas('college', function ($q2) use ($search) {
-                          $q2->where('college_name', 'like', "%{$search}%");
-                      });
-                });
-            }
-
-            // Pagination
-            $perPage = $request->get('per_page', 10);
-            $buildings = $query->paginate($perPage);
-
-            return response()->json([
-                'success' => true,
-                'data' => $buildings,
-                'message' => 'Buildings fetched successfully'
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to fetch buildings: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
