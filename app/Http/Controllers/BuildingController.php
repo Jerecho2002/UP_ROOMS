@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Building;
+use App\Models\College;
 use App\Services\BuildingService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -17,50 +18,34 @@ class BuildingController extends Controller
     {
         $perPage = 10;
         $search = $request->input('search');
-        $builds = $this->buildingService->getBuildings($perPage, $search);
+        $buildings = $this->buildingService->getBuildings($perPage, $search);
+        $colleges = College::all();
 
         return Inertia::render('BuildingDashboard', [
-            'builds' => $builds,
+            'buildings' => $buildings,
+            'colleges' => $colleges,
         ]);
     }
 
-    public function store(Request $request)
+     public function store(Request $request)
     {
-        $validator = Validator::make($request->all(), [
+        // Basic validation
+        $data = $request->validate([
             'building_name' => 'required|string|max:255',
             'address' => 'required|string|max:500',
             'description' => 'nullable|string',
-            'total_floors' => 'nullable|integer|min:1',
-            'total_rooms' => 'nullable|integer|min:0',
-            'has_elevator' => 'boolean',
-            'has_parking' => 'boolean',
-            'restroom_count' => 'nullable|integer|min:0',
-            'ramp_count' => 'nullable|integer|min:0',
-            'college_id' => 'nullable|exists:colleges,id',
+            'total_floors' => 'required|integer|min:0',
+            'total_rooms' => 'required|integer|min:0',
+            'has_elevator' => 'required|in:0,1',
+            'has_parking' => 'required|in:0,1',
+            'restroom_count' => 'required|integer|min:0',
+            'ramp_count' => 'required|integer|min:0',
+            'college_id' => 'required|exists:colleges,id',
         ]);
 
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors' => $validator->errors(),
-                'message' => 'Validation failed'
-            ], 422);
-        }
+        Building::create($data);
 
-        try {
-            $building = Building::create($validator->validated());
-
-            return response()->json([
-                'success' => true,
-                'data' => $building->load('college'),
-                'message' => 'Building created successfully'
-            ], 201);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to create building: ' . $e->getMessage()
-            ], 500);
-        }
+        return redirect()->back()->with('success', 'Building created successfully.');
     }
 
     /**

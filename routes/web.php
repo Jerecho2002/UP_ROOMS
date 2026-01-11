@@ -57,7 +57,7 @@ Route::middleware(['auth.session'])->group(function () {
 
     // Building Management
     Route::get('/BuildingDashboard', [BuildingController::class, 'index'])->name('buildings.index');
-    Route::post('/buildings', [BuildingController::class, 'store']);
+    Route::post('/BuildingDashboard', [BuildingController::class, 'store']);
     Route::put('/buildings/{building}', [BuildingController::class, 'update']);
     Route::delete('/buildings/{building}', [BuildingController::class, 'destroy']);
 

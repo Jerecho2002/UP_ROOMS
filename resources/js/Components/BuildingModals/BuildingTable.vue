@@ -34,13 +34,13 @@
           </thead>
 
           <tbody>
-            <tr v-if="builds.length === 0">
+            <tr v-if="buildings.length === 0">
               <td colspan="6" class="text-center py-10 text-gray-500">
                 No buildings found.
               </td>
             </tr>
 
-            <tr v-for="building in builds.data" :key="building.id" class="odd:bg-white even:bg-gray-100">
+            <tr v-for="building in buildings.data" :key="building.id" class="odd:bg-white even:bg-gray-100">
               <td class="px-4 py-3">{{ building.building_name }}</td>
               <td class="px-4 py-3">{{ building.address }}</td>
               <td class="px-4 py-3">{{ building.college?.college_name ?? 'N/A' }}</td>
@@ -57,15 +57,17 @@
           </tbody>
         </table>
 
+        <BuildingModal v-if="isModalVisible" :type="modalType" :building="modalData" @close="isModalVisible = false" />
+
         <!-- Pagination -->
-        <div v-if="builds.data" class="bg-gray-50 px-6 py-4 border-t">
+        <div v-if="buildings.data" class="bg-gray-50 px-6 py-4 border-t">
           <div class="flex justify-between items-center">
             <div class="text-sm text-gray-600">
-              Showing {{ builds.from }} to {{ builds.to }} of {{ builds.total }}
+              Showing {{ buildings.from }} to {{ buildings.to }} of {{ buildings.total }}
             </div>
 
             <div class="flex gap-1">
-              <button v-for="link in builds.links" :key="link.label"
+              <button v-for="link in buildings.links" :key="link.label"
                 @click="link.url && router.visit(link.url, { preserveState: true })" v-html="link.label"
                 :disabled="!link.url" class="px-3 py-1 border rounded text-sm"
                 :class="link.active ? 'bg-[#7A0C23] text-white' : 'bg-white'" />
@@ -82,8 +84,8 @@ import { ref, computed, watch } from 'vue'
 import { usePage, router } from '@inertiajs/vue3'
 import debounce from 'lodash/debounce'
 import IconButton from '@/Components/IconButton.vue'
+import BuildingModal from './BuildingModal.vue'
 
-// Props from backend
 const props = defineProps({
   search: {
     type: String,
@@ -95,13 +97,35 @@ const emit = defineEmits(['openModal'])
 const page = usePage()
 
 // Backend props
-const builds = computed(() => page.props.builds)
+const buildings = computed(() => page.props.buildings)
 
-// Modal actions
-const handleAdd = () => emit('openModal', 'add')
-const handleEdit = (b) => emit('openModal', 'edit', b)
-const handleDelete = (b) => emit('openModal', 'delete', b)
-const handleView = (b) => emit('openModal', 'view', b)
+const isModalVisible = ref(false)
+const modalType = ref(null)
+const modalData = ref(null)
+
+const handleAdd = () => {
+  modalType.value = 'add'
+  modalData.value = null
+  isModalVisible.value = true
+}
+
+const handleEdit = (b) => {
+  modalType.value = 'edit'
+  modalData.value = b
+  isModalVisible.value = true
+}
+
+const handleView = (b) => {
+  modalType.value = 'view'
+  modalData.value = b
+  isModalVisible.value = true
+}
+
+const handleDelete = (b) => {
+  modalType.value = 'delete'
+  modalData.value = b
+  isModalVisible.value = true
+}
 
 // Search input
 const search = ref(props.search || '')

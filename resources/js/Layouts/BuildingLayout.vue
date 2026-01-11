@@ -311,14 +311,6 @@ const handleDataUpdated = (data, type) => {
       </main>
     </div>
 
-    <BuildingModal
-      :isVisible="isModalVisible"
-      :type="modalType"
-      :building="modalData"
-      @close="handleCloseModal"
-      @dataUpdated="handleDataUpdated"
-    />
-
     <Messagefunction
       :showCreateSuccess="showCreateSuccess"
       :showEditSuccess="showEditSuccess"
