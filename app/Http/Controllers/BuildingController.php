@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Building;
+use App\Http\Requests\StoreBuildingRequest;
+use App\Http\Requests\UpdateBuildingRequest;
 use App\Models\College;
 use App\Services\BuildingService;
 use Illuminate\Http\Request;
@@ -13,8 +15,8 @@ class BuildingController extends Controller
 {
     public function __construct(
         protected BuildingService $buildingService,
-    ){}
-     public function index(Request $request)
+    ) {}
+    public function index(Request $request)
     {
         $perPage = 10;
         $search = $request->input('search');
@@ -27,67 +29,18 @@ class BuildingController extends Controller
         ]);
     }
 
-     public function store(Request $request)
+    public function store(StoreBuildingRequest $request)
     {
-        // Basic validation
-        $data = $request->validate([
-            'building_name' => 'required|string|max:255',
-            'address' => 'required|string|max:500',
-            'description' => 'nullable|string',
-            'total_floors' => 'required|integer|min:0',
-            'total_rooms' => 'required|integer|min:0',
-            'has_elevator' => 'required|in:0,1',
-            'has_parking' => 'required|in:0,1',
-            'restroom_count' => 'required|integer|min:0',
-            'ramp_count' => 'required|integer|min:0',
-            'college_id' => 'required|exists:colleges,id',
-        ]);
-
-        Building::create($data);
+        Building::create($request->validated());
 
         return redirect()->back()->with('success', 'Building created successfully.');
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Building $building)
+    public function update(UpdateBuildingRequest $request, Building $building)
     {
-        $validator = Validator::make($request->all(), [
-            'building_name' => 'required|string|max:255',
-            'address' => 'required|string|max:500',
-            'description' => 'nullable|string',
-            'total_floors' => 'nullable|integer|min:1',
-            'total_rooms' => 'nullable|integer|min:0',
-            'has_elevator' => 'boolean',
-            'has_parking' => 'boolean',
-            'restroom_count' => 'nullable|integer|min:0',
-            'ramp_count' => 'nullable|integer|min:0',
-            'college_id' => 'nullable|exists:colleges,id',
-        ]);
+        $building->update($request->validated());
 
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors' => $validator->errors(),
-                'message' => 'Validation failed'
-            ], 422);
-        }
-
-        try {
-            $building->update($validator->validated());
-
-            return response()->json([
-                'success' => true,
-                'data' => $building->load('college'),
-                'message' => 'Building updated successfully'
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to update building: ' . $e->getMessage()
-            ], 500);
-        }
+        return redirect()->back()->with('success', 'Building updated successfully.');
     }
 
     /**

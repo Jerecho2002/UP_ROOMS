@@ -187,19 +187,16 @@ const handleDataUpdated = (data, type) => {
             </h1>
             <!-- Breadcrumb - Left aligned under the title -->
             <div class="mt-20 absolute right-6 top-2 z-20">
-                    <div class="text-sm text-gray-500 whitespace-nowrap ">
-                        <span>UPCEBU > BUILDING</span>
-                    </div>
-                </div>
-     </div>
-</div>
+              <div class="text-sm text-gray-500 whitespace-nowrap ">
+                <span>UPCEBU > BUILDING</span>
+              </div>
+            </div>
+          </div>
+        </div>
 
 
         <!-- Building Table Component -->
-        <BuildingTable
-          :buildings="paginatedBuildings"
-          @openModal="handleOpenModal"
-        />
+        <BuildingTable :buildings="paginatedBuildings" @openModal="handleOpenModal" />
 
         <!-- Pagination Controls -->
         <div v-if="buildings.length > 0" class="mt-4 bg-white rounded-lg shadow p-4">
@@ -212,11 +209,8 @@ const handleDataUpdated = (data, type) => {
             <!-- Items per page selector -->
             <div class="flex items-center space-x-2 mb-3 md:mb-0">
               <span class="text-sm text-gray-600">Show:</span>
-              <select
-                v-model="itemsPerPage"
-                @change="resetPagination"
-                class="text-sm border border-gray-300 rounded px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-[#7A0C23] focus:border-transparent"
-              >
+              <select v-model="itemsPerPage" @change="resetPagination"
+                class="text-sm border border-gray-300 rounded px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-[#7A0C23] focus:border-transparent">
                 <option value="3">3</option>
                 <option value="5">5</option>
                 <option value="10">10</option>
@@ -229,57 +223,36 @@ const handleDataUpdated = (data, type) => {
             <!-- Page navigation -->
             <div class="flex items-center space-x-2">
               <!-- Previous button -->
-              <IconButton
-                @click="prevPage"
-                :disabled="currentPage === 1"
-                icon="chevronLeft"
-                title="Previous Page"
-                size="sm"
-                color="gray"
-                outlined
-                :class="[
+              <IconButton @click="prevPage" :disabled="currentPage === 1" icon="chevronLeft" title="Previous Page"
+                size="sm" color="gray" outlined :class="[
                   'px-3 py-1.5 rounded border text-sm font-medium transition-colors duration-150',
                   currentPage === 1
                     ? 'bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed'
                     : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
-                ]"
-              >
+                ]">
                 Previous
               </IconButton>
 
               <!-- Page numbers -->
               <div class="flex items-center space-x-1">
-                <button
-                  v-for="page in totalPages"
-                  :key="page"
-                  @click="goToPage(page)"
-                  :class="[
-                    'px-3 py-1.5 rounded border text-sm font-medium min-w-[36px] transition-colors duration-150',
-                    currentPage === page
-                      ? 'bg-[#7A0C23] text-white border-[#7A0C23]'
-                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                  ]"
-                >
+                <button v-for="page in totalPages" :key="page" @click="goToPage(page)" :class="[
+                  'px-3 py-1.5 rounded border text-sm font-medium min-w-[36px] transition-colors duration-150',
+                  currentPage === page
+                    ? 'bg-[#7A0C23] text-white border-[#7A0C23]'
+                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                ]">
                   {{ page }}
                 </button>
               </div>
 
               <!-- Next button -->
-              <IconButton
-                @click="nextPage"
-                :disabled="currentPage === totalPages"
-                icon="chevronRight"
-                title="Next Page"
-                size="sm"
-                color="gray"
-                outlined
-                :class="[
+              <IconButton @click="nextPage" :disabled="currentPage === totalPages" icon="chevronRight" title="Next Page"
+                size="sm" color="gray" outlined :class="[
                   'px-3 py-1.5 rounded border text-sm font-medium transition-colors duration-150',
                   currentPage === totalPages
                     ? 'bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed'
                     : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
-                ]"
-              >
+                ]">
                 Next
               </IconButton>
             </div>
@@ -302,7 +275,9 @@ const handleDataUpdated = (data, type) => {
         <div v-if="buildings.length === 0" class="mt-4 bg-white rounded-lg shadow p-8 text-center">
           <div class="flex flex-col items-center justify-center">
             <svg class="w-16 h-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4">
+              </path>
             </svg>
             <h3 class="text-lg font-medium text-gray-900 mb-2">No Buildings Found</h3>
             <p class="text-gray-500 mb-4">Get started by adding your first building.</p>
@@ -311,12 +286,8 @@ const handleDataUpdated = (data, type) => {
       </main>
     </div>
 
-    <Messagefunction
-      :showCreateSuccess="showCreateSuccess"
-      :showEditSuccess="showEditSuccess"
-      :showDeleteSuccess="showDeleteSuccess"
-      :deletedBuildingName="deletedBuildingName"
-    />
+    <Messagefunction :showCreateSuccess="showCreateSuccess" :showEditSuccess="showEditSuccess"
+      :showDeleteSuccess="showDeleteSuccess" :deletedBuildingName="deletedBuildingName" />
   </div>
 </template>
 
@@ -328,11 +299,11 @@ button:not(:disabled):hover {
 }
 
 /* Ensure pagination controls are properly spaced */
-.space-x-1 > * + * {
+.space-x-1>*+* {
   margin-left: 0.25rem;
 }
 
-.space-x-2 > * + * {
+.space-x-2>*+* {
   margin-left: 0.5rem;
 }
 

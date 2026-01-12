@@ -58,7 +58,7 @@ Route::middleware(['auth.session'])->group(function () {
     // Building Management
     Route::get('/BuildingDashboard', [BuildingController::class, 'index'])->name('buildings.index');
     Route::post('/BuildingDashboard', [BuildingController::class, 'store']);
-    Route::put('/buildings/{building}', [BuildingController::class, 'update']);
+    Route::put('/BuildingDashboard/{building}', [BuildingController::class, 'update']);
     Route::delete('/buildings/{building}', [BuildingController::class, 'destroy']);
 
     // College Management
