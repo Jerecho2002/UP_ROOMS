@@ -17,7 +17,8 @@ use App\Http\Controllers\UserAccountController;
 use App\Http\Controllers\DashboardController;
 
 // Simple auth check function
-function authCheck(Request $request) {
+function authCheck(Request $request)
+{
     return $request->session()->has('user');
 }
 
@@ -56,18 +57,15 @@ Route::middleware(['auth.session'])->group(function () {
     Route::get('/api/dashboard/search', [DashboardController::class, 'search']);
 
     // Building Management
-    Route::get('/BuildingDashboard', [BuildingController::class, 'index'])->name('buildings.index');
-    Route::post('/BuildingDashboard', [BuildingController::class, 'store']);
-    Route::put('/BuildingDashboard/{building}', [BuildingController::class, 'update']);
-    Route::delete('/buildings/{building}', [BuildingController::class, 'destroy']);
+    Route::resource('BuildingDashboard', BuildingController::class)
+        ->except(['create', 'edit', 'show'])
+        ->parameters(['BuildingDashboard' => 'building']);
 
     // College Management
-    Route::get('/CollegeDashboard', [CollegeController::class, 'index'])->name('colleges.index');
-    Route::get('/api/colleges', [CollegeController::class, 'getAll']);
-    Route::get('/api/colleges/stats/{college}', [CollegeController::class, 'getStats']);
-    Route::post('/colleges', [CollegeController::class, 'store']);
-    Route::put('/colleges/{college}', [CollegeController::class, 'update']);
-    Route::delete('/colleges/{college}', [CollegeController::class, 'destroy']);
+    Route::resource('CollegeDashboard', CollegeController::class)
+    ->except(['create', 'edit', 'show'])
+    ->parameters(['CollegeDashboard' => 'college']);
+
 
     // Department Management
     Route::get('/Department', [DepartmentController::class, 'index'])->name('departments.index');
@@ -96,19 +94,19 @@ Route::middleware(['auth.session'])->group(function () {
     // Equipment Management
     // In web.php, make sure this route exists and returns Inertia::render()
 
-  // Equipment Management Routes
-Route::get('/equipment', [EquipmentController::class, 'index'])->name('equipment.index');
+    // Equipment Management Routes
+    Route::get('/equipment', [EquipmentController::class, 'index'])->name('equipment.index');
 
-// Equipment API Routes
-Route::prefix('/api/equipment')->group(function () {
-    Route::get('/', [EquipmentController::class, 'getAll']);
-    Route::get('/stats', [EquipmentController::class, 'getStats']);
-    Route::get('/usage', [EquipmentController::class, 'getEquipmentUsage']);
-    Route::post('/', [EquipmentController::class, 'store']);
-    Route::put('/{equipment}', [EquipmentController::class, 'update']);
-    Route::post('/{equipment}/transfer', [EquipmentController::class, 'transfer']);
-    Route::delete('/{equipment}', [EquipmentController::class, 'destroy']);
-});
+    // Equipment API Routes
+    Route::prefix('/api/equipment')->group(function () {
+        Route::get('/', [EquipmentController::class, 'getAll']);
+        Route::get('/stats', [EquipmentController::class, 'getStats']);
+        Route::get('/usage', [EquipmentController::class, 'getEquipmentUsage']);
+        Route::post('/', [EquipmentController::class, 'store']);
+        Route::put('/{equipment}', [EquipmentController::class, 'update']);
+        Route::post('/{equipment}/transfer', [EquipmentController::class, 'transfer']);
+        Route::delete('/{equipment}', [EquipmentController::class, 'destroy']);
+    });
     // Schedule Management
     Route::get('/schedule', [ScheduleController::class, 'index'])->name('schedules.index');
     Route::get('/api/schedules', [ScheduleController::class, 'getAll']);
@@ -132,14 +130,14 @@ Route::prefix('/api/equipment')->group(function () {
     Route::delete('/terms/{term}', [TermController::class, 'destroy']);
 
     // User Account Management
-   // User Account Management
+    // User Account Management
 
-Route::get('/UserAccountPage', [UserAccountController::class, 'index'])->name('user-accounts.index');
-Route::post('/user-accounts', [UserAccountController::class, 'store'])->name('user-accounts.store');
-Route::put('/user-accounts/{userAccount}', [UserAccountController::class, 'update'])->name('user-accounts.update');
-Route::delete('/user-accounts/{userAccount}', [UserAccountController::class, 'destroy'])->name('user-accounts.destroy');
-Route::post('/user-accounts/{userAccount}/change-status', [UserAccountController::class, 'changeStatus'])->name('user-accounts.change-status');
-Route::post('/user-accounts/bulk-actions', [UserAccountController::class, 'bulkActions'])->name('user-accounts.bulk-actions');
+    Route::get('/UserAccountPage', [UserAccountController::class, 'index'])->name('user-accounts.index');
+    Route::post('/user-accounts', [UserAccountController::class, 'store'])->name('user-accounts.store');
+    Route::put('/user-accounts/{userAccount}', [UserAccountController::class, 'update'])->name('user-accounts.update');
+    Route::delete('/user-accounts/{userAccount}', [UserAccountController::class, 'destroy'])->name('user-accounts.destroy');
+    Route::post('/user-accounts/{userAccount}/change-status', [UserAccountController::class, 'changeStatus'])->name('user-accounts.change-status');
+    Route::post('/user-accounts/bulk-actions', [UserAccountController::class, 'bulkActions'])->name('user-accounts.bulk-actions');
     // Report Generation
     Route::prefix('/api/reports')->group(function () {
         Route::get('/room-utilization', function (Request $request) {

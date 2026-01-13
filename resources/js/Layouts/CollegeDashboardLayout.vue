@@ -2,7 +2,7 @@
 import { ref } from "vue";
 import Navbar from "@/Components/Navbar.vue";
 import Sidebar from "@/Components/Sidebar.vue";
-import CollegeTableComponent from "@/Components/CollegeModals/CollegeStatsAndLinks.vue";
+import CollegeTable from "@/Components/CollegeModals/CollegeTable.vue";
 import MessageFunction from "@/Components/MessageFunction.vue";
 
 const sidebarVisible = ref(true);
@@ -69,10 +69,7 @@ const handleDeleted = (name) => triggerToast("delete", name);
 
         <div class="bg-white shadow-lg rounded-lg p-4 sm:p-6 mb-6 ml-8 mt-6">
           <!-- CHILD COMPONENT WITH EVENTS -->
-          <CollegeTableComponent
-            @created="handleCreated"
-            @edited="handleEdited"
-            @deleted="handleDeleted"
+          <CollegeTable
           />
         </div>
       </main>
