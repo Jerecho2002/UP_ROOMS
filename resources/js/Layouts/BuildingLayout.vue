@@ -199,77 +199,7 @@ const handleDataUpdated = (data, type) => {
         <BuildingTable :buildings="paginatedBuildings" @openModal="handleOpenModal" />
 
         <!-- Pagination Controls -->
-        <div v-if="buildings.length > 0" class="mt-4 bg-white rounded-lg shadow p-4">
-          <div class="flex flex-col md:flex-row items-center justify-between">
-            <!-- Showing range -->
-            <div class="text-sm text-gray-600 mb-3 md:mb-0">
-              Showing {{ showingRange.start }} to {{ showingRange.end }} of {{ showingRange.total }} entries
-            </div>
 
-            <!-- Items per page selector -->
-            <div class="flex items-center space-x-2 mb-3 md:mb-0">
-              <span class="text-sm text-gray-600">Show:</span>
-              <select v-model="itemsPerPage" @change="resetPagination"
-                class="text-sm border border-gray-300 rounded px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-[#7A0C23] focus:border-transparent">
-                <option value="3">3</option>
-                <option value="5">5</option>
-                <option value="10">10</option>
-                <option value="20">20</option>
-                <option value="50">50</option>
-              </select>
-              <span class="text-sm text-gray-600">per page</span>
-            </div>
-
-            <!-- Page navigation -->
-            <div class="flex items-center space-x-2">
-              <!-- Previous button -->
-              <IconButton @click="prevPage" :disabled="currentPage === 1" icon="chevronLeft" title="Previous Page"
-                size="sm" color="gray" outlined :class="[
-                  'px-3 py-1.5 rounded border text-sm font-medium transition-colors duration-150',
-                  currentPage === 1
-                    ? 'bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed'
-                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
-                ]">
-                Previous
-              </IconButton>
-
-              <!-- Page numbers -->
-              <div class="flex items-center space-x-1">
-                <button v-for="page in totalPages" :key="page" @click="goToPage(page)" :class="[
-                  'px-3 py-1.5 rounded border text-sm font-medium min-w-[36px] transition-colors duration-150',
-                  currentPage === page
-                    ? 'bg-[#7A0C23] text-white border-[#7A0C23]'
-                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                ]">
-                  {{ page }}
-                </button>
-              </div>
-
-              <!-- Next button -->
-              <IconButton @click="nextPage" :disabled="currentPage === totalPages" icon="chevronRight" title="Next Page"
-                size="sm" color="gray" outlined :class="[
-                  'px-3 py-1.5 rounded border text-sm font-medium transition-colors duration-150',
-                  currentPage === totalPages
-                    ? 'bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed'
-                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
-                ]">
-                Next
-              </IconButton>
-            </div>
-
-            <!-- Page indicator -->
-            <div class="text-sm text-gray-600 mt-3 md:mt-0">
-              Page {{ currentPage }} of {{ totalPages }}
-            </div>
-          </div>
-
-          <!-- Results summary -->
-          <div class="mt-4 pt-3 border-t border-gray-200 text-center">
-            <p class="text-sm text-gray-500">
-              Total Buildings: <span class="font-semibold text-[#7A0C23]">{{ buildings.length }}</span>
-            </p>
-          </div>
-        </div>
 
         <!-- Empty state -->
         <div v-if="buildings.length === 0" class="mt-4 bg-white rounded-lg shadow p-8 text-center">

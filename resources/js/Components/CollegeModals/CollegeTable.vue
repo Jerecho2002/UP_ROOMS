@@ -14,7 +14,7 @@
       <!-- Search -->
       <div class="relative w-full sm:w-96 mb-4">
         <input type="text" v-model="search" placeholder="Search college by name..."
-          class="max-w-[300px] border border-yellow-300 rounded-lg pl-10 pr-4 py-2 w-full bg-gray-200" />
+          class="max-w-[300px] border border-yellow-300 rounded-lg pl-10 pr-4 py-2 w-full bg-gray-100" />
         <IconButton icon="search" size="sm" color="gray" class="absolute left-3 top-1/2 -translate-y-1/2"
           @click="search" />
       </div>
@@ -40,8 +40,8 @@
               </td>
             </tr>
 
-            <tr v-for="college in colleges.data" :key="college.id" class="odd:bg-white even:bg-gray-100">
-              <td class="px-4 py-3">{{ college.college_name ?? 'N/A' }}</td>
+            <tr v-for="college in colleges.data" :key="college.id" class=" odd:bg-white even:bg-gray-200 ">
+              <td class="px-4 py-3 ">{{ college.college_name ?? 'N/A' }}</td>
               <td class="px-4 py-3">{{ college.college_code ?? 'N/A' }}</td>
               <td class="px-4 py-3">{{ college.dean?.username ?? 'N/A' }}</td>
               <td class="px-4 py-3 text-center">{{ college.contact_email ?? 'N/A' }}</td>
@@ -60,7 +60,7 @@
         <CollegeModal v-if="isModalVisible" :type="modalType" :college="modalData" @close="isModalVisible = false" />
 
         <!-- Pagination -->
-        <div v-if="colleges.data" class="bg-gray-50 px-6 py-4 border-t">
+        <div v-if="colleges.data" class="bg-gray-100 px-6 py-4 border-t">
           <div class="flex justify-between items-center">
             <div class="text-sm text-gray-600">
               Showing {{ colleges.from }} to {{ colleges.to }} of {{ colleges.total }}
