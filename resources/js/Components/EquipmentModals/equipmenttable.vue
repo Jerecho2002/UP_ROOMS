@@ -371,18 +371,26 @@ watch(searchTerm, () => {
                     <table class="w-full text-left">
                         <thead class="bg-[#7A0C23] text-white sticky top-0 z-10">
                             <tr>
-                                <th class="px-6 py-4 text-sm font-bold uppercase tracking-wider">Accountable Person</th>
+                                <th class="px-6 py-4 text-sm font-bold uppercase tracking-wider">Items</th>
                                 <th class="px-6 py-4 text-sm font-bold uppercase tracking-wider">Location</th>
                                 <th class="px-6 py-4 text-sm font-bold uppercase tracking-wider">College</th>
-                                <th class="px-6 py-4 text-sm font-bold uppercase tracking-wider">Items</th>
+                                <th class="px-6 py-4 text-sm font-bold uppercase tracking-wider">Accountable Person</th>
                                 <th class="px-6 py-4 text-sm font-bold uppercase tracking-wider text-center">Action</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-yellow-400">
                             <tr v-for="item in paginatedUsageList" :key="item.id" class="hover:bg-gray-300 transition-colors">
+
                                 <td class="px-6 py-4">
-                                    <div class="font-bold text-gray-900">{{ item.name }}</div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-8 h-8 flex items-center justify-center bg-green-100 text-green-700 rounded-full font-bold text-xs">
+                                            {{ item.equipmentUsed.length }}
+                                        </span>
+                                        <span class="text-xs text-gray-500 font-medium">Equipments</span>
+                                    </div>
                                 </td>
+
+
                                 <td class="px-6 py-4">
                                     <div class="text-sm font-semibold text-green-700">Room {{ item.room }}</div>
                                     <div class="text-xs text-gray-500">{{ item.building }}</div>
@@ -392,23 +400,21 @@ watch(searchTerm, () => {
                                         {{ item.college }}
                                     </span>
                                 </td>
-                                <td class="px-6 py-4">
-                                    <div class="flex items-center gap-2">
-                                        <span class="w-8 h-8 flex items-center justify-center bg-green-100 text-green-700 rounded-full font-bold text-xs">
-                                            {{ item.equipmentUsed.length }}
-                                        </span>
-                                        <span class="text-xs text-gray-500 font-medium">Equipments</span>
-                                    </div>
+
+                                 <td class="px-6 py-4">
+                                    <div class="font-bold text-gray-900">{{ item.name }}</div>
                                 </td>
+
+
                                 <td class="px-6 py-4 text-center">
                                     <IconButton
                                         @click="handleViewDetails(item)"
                                         icon="eye"
                                         title="View Details"
                                         size="sm"
-                                        color="green"
+                                        color="black"
                                         outlined
-                                        class="hover:scale-105 transition-transform"
+                                        class="hover:scale-105  bg-green-500 "
                                     >
                                         View Details
                                     </IconButton>

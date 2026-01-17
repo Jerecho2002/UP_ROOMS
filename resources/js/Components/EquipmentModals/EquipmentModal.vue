@@ -19,6 +19,12 @@ const close = () => {
 };
 
 const equipmentList = computed(() => props.selectedUsage?.equipmentUsed || []);
+
+// Function to view item details
+const viewItemDetails = (item) => {
+    // You can implement item details view logic here
+    console.log('View item details:', item);
+};
 </script>
 
 <template>
