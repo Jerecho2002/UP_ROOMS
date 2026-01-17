@@ -3,67 +3,63 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
-class DepartmentRequest extends FormRequest
+class StoreDepartmentRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-     */
     public function rules(): array
     {
-        $departmentId = $this->route('department')?->id;
-
         return [
             'department_name' => [
                 'required',
                 'string',
                 'max:255',
-                Rule::unique('departments', 'department_name')->ignore($departmentId)
+                'unique:departments,department_name',
             ],
+
             'department_code' => [
                 'required',
                 'string',
                 'max:50',
-                'unique:departments,department_code,' . $departmentId
+                'unique:departments,department_code',
             ],
+
             'college_id' => [
-                'nullable',
-                'exists:colleges,id'
+                'required',
+                'exists:colleges,id',
             ],
+
             'department_head_id' => [
                 'nullable',
-                'exists:users,id'
+                'exists:user_accounts,id', // ⚠️ adjust if needed
             ],
+
             'description' => [
                 'nullable',
-                'string'
+                'string',
             ],
+
             'office_location' => [
                 'nullable',
                 'string',
-                'max:255'
+                'max:255',
             ],
+
             'contact_email' => [
                 'nullable',
                 'email',
-                'max:255'
+                'max:255',
             ],
+
             'contact_phone' => [
                 'nullable',
                 'string',
-                'max:20'
-            ]
+                'max:20',
+            ],
         ];
     }
 }

@@ -3,8 +3,6 @@
 namespace App\Services;
 
 use App\Models\Building;
-use App\Models\Room;
-use Illuminate\Support\Facades\DB;
 
 class BuildingService
 {

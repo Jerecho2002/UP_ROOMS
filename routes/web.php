@@ -33,18 +33,6 @@ Route::get('/login', function () {
 Route::post('/login', [LoginController::class, 'login']);
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
-// Public API routes (for debugging)
-Route::get('/api/health', function () {
-    return response()->json([
-        'status' => 'ok',
-        'timestamp' => now(),
-        'database' => [
-            'connected' => \DB::connection()->getPdo() ? true : false,
-            'name' => \DB::connection()->getDatabaseName()
-        ]
-    ]);
-});
-
 // Protected routes with auth check
 Route::middleware(['auth.session'])->group(function () {
     // Main Dashboard (with pagination and search)
@@ -63,33 +51,23 @@ Route::middleware(['auth.session'])->group(function () {
 
     // College Management
     Route::resource('CollegeDashboard', CollegeController::class)
-    ->except(['create', 'edit', 'show'])
-    ->parameters(['CollegeDashboard' => 'college']);
-
+        ->except(['create', 'edit', 'show'])
+        ->parameters(['CollegeDashboard' => 'college']);
 
     // Department Management
-    Route::get('/Department', [DepartmentController::class, 'index'])->name('departments.index');
-    Route::get('/api/departments', [DepartmentController::class, 'getAll']);
-    Route::get('/api/departments/stats/{department}', [DepartmentController::class, 'getStats']);
-    Route::post('/departments', [DepartmentController::class, 'store']);
-    Route::put('/departments/{department}', [DepartmentController::class, 'update']);
-    Route::delete('/departments/{department}', [DepartmentController::class, 'destroy']);
+    Route::resource('Departments', DepartmentController::class)
+        ->except(['create', 'edit', 'show'])
+        ->parameters(['Departments' => 'department']);
 
     // Room Types
-    Route::get('/roomtypes', [RoomTypeController::class, 'index'])->name('roomtypes.index');
-    Route::get('/api/room-types', [RoomTypeController::class, 'getAll']);
-    Route::post('/room-types', [RoomTypeController::class, 'store']);
-    Route::put('/room-types/{roomType}', [RoomTypeController::class, 'update']);
-    Route::delete('/room-types/{roomType}', [RoomTypeController::class, 'destroy']);
+    Route::resource('RoomTypes', RoomTypeController::class)
+        ->except(['create', 'edit', 'show'])
+        ->parameters(['RoomTypes' => 'roomtype']);
 
     // Rooms Management
-    Route::get('/room', [RoomController::class, 'index'])->name('rooms.index');
-    Route::get('/api/rooms', [RoomController::class, 'getAll']);
-    Route::get('/api/rooms/{id}', [RoomController::class, 'show']);
-    Route::get('/api/rooms/{id}/availability', [RoomController::class, 'getAvailability']);
-    Route::post('/rooms', [RoomController::class, 'store']);
-    Route::put('/rooms/{room}', [RoomController::class, 'update']);
-    Route::delete('/rooms/{room}', [RoomController::class, 'destroy']);
+    Route::resource('Rooms', RoomController::class)
+        ->except(['create', 'edit', 'show'])
+        ->parameters(['Rooms' => 'room']);
 
     // Equipment Management
     // In web.php, make sure this route exists and returns Inertia::render()
@@ -171,40 +149,6 @@ Route::middleware(['auth.session'])->group(function () {
     });
 });
 
-// **PROBLEM**: You have duplicate routes defined for the same paths
-// Remove the duplicate fallback routes section below, OR
-// Make sure the controller routes above are properly rendering Inertia components
-
-// Alternative solution: Keep both but ensure controllers return Inertia::render()
-// Here's what each controller's index() method should return:
-
-/*
-// In EquipmentController::index()
-public function index()
-{
-    return Inertia::render('Equipment');
-}
-
-// In RoomController::index()
-public function index()
-{
-    return Inertia::render('Room');
-}
-
-// In RoomTypeController::index()
-public function index()
-{
-    return Inertia::render('RoomTypes');
-}
-
-// In ScheduleController::index()
-public function index()
-{
-    return Inertia::render('Schedule');
-}
-*/
-
-// Catch-all route for SPA (Single Page Application) - should be LAST
 Route::get('/{any}', function () {
     return Inertia::render('NotFound');
 })->where('any', '.*');

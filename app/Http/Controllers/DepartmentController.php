@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\DepartmentRequest;
+use App\Http\Requests\StoreDepartmentRequest;
+use App\Http\Requests\UpdateDepartmentRequest;
 use App\Models\Building;
-use App\Http\Requests\StoreBuildingRequest;
-use App\Http\Requests\UpdateBuildingRequest;
 use App\Models\Department;
 use App\Models\College;
+use App\Models\UserAccount;
 use App\Services\DepartmentService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -23,25 +23,27 @@ class DepartmentController extends Controller
         $search = $request->input('search');
         $departments = $this->DepartmentService->getDepartment($perPage, $search);
         $colleges = College::all();
+        $users = UserAccount::all();
 
-        return Inertia::render('Department', [
+        return Inertia::render('Departments', [
             'departments' => $departments,
             'colleges' => $colleges,
+            'users' => $users,
         ]);
     }
 
-    public function store(DepartmentRequest $request)
+    public function store(StoreDepartmentRequest $request)
     {
         Department::create($request->validated());
 
         return redirect()->back()->with('success', 'Department created successfully.');
     }
 
-    public function update(UpdateBuildingRequest $request, Building $building)
+    public function update(UpdateDepartmentRequest $request, Department $department)
     {
-        $building->update($request->validated());
+        $department->update($request->validated());
 
-        return redirect()->back()->with('success', 'Building updated successfully.');
+        return redirect()->back()->with('success', 'Department updated successfully.');
     }
 
     public function destroy(Building $building)

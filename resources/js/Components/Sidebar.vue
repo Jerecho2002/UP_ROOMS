@@ -55,7 +55,7 @@
 
       <div v-show="isCollegeOpen" class="pl-4 space-y-1 transition-all duration-300 overflow-hidden">
         <a href="/CollegeDashboard" class="block px-4 py-2 hover:bg-[#9c1b33] hover:text-white rounded transition duration-150">College Dashboard</a>
-        <a href="/Department" class="block px-4 py-2 hover:bg-[#9c1b33] hover:text-white rounded transition duration-150">Department</a>
+        <a href="/Departments" class="block px-4 py-2 hover:bg-[#9c1b33] hover:text-white rounded transition duration-150">Departments</a>
       </div>
 
       <hr class="border-gray-100 my-1">
@@ -79,8 +79,8 @@
       </div>
 
       <div v-show="isRoomsOpen" class="pl-4 space-y-1 transition-all duration-300 overflow-hidden">
-        <a href="/room" class="block px-4 py-2 hover:bg-[#9c1b33] hover:text-white rounded transition duration-150">Rooms</a>
-        <a href="/roomtypes" class="block px-4 py-2 hover:bg-[#9c1b33] hover:text-white rounded transition duration-150">Room Types</a>
+        <a href="/Rooms" class="block px-4 py-2 hover:bg-[#9c1b33] hover:text-white rounded transition duration-150">Rooms</a>
+        <a href="/RoomTypes" class="block px-4 py-2 hover:bg-[#9c1b33] hover:text-white rounded transition duration-150">Room Types</a>
       </div>
 
       <hr class="border-gray-200 my-2">
@@ -175,8 +175,8 @@ const setInitialMenuState = () => {
   // Map sub-routes to their corresponding parent menu state ref
   const pathMap = {
     Building: ['/BuildingDashboard', '/equipment'],
-    College: ['/CollegeDashboard', '/Department'],
-    Rooms: ['/room', '/roomtypes'],
+    College: ['/CollegeDashboard', '/Departments'],
+    Rooms: ['/Rooms', '/RoomTypes'],
   };
 
   const currentPath = window.location.pathname;

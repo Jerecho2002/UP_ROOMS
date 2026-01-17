@@ -2,103 +2,49 @@
 
 namespace App\Http\Controllers;
 
-use Inertia\Inertia;
+use App\Http\Requests\StoreRoomTypesRequest;
+use App\Http\Requests\UpdateRoomTypesRequest;
 use App\Models\RoomType;
+use App\Services\RoomTypesService;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class RoomTypeController extends Controller
 {
+    public function __construct(
+        protected RoomTypesService $roomTypesService,
+    ) {}
     public function index(Request $request)
     {
-        $roomTypes = RoomType::withCount('rooms')
-            ->orderBy('room_type_name')
-            ->paginate(20);
+        $perPage = 10;
+        $search = $request->input('search');
+        $roomtypes = $this->roomTypesService->getRoomTypes($perPage, $search);
 
-        return Inertia::render('roomtypes', [
-            'room_types' => $roomTypes,
-            'stats' => [
-                'total' => RoomType::count(),
-                'total_rooms' => RoomType::withCount('rooms')->get()->sum('rooms_count'),
-                'most_common' => RoomType::withCount('rooms')
-                    ->orderBy('rooms_count', 'desc')
-                    ->first(),
-            ]
+        return Inertia::render('RoomTypes', [
+            'roomtypes' => $roomtypes,
         ]);
     }
 
-    public function getAll(Request $request)
+    public function store(StoreRoomTypesRequest $request)
     {
-        $query = RoomType::withCount('rooms');
+        RoomType::create($request->validated());
 
-        if ($request->has('search')) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('room_type_name', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
-            });
-        }
-
-        $sortField = $request->get('sort_field', 'room_type_name');
-        $sortOrder = $request->get('sort_order', 'asc');
-        $query->orderBy($sortField, $sortOrder);
-
-        return response()->json($query->paginate($request->get('per_page', 20)));
+        return redirect()->back()->with('success', 'Room type created successfully.');
     }
 
-    public function store(Request $request)
+    public function update(UpdateRoomTypesRequest $request, RoomType $roomtype)
     {
-        $validated = $request->validate([
-            'room_type_name' => 'required|string|max:255|unique:room_types,room_type_name',
-            'slug' => 'nullable|string|max:255|unique:room_types,slug',
-            'description' => 'nullable|string',
-            'default_capacity' => 'nullable|integer|min:1',
-            'features' => 'nullable|array',
-        ]);
+        $roomtype->update($request->validated());
 
-        // Generate slug if not provided
-        if (empty($validated['slug'])) {
-            $validated['slug'] = \Illuminate\Support\Str::slug($validated['room_type_name']);
-        }
-
-        $roomType = RoomType::create($validated);
-
-        return response()->json([
-            'message' => 'Room type created successfully',
-            'room_type' => $roomType,
-        ], 201);
+        return redirect()->back()->with('success', 'Room type updated successfully.');
     }
 
-    public function update(Request $request, RoomType $roomType)
+    public function destroy(RoomType $roomtype)
     {
-        $validated = $request->validate([
-            'room_type_name' => 'sometimes|required|string|max:255|unique:room_types,room_type_name,' . $roomType->id,
-            'slug' => 'nullable|string|max:255|unique:room_types,slug,' . $roomType->id,
-            'description' => 'nullable|string',
-            'default_capacity' => 'nullable|integer|min:1',
-            'features' => 'nullable|array',
-        ]);
+        $roomtype->delete();
 
-        $roomType->update($validated);
-
-        return response()->json([
-            'message' => 'Room type updated successfully',
-            'room_type' => $roomType,
-        ]);
-    }
-
-    public function destroy(RoomType $roomType)
-    {
-        // Check if room type is being used
-        if ($roomType->rooms()->count() > 0) {
-            return response()->json([
-                'message' => 'Cannot delete room type that is assigned to rooms'
-            ], 422);
-        }
-
-        $roomType->delete();
-
-        return response()->json([
-            'message' => 'Room type deleted successfully'
-        ]);
+        return redirect()
+            ->back()
+            ->with('success', 'Room Type deleted successfully.');
     }
 }

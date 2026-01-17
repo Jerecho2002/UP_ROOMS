@@ -1,19 +1,19 @@
 <template>
   <div class="p-4 bg-white min-h-screen">
     <div class="max-w-7xl mx-auto">
-      <h6 class="font-bold text-l text-[#7A0C23] mt-4">Building LIST 📃</h6>
+      <h6 class="font-bold text-l text-[#7A0C23] mt-4">Department LIST 📃</h6>
 
       <!-- Add Button -->
       <div class="pt-7 mb-3 flex justify-end">
-        <IconButton @click="handleAdd" icon="plus" title="Add Building" size="md" color="green" outlined
+        <IconButton @click="handleAdd" icon="plus" title="Department Building" size="md" color="green" outlined
           class="bg-green-600 text-white px-5 py-2 rounded-lg">
-          Add Building
+          Add Department
         </IconButton>
       </div>
 
       <!-- Search -->
       <div class="relative w-full sm:w-96 mb-4">
-        <input type="text" v-model="search" placeholder="Search buildings by name..."
+        <input type="text" v-model="search" placeholder="Search departments by name..."
           class="max-w-[300px] border border-yellow-300 rounded-lg pl-10 pr-4 py-2 w-full bg-gray-200" />
         <IconButton icon="search" size="sm" color="gray" class="absolute left-3 top-1/2 -translate-y-1/2"
           @click="search" />
@@ -24,11 +24,10 @@
         <table class="min-w-full text-sm table-fixed">
           <thead class="bg-[#7A0C23] text-white">
             <tr>
-              <th class="px-4 py-3 text-left">Building</th>
-              <th class="px-4 py-3 text-left">Address</th>
-              <th class="px-4 py-3 text-left">College</th>
-              <th class="px-4 py-3 text-center">Floors</th>
-              <th class="px-4 py-3 text-center">Rooms</th>
+              <th class="px-4 py-3 text-left">Department Name</th>
+              <th class="px-4 py-3 text-left">Department Code</th>
+              <th class="px-4 py-3 text-left">College Name</th>
+              <th class="px-4 py-3 text-center">Office Location</th>
               <th class="px-4 py-3 text-center">Actions</th>
             </tr>
           </thead>
@@ -44,7 +43,6 @@
               <td class="px-4 py-3">{{ department.department_name ?? 'N/A' }}</td>
               <td class="px-4 py-3">{{ department.department_code ?? 'N/A'}}</td>
               <td class="px-4 py-3">{{ department.college?.college_name ?? 'N/A' }}</td>
-              <td class="px-4 py-3 text-center">{{ department.description ?? 'N/A' }}</td>
               <td class="px-4 py-3 text-center">{{ department.office_location ?? 'N/A' }}</td>
               <td class="px-4 py-3">
                 <div class="flex justify-center gap-2">
@@ -57,7 +55,7 @@
           </tbody>
         </table>
 
-        <!-- <BuildingModal v-if="isModalVisible" :type="modalType" :building="modalData" @close="isModalVisible = false" /> -->
+        <DepartmentModal v-if="isModalVisible" :type="modalType" :department="modalData" @close="isModalVisible = false" />
 
         <!-- Pagination -->
         <div v-if="departments.data" class="bg-gray-50 px-6 py-4 border-t">
@@ -84,7 +82,7 @@ import { ref, computed, watch } from 'vue'
 import { usePage, router } from '@inertiajs/vue3'
 import debounce from 'lodash/debounce'
 import IconButton from '@/Components/IconButton.vue'
-// import BuildingModal from './BuildingModal.vue'
+import DepartmentModal from './DepartmentModal.vue'
 
 const props = defineProps({
   search: {
@@ -140,11 +138,6 @@ watch(search, (val) => {
   updateSearch(val)
 })
 </script>
-
-
-
-
-
 
 <style scoped>
 /* Fixed table layout to prevent movement */
