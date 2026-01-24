@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, defineProps, defineEmits, onMounted } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import IconButton from '@/Components/IconButton.vue';
 
 const props = defineProps({
