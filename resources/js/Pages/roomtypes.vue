@@ -3,5 +3,5 @@ import Layout from '@/Layouts/RoomTypesLayout.vue';
 </script>
 
 <template>
-  <Layout />
+    <Layout />
 </template>

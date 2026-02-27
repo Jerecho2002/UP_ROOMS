@@ -16,7 +16,6 @@ use App\Http\Controllers\TermController;
 use App\Http\Controllers\UserAccountController;
 use App\Http\Controllers\DashboardController;
 
-// Simple auth check function
 function authCheck(Request $request)
 {
     return $request->session()->has('user');
@@ -33,7 +32,6 @@ Route::get('/login', function () {
 Route::post('/login', [LoginController::class, 'login']);
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
-// Protected routes with auth check
 Route::middleware(['auth.session'])->group(function () {
     // Main Dashboard (with pagination and search)
     Route::get('/', [MainDashboardController::class, 'index'])->name('dashboard');
@@ -69,9 +67,6 @@ Route::middleware(['auth.session'])->group(function () {
         ->except(['create', 'edit', 'show'])
         ->parameters(['Rooms' => 'room']);
 
-    // Equipment Management
-    // In web.php, make sure this route exists and returns Inertia::render()
-
     // Equipment Management Routes
     Route::get('/equipment', [EquipmentController::class, 'index'])->name('equipment.index');
 
@@ -86,28 +81,11 @@ Route::middleware(['auth.session'])->group(function () {
         Route::delete('/{equipment}', [EquipmentController::class, 'destroy']);
     });
     // Schedule Management
-    Route::get('/schedule', [ScheduleController::class, 'index'])->name('schedules.index');
-    Route::get('/api/schedules', [ScheduleController::class, 'getAll']);
-    Route::get('/api/schedules/stats', [ScheduleController::class, 'getStats']);
-    Route::get('/api/schedules/check-availability', [ScheduleController::class, 'checkAvailability']);
-    Route::get('/api/schedules/{id}/approve', [ScheduleController::class, 'approve']);
-    Route::get('/api/rooms/{roomId}/schedules', [ScheduleController::class, 'getRoomSchedules']);
-    Route::post('/schedules', [ScheduleController::class, 'store']);
-    Route::put('/schedules/{schedule}', [ScheduleController::class, 'update']);
-    Route::delete('/schedules/{schedule}', [ScheduleController::class, 'destroy']);
+    Route::get('/Schedule', [ScheduleController::class, 'index'])->name('schedules.index');
 
     // Terms Management
     Route::get('/Terms', [TermController::class, 'index'])->name('terms.index');
-    Route::get('/api/terms', [TermController::class, 'getAll']);
-    Route::get('/api/terms/current', [TermController::class, 'getCurrent']);
-    Route::get('/api/terms/{id}/stats', [TermController::class, 'getStats']);
-    Route::get('/api/terms/{id}/set-current', [TermController::class, 'setCurrent']);
-    Route::get('/api/terms/{id}/calendar', [TermController::class, 'getCalendar']);
-    Route::post('/terms', [TermController::class, 'store']);
-    Route::put('/terms/{term}', [TermController::class, 'update']);
-    Route::delete('/terms/{term}', [TermController::class, 'destroy']);
 
-    // User Account Management
     // User Account Management
 
     Route::get('/UserAccountPage', [UserAccountController::class, 'index'])->name('user-accounts.index');

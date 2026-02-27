@@ -1,7 +1,7 @@
 <script setup>
-import Layout from '@/Layouts/schedulelayout.vue'; 
+import Layout from '@/Layouts/ScheduleLayout.vue'; 
 </script>
 
 <template>
-  <Layout />
+    <Layout />
 </template>

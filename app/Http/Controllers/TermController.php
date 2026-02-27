@@ -16,7 +16,7 @@ class TermController extends Controller
 
         $currentTerm = Term::where('is_current', true)->first();
 
-        return Inertia::render('Terms',[
+        return Inertia::render('Terms', [
             'terms' => $terms,
             'current_term' => $currentTerm,
             'stats' => [
@@ -34,10 +34,10 @@ class TermController extends Controller
 
         if ($request->has('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('term_name', 'like', "%{$search}%")
-                  ->orWhere('term_code', 'like', "%{$search}%")
-                  ->orWhere('academic_year', 'like', "%{$search}%");
+                    ->orWhere('term_code', 'like', "%{$search}%")
+                    ->orWhere('academic_year', 'like', "%{$search}%");
             });
         }
 

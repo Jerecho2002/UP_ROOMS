@@ -1,101 +1,89 @@
 <template>
-  <aside
-    v-show="sidebarOpen"
-    id="sidebar"
-    class="w-64 bg-white text-black h-screen p-4 flex flex-col transition-all duration-300 z-10"
-  >
+  <aside v-show="sidebarOpen" id="sidebar"
+    class="w-64 bg-white text-black h-screen p-4 flex flex-col transition-all duration-300 z-10">
     <div class="text-center mb-6">
       <p class="mt-3 font-semibold text-xl text-[#00b3ff] "><a href="/MainDashboard">Dashboard</a></p>
     </div>
 
     <nav class="space-y-1 text-sm overflow-y-auto">
 
-      <div
-        @click="toggleMenu('Building')"
-        class="flex justify-between items-center cursor-pointer px-4 py-2 rounded transition duration-150"
-        :class="{
+      <div @click="toggleMenu('Building')"
+        class="flex justify-between items-center cursor-pointer px-4 py-2 rounded transition duration-150" :class="{
           'bg-gray-100 font-semibold text-gray-800': isBuildingOpen,
           'text-black hover:bg-[#9c1b33] hover:text-white': !isBuildingOpen
-        }"
-      >
+        }">
         <span>Build & Equip.</span>
-        <svg
-          :class="{'rotate-90': isBuildingOpen}"
-          class="w-4 h-4 transform transition-transform duration-300"
-          fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"
-        >
+        <svg :class="{ 'rotate-90': isBuildingOpen }" class="w-4 h-4 transform transition-transform duration-300"
+          fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
         </svg>
       </div>
 
       <div v-show="isBuildingOpen" class="pl-4 space-y-1 transition-all duration-300 overflow-hidden">
-        <a href="/BuildingDashboard" class="block px-4 py-2 hover:bg-[#9c1b33] hover:text-white rounded transition duration-150">Building</a>
-        <a href="/equipment" class="block px-4 py-2 hover:bg-[#9c1b33] hover:text-white rounded transition duration-150">Equipment</a>
+        <a href="/BuildingDashboard"
+          class="block px-4 py-2 hover:bg-[#9c1b33] hover:text-white rounded transition duration-150">Building</a>
+        <a href="/equipment"
+          class="block px-4 py-2 hover:bg-[#9c1b33] hover:text-white rounded transition duration-150">Equipment</a>
       </div>
 
       <hr class="border-gray-100 my-1">
 
-      <div
-        @click="toggleMenu('College')"
-        class="flex justify-between items-center cursor-pointer px-4 py-2 rounded transition duration-150"
-        :class="{
+      <div @click="toggleMenu('College')"
+        class="flex justify-between items-center cursor-pointer px-4 py-2 rounded transition duration-150" :class="{
           'bg-gray-100 font-semibold text-gray-800': isCollegeOpen,
           'text-black hover:bg-[#9c1b33] hover:text-white': !isCollegeOpen
-        }"
-      >
+        }">
         <span>College & Dept.</span>
-        <svg
-          :class="{'rotate-90': isCollegeOpen}"
-          class="w-4 h-4 transform transition-transform duration-300"
-          fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"
-        >
+        <svg :class="{ 'rotate-90': isCollegeOpen }" class="w-4 h-4 transform transition-transform duration-300"
+          fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
         </svg>
       </div>
 
       <div v-show="isCollegeOpen" class="pl-4 space-y-1 transition-all duration-300 overflow-hidden">
-        <a href="/CollegeDashboard" class="block px-4 py-2 hover:bg-[#9c1b33] hover:text-white rounded transition duration-150">College Dashboard</a>
-        <a href="/Departments" class="block px-4 py-2 hover:bg-[#9c1b33] hover:text-white rounded transition duration-150">Departments</a>
+        <a href="/CollegeDashboard"
+          class="block px-4 py-2 hover:bg-[#9c1b33] hover:text-white rounded transition duration-150">College
+          Dashboard</a>
+        <a href="/Departments"
+          class="block px-4 py-2 hover:bg-[#9c1b33] hover:text-white rounded transition duration-150">Departments</a>
       </div>
 
       <hr class="border-gray-100 my-1">
 
-      <div
-        @click="toggleMenu('Rooms')"
-        class="flex justify-between items-center cursor-pointer px-4 py-2 rounded transition duration-150"
-        :class="{
+      <div @click="toggleMenu('Rooms')"
+        class="flex justify-between items-center cursor-pointer px-4 py-2 rounded transition duration-150" :class="{
           'bg-gray-100 font-semibold text-gray-800': isRoomsOpen,
           'text-black hover:bg-[#9c1b33] hover:text-white': !isRoomsOpen
-        }"
-      >
+        }">
         <span>Room Management.</span>
-        <svg
-          :class="{'rotate-90': isRoomsOpen}"
-          class="w-4 h-4 transform transition-transform duration-300"
-          fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"
-        >
+        <svg :class="{ 'rotate-90': isRoomsOpen }" class="w-4 h-4 transform transition-transform duration-300" fill="none"
+          stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
         </svg>
       </div>
 
       <div v-show="isRoomsOpen" class="pl-4 space-y-1 transition-all duration-300 overflow-hidden">
-        <a href="/Rooms" class="block px-4 py-2 hover:bg-[#9c1b33] hover:text-white rounded transition duration-150">Rooms</a>
-        <a href="/RoomTypes" class="block px-4 py-2 hover:bg-[#9c1b33] hover:text-white rounded transition duration-150">Room Types</a>
+        <a href="/Rooms"
+          class="block px-4 py-2 hover:bg-[#9c1b33] hover:text-white rounded transition duration-150">Rooms</a>
+        <a href="/RoomTypes"
+          class="block px-4 py-2 hover:bg-[#9c1b33] hover:text-white rounded transition duration-150">Room Types</a>
       </div>
 
       <hr class="border-gray-200 my-2">
 
-      <a href="/UserAccountPage" class="block px-4 py-2 text-black hover:bg-[#9c1b33] hover:text-white rounded transition duration-150">User Account</a>
-      <a href="/schedule" class="block px-4 py-2 text-black hover:bg-[#9c1b33] hover:text-white rounded transition duration-150">Schedules</a>
+      <a href="/UserAccountPage"
+        class="block px-4 py-2 text-black hover:bg-[#9c1b33] hover:text-white rounded transition duration-150">User
+        Account</a>
+      <a href="/Schedule"
+        class="block px-4 py-2 text-black hover:bg-[#9c1b33] hover:text-white rounded transition duration-150">Schedules</a>
       <hr class="border-gray-100 my-1">
-      <a href="/Terms" class="block px-4 py-2 text-black hover:bg-[#9c1b33] hover:text-white rounded transition duration-150">Terms</a>
+      <a href="/Terms"
+        class="block px-4 py-2 text-black hover:bg-[#9c1b33] hover:text-white rounded transition duration-150">Terms</a>
 
       <!-- Logout Link Added Below Terms -->
       <form @submit.prevent="logout">
-        <button
-          type="submit"
-          class="w-full text-left block px-4 py-2 text-black hover:bg-[#9c1b33] hover:text-white rounded transition duration-150"
-        >
+        <button type="submit"
+          class="w-full text-left block px-4 py-2 text-black hover:bg-[#9c1b33] hover:text-white rounded transition duration-150">
           Logout
         </button>
       </form>
