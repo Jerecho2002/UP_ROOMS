@@ -18,9 +18,20 @@ class EquipmentFactory extends Factory
     {
         $statuses = ['available', 'in_use', 'maintenance', 'damaged', 'retired'];
         $equipmentTypes = [
-            'Laptop', 'Desktop Computer', 'Projector', 'Printer', 'Scanner',
-            'Microphone', 'Speaker System', 'Whiteboard', 'Television',
-            'Camera', 'Tablet', 'Server', 'Router', 'Switch'
+            'Laptop',
+            'Desktop Computer',
+            'Projector',
+            'Printer',
+            'Scanner',
+            'Microphone',
+            'Speaker System',
+            'Whiteboard',
+            'Television',
+            'Camera',
+            'Tablet',
+            'Server',
+            'Router',
+            'Switch'
         ];
 
         $equipmentName = $this->faker->randomElement($equipmentTypes);
@@ -42,7 +53,7 @@ class EquipmentFactory extends Factory
             'serial_number' => $this->faker->unique()->bothify('SN-########'),
             'purchase_date' => $this->faker->dateTimeBetween('-5 years', 'now')->format('Y-m-d'),
             'purchase_price' => $this->faker->randomFloat(2, 1000, 50000),
-            'assigned_user_id' => UserAccount::factory(),
+            'assigned_user_id' => null,
             'specifications' => json_encode([
                 'processor' => $this->faker->optional()->words(2, true),
                 'ram' => $this->faker->optional()->randomElement(['4GB', '8GB', '16GB', '32GB']),

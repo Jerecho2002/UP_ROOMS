@@ -2,25 +2,30 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Spatie\Permission\Traits\HasRoles;
 
-class User extends Model
+
+class User extends Authenticatable
 {
-    use SoftDeletes;
+    use HasRoles, HasFactory;
 
-    protected $table = 'user_accounts';
+    protected $table = 'users';
+
+    protected $guard_name = 'web';
 
     protected $fillable = [
-        'name',
         'email',
-        'user_type',
-        'college_id',
-        'department_id',
+        'password',
         'status',
+    ];
+
+    protected $casts = [
+        'status'   => 'integer',
     ];
 
     // Relationship: User belongs to a college
@@ -69,5 +74,9 @@ class User extends Model
     public function assignedEquipment(): HasMany
     {
         return $this->hasMany(Equipment::class, 'assigned_user_id');
+    }
+    public function userAccount(): HasOne
+    {
+        return $this->hasOne(UserAccount::class, 'user_id');
     }
 }

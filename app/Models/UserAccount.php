@@ -15,25 +15,16 @@ class UserAccount extends Authenticatable
     protected $table = 'user_accounts';
 
     protected $fillable = [
-        'username',
-        'email',
-        'password',
+        'user_id',
         'first_name',
         'last_name',
         'middle_name',
-        'employee_id',
-        'profile_picture',
+        'employee_number',
         'gender',
-        'birth_date',
         'contact_number',
-        'address',
         'college_id',
         'department_id',
-        'user_type',
-        'roles',
-        'account_status',
-        'last_login_at',
-        'last_login_ip',
+        'status',
     ];
 
     protected $hidden = [
@@ -41,14 +32,11 @@ class UserAccount extends Authenticatable
         'remember_token',
     ];
 
-    protected $casts = [
-        'roles' => 'json',
-        'last_login_at' => 'datetime',
-        'birth_date' => 'date',
-        'account_status' => 'string',
-    ];
-
     // Relationships
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
     public function college()
     {
         return $this->belongsTo(College::class, 'college_id');

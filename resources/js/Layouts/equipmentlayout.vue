@@ -71,7 +71,7 @@ const initializeCharts = () => {
                 },
                 tooltip: {
                     callbacks: {
-                        label: function(context) {
+                        label: function (context) {
                             return `${context.label}: ${context.raw} equipment items`
                         }
                     }
@@ -126,6 +126,7 @@ watch(chartData, updateCharts, { deep: true })
 </script>
 
 <template>
+
     <Head title="Equipment Management" />
 
     <div class="flex pt-14 h-screen">
@@ -149,7 +150,8 @@ watch(chartData, updateCharts, { deep: true })
                                 <h2 class="text-lg font-bold text-gray-800">Equipment Distribution by Person</h2>
                                 <div class="flex items-center text-sm text-gray-500">
                                     <div class="w-3 h-3 bg-blue-500 rounded-full mr-1"></div>
-                                    <span>Total: {{ chartData.pieData.datasets[0]?.data?.reduce((a, b) => a + b, 0) || 0 }} items</span>
+                                    <span>Total: {{chartData.pieData.datasets[0]?.data?.reduce((a, b) => a + b, 0) || 0
+                                        }} items</span>
                                 </div>
                             </div>
                             <div class="h-[320px] relative">

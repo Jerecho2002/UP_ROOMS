@@ -20,11 +20,11 @@ class CollegeController extends Controller
         $perPage = 10;
         $search = $request->input('search');
         $colleges = $this->collegeService->getColleges($perPage, $search);
-        $dean = UserAccount::all();
+        $deans = UserAccount::all();
 
         return Inertia::render('CollegeDashboard', [
             'colleges' => $colleges,
-            'dean' => $dean,
+            'deans' => $deans,
         ]);
     }
 

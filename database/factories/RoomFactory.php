@@ -23,7 +23,7 @@ class RoomFactory extends Factory
             'college_id' => College::factory(),
             'department_id' => Department::factory(),
             'room_type_id' => RoomType::factory(),
-            'assigned_user_id' => UserAccount::factory(),
+            'assigned_user_id' => null,
             'floor_number' => $this->faker->numberBetween(1, 5),
             'location' => $this->faker->optional()->words(3, true),
             'capacity' => $this->faker->numberBetween(20, 100),

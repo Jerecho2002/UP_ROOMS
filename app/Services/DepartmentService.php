@@ -7,9 +7,9 @@ use Illuminate\Support\Facades\DB;
 
 class DepartmentService
 {
-   public function getDepartment(int $perPage = 10, ?string $search = null)
+    public function getDepartment(int $perPage = 10, ?string $search = null)
     {
-        return Department::with('college')
+        return Department::with('college', 'head')
             ->orderByDesc('created_at')
             ->when($search, fn($query) => $query->where('department_name', 'like', "%{$search}%"))
             ->paginate($perPage)

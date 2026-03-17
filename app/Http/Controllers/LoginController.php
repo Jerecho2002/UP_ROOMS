@@ -3,44 +3,38 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use App\Models\User;
 
 class LoginController extends Controller
 {
+    public function showLogin()
+    {
+        return inertia('Login');
+    }
     public function login(Request $request)
     {
         $credentials = $request->validate([
-            'username' => 'required',
-            'password' => 'required',
+            'email' => ['required', 'email'],
+            'password' => ['required'],
         ]);
 
-        // Simple static authentication
-        $users = [
-            'admin' => 'password123',
-            'staff' => 'password123',
-            'faculty' => 'password123',
-            'sysadmin' => 'password123',
-            'ao' => 'password123',
-            'adpd' => 'password123',
-        ];
+        if (Auth::attempt($credentials)) {
 
-        if (isset($users[$credentials['username']]) &&
-            $users[$credentials['username']] === $credentials['password']) {
+            $request->session()->regenerate();
 
-            $request->session()->put('user', [
-                'username' => $credentials['username'],
-                'role' => $credentials['username']
-            ]);
-
-            return redirect('/MainDashboard');
+            return redirect()->route('BuildingDashboard.index');
         }
 
         return back()->withErrors([
-            'username' => 'Invalid username or password.',
-        ]);
+            'email' => 'Invalid credentials.',
+        ])->onlyInput('email');
     }
 
     public function logout(Request $request)
     {
+        Auth::logout();
+
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 

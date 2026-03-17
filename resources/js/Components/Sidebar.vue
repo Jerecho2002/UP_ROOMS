@@ -56,8 +56,8 @@
           'text-black hover:bg-[#9c1b33] hover:text-white': !isRoomsOpen
         }">
         <span>Room Management.</span>
-        <svg :class="{ 'rotate-90': isRoomsOpen }" class="w-4 h-4 transform transition-transform duration-300" fill="none"
-          stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <svg :class="{ 'rotate-90': isRoomsOpen }" class="w-4 h-4 transform transition-transform duration-300"
+          fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
         </svg>
       </div>
@@ -71,7 +71,7 @@
 
       <hr class="border-gray-200 my-2">
 
-      <a href="/UserAccountPage"
+      <a href="/UserAccounts"
         class="block px-4 py-2 text-black hover:bg-[#9c1b33] hover:text-white rounded transition duration-150">User
         Account</a>
       <a href="/Schedule"

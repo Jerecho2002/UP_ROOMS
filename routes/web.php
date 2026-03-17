@@ -16,113 +16,106 @@ use App\Http\Controllers\TermController;
 use App\Http\Controllers\UserAccountController;
 use App\Http\Controllers\DashboardController;
 
-function authCheck(Request $request)
-{
-    return $request->session()->has('user');
-}
-
 // Login Routes
-Route::get('/login', function () {
-    if (authCheck(request())) {
-        return redirect('/MainDashboard');
-    }
-    return Inertia::render('Login');
-})->name('login');
-
+Route::get('/login', [LoginController::class, 'showLogin'])
+    ->name('login');
 Route::post('/login', [LoginController::class, 'login']);
-Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+Route::post('/logout', [LoginController::class, 'logout'])->name('logout')->middleware('auth');
 
-Route::middleware(['auth.session'])->group(function () {
-    // Main Dashboard (with pagination and search)
-    Route::get('/', [MainDashboardController::class, 'index'])->name('dashboard');
-    Route::get('/MainDashboard', [MainDashboardController::class, 'index'])->name('main.dashboard');
+// Authenticated Routes
+Route::middleware(['auth'])->group(function () {
 
-    // API endpoints for frontend
-    Route::get('/api/dashboard/stats', [DashboardController::class, 'getStats']);
-    Route::get('/api/dashboard/rooms', [DashboardController::class, 'getRooms']);
-    Route::get('/api/dashboard/search', [DashboardController::class, 'search']);
+    Route::middleware(['role:admin'])->group(function () {
+        // Main Dashboard
+        Route::get('/', [MainDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/MainDashboard', [MainDashboardController::class, 'index'])->name('main.dashboard');
 
-    // Building Management
-    Route::resource('BuildingDashboard', BuildingController::class)
-        ->except(['create', 'edit', 'show'])
-        ->parameters(['BuildingDashboard' => 'building']);
+        // API endpoints for frontend
+        Route::get('/api/dashboard/stats', [DashboardController::class, 'getStats']);
+        Route::get('/api/dashboard/rooms', [DashboardController::class, 'getRooms']);
+        Route::get('/api/dashboard/search', [DashboardController::class, 'search']);
 
-    // College Management
-    Route::resource('CollegeDashboard', CollegeController::class)
-        ->except(['create', 'edit', 'show'])
-        ->parameters(['CollegeDashboard' => 'college']);
+        // Building Management
+        Route::resource('BuildingDashboard', BuildingController::class)
+            ->except(['create', 'edit', 'show'])
+            ->parameters(['BuildingDashboard' => 'building']);
 
-    // Department Management
-    Route::resource('Departments', DepartmentController::class)
-        ->except(['create', 'edit', 'show'])
-        ->parameters(['Departments' => 'department']);
+        // College Management
+        Route::resource('CollegeDashboard', CollegeController::class)
+            ->except(['create', 'edit', 'show'])
+            ->parameters(['CollegeDashboard' => 'college']);
 
-    // Room Types
-    Route::resource('RoomTypes', RoomTypeController::class)
-        ->except(['create', 'edit', 'show'])
-        ->parameters(['RoomTypes' => 'roomtype']);
+        // Department Management
+        Route::resource('Departments', DepartmentController::class)
+            ->except(['create', 'edit', 'show'])
+            ->parameters(['Departments' => 'department']);
 
-    // Rooms Management
-    Route::resource('Rooms', RoomController::class)
-        ->except(['create', 'edit', 'show'])
-        ->parameters(['Rooms' => 'room']);
+        // Room Types
+        Route::resource('RoomTypes', RoomTypeController::class)
+            ->except(['create', 'edit', 'show'])
+            ->parameters(['RoomTypes' => 'roomtype']);
 
-    // Equipment Management Routes
-    Route::get('/equipment', [EquipmentController::class, 'index'])->name('equipment.index');
+        // Rooms Management
+        Route::resource('Rooms', RoomController::class)
+            ->except(['create', 'edit', 'show'])
+            ->parameters(['Rooms' => 'room']);
 
-    // Equipment API Routes
-    Route::prefix('/api/equipment')->group(function () {
-        Route::get('/', [EquipmentController::class, 'getAll']);
-        Route::get('/stats', [EquipmentController::class, 'getStats']);
-        Route::get('/usage', [EquipmentController::class, 'getEquipmentUsage']);
-        Route::post('/', [EquipmentController::class, 'store']);
-        Route::put('/{equipment}', [EquipmentController::class, 'update']);
-        Route::post('/{equipment}/transfer', [EquipmentController::class, 'transfer']);
-        Route::delete('/{equipment}', [EquipmentController::class, 'destroy']);
-    });
-    // Schedule Management
-    Route::get('/Schedule', [ScheduleController::class, 'index'])->name('schedules.index');
+        // User Account Management
+        Route::resource('UserAccounts', UserAccountController::class)
+            ->except(['create', 'edit', 'show'])
+            ->parameters(['UserAccounts' => 'userAccount']);
 
-    // Terms Management
-    Route::get('/Terms', [TermController::class, 'index'])->name('terms.index');
+        // Term Management
+        Route::resource('Terms', TermController::class)
+            ->except(['create', 'edit', 'show'])
+            ->parameters(['Terms' => 'term']);
 
-    // User Account Management
+        // Equipment Management
+        Route::get('/equipment', [EquipmentController::class, 'index'])->name('equipment.index');
 
-    Route::get('/UserAccountPage', [UserAccountController::class, 'index'])->name('user-accounts.index');
-    Route::post('/user-accounts', [UserAccountController::class, 'store'])->name('user-accounts.store');
-    Route::put('/user-accounts/{userAccount}', [UserAccountController::class, 'update'])->name('user-accounts.update');
-    Route::delete('/user-accounts/{userAccount}', [UserAccountController::class, 'destroy'])->name('user-accounts.destroy');
-    Route::post('/user-accounts/{userAccount}/change-status', [UserAccountController::class, 'changeStatus'])->name('user-accounts.change-status');
-    Route::post('/user-accounts/bulk-actions', [UserAccountController::class, 'bulkActions'])->name('user-accounts.bulk-actions');
-    // Report Generation
-    Route::prefix('/api/reports')->group(function () {
-        Route::get('/room-utilization', function (Request $request) {
-            return app(\App\Services\ReportService::class)->generateRoomUtilizationReport(
-                $request->query('start_date', now()->subDays(30)->format('Y-m-d')),
-                $request->query('end_date', now()->format('Y-m-d'))
-            );
+        Route::prefix('/api/equipment')->group(function () {
+            Route::get('/', [EquipmentController::class, 'getAll']);
+            Route::get('/stats', [EquipmentController::class, 'getStats']);
+            Route::get('/usage', [EquipmentController::class, 'getEquipmentUsage']);
+            Route::post('/', [EquipmentController::class, 'store']);
+            Route::put('/{equipment}', [EquipmentController::class, 'update']);
+            Route::post('/{equipment}/transfer', [EquipmentController::class, 'transfer']);
+            Route::delete('/{equipment}', [EquipmentController::class, 'destroy']);
         });
 
-        Route::get('/equipment-status', function () {
-            return app(\App\Services\ReportService::class)->generateEquipmentStatusReport();
-        });
+        // Schedule Management
+        Route::get('/Schedule', [ScheduleController::class, 'index'])->name('schedules.index');
 
-        Route::get('/user-activity', function (Request $request) {
-            return app(\App\Services\ReportService::class)->generateUserActivityReport(
-                $request->query('start_date', now()->subDays(30)->format('Y-m-d')),
-                $request->query('end_date', now()->format('Y-m-d'))
-            );
-        });
+        // Report Generation
+        Route::prefix('/api/reports')->group(function () {
+            Route::get('/room-utilization', function (Request $request) {
+                return app(\App\Services\ReportService::class)->generateRoomUtilizationReport(
+                    $request->query('start_date', now()->subDays(30)->format('Y-m-d')),
+                    $request->query('end_date', now()->format('Y-m-d'))
+                );
+            });
 
-        Route::get('/schedule-report', function (Request $request) {
-            return app(\App\Services\ReportService::class)->generateScheduleReport(
-                $request->query('start_date', now()->subDays(30)->format('Y-m-d')),
-                $request->query('end_date', now()->format('Y-m-d'))
-            );
-        });
+            Route::get('/equipment-status', function () {
+                return app(\App\Services\ReportService::class)->generateEquipmentStatusReport();
+            });
 
-        Route::get('/building-report', function () {
-            return app(\App\Services\ReportService::class)->generateBuildingReport();
+            Route::get('/user-activity', function (Request $request) {
+                return app(\App\Services\ReportService::class)->generateUserActivityReport(
+                    $request->query('start_date', now()->subDays(30)->format('Y-m-d')),
+                    $request->query('end_date', now()->format('Y-m-d'))
+                );
+            });
+
+            Route::get('/schedule-report', function (Request $request) {
+                return app(\App\Services\ReportService::class)->generateScheduleReport(
+                    $request->query('start_date', now()->subDays(30)->format('Y-m-d')),
+                    $request->query('end_date', now()->format('Y-m-d'))
+                );
+            });
+
+            Route::get('/building-report', function () {
+                return app(\App\Services\ReportService::class)->generateBuildingReport();
+            });
         });
     });
 });

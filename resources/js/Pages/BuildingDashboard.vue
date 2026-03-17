@@ -1,11 +1,92 @@
 <script setup>
+import { computed, ref } from 'vue'
+import { usePage, useForm } from '@inertiajs/vue3'
+import DynamicLayout from '@/Layouts/DynamicLayout.vue'
+import DynamicModal from '@/Components/DynamicModal.vue'
 
-import Layout from '@/Layouts/BuildingLayout.vue';
+const isModalVisible = ref(false)
+const modalType = ref(null)
+const modalData = ref(null)
 
+const page = usePage()
+const buildings = computed(() => page.props.buildings ?? {})
+const filters = computed(() => page.props.filters ?? {})
+const colleges = computed(() =>
+    page.props.colleges.map(c => ({ label: c.college_name, value: c.id }))
+)
+
+const form = useForm({
+    building_name: '',
+    address: '',
+    description: '',
+    total_floors: '',
+    total_rooms: '',
+    has_elevator: 0,
+    has_parking: 0,
+    restroom_count: '',
+    ramp_count: '',
+    college_id: '',
+})
+
+const openModal = (type, row = null) => {
+    modalType.value = type
+    modalData.value = row
+    isModalVisible.value = true
+}
+
+const closeModal = () => {
+    isModalVisible.value = false
+}
+
+const handleSubmit = (data) => {
+    Object.assign(form, data)
+
+    const options = {
+        onSuccess: closeModal,
+        onError: (errors) => {
+            const firstError = Object.values(errors)[0]
+            window.dispatchEvent(new CustomEvent('toast', {
+                detail: { message: firstError, type: 'error' }
+            }))
+        }
+    }
+
+    if (modalType.value === 'add') {
+        form.post('/BuildingDashboard', options)
+    }
+
+    if (modalType.value === 'edit') {
+        form.put(`/BuildingDashboard/${modalData.value.id}`, options)
+    }
+
+    if (modalType.value === 'delete') {
+        form.delete(`/BuildingDashboard/${modalData.value.id}`, options)
+    }
+}
 </script>
 
 <template>
+    <DynamicLayout :items="buildings" :filters="filters" :route-name="'BuildingDashboard'"
+        :title="'Building Management'" :buttonName="'Building'" @add="openModal('add')"
+        @edit="(row) => openModal('edit', row)" @delete="(row) => openModal('delete', row)"
+        @view="(row) => openModal('view', row)" :columns="[
+            { label: 'Building Name', field: 'building_name' },
+            { label: 'Address', field: 'address' },
+            { label: 'College', field: 'college', render: (item) => item.college?.college_name ?? 'N/A' },
+            { label: 'Floors', field: 'total_floors' },
+            { label: 'Rooms', field: 'total_rooms' },
+        ]" />
 
- <Layout/>
-
+    <DynamicModal v-if="isModalVisible" :type="modalType" :data="modalData" title="Building" :fields="[
+        { label: 'Building Name', field: 'building_name' },
+        { label: 'Address', field: 'address' },
+        { label: 'Description', field: 'description', type: 'textarea' },
+        { label: 'Floors', field: 'total_floors', type: 'number' },
+        { label: 'CR', field: 'restroom_count', type: 'number' },
+        { label: 'Ramps', field: 'ramp_count', type: 'number' },
+        { label: 'Rooms', field: 'total_rooms', type: 'number' },
+        { label: 'Has Elevator', field: 'has_elevator', type: 'select', options: [{ label: 'Yes', value: 1 }, { label: 'No', value: 0 }] },
+        { label: 'Has Parking', field: 'has_parking', type: 'select', options: [{ label: 'Yes', value: 1 }, { label: 'No', value: 0 }] },
+        { label: 'College', field: 'college_id', type: 'select', options: colleges },
+    ]" @close="closeModal" @submit="handleSubmit" />
 </template>

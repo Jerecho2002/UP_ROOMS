@@ -25,6 +25,7 @@ class BuildingController extends Controller
         return Inertia::render('BuildingDashboard', [
             'buildings' => $buildings,
             'colleges' => $colleges,
+            'filters'   => $request->only('search'),
         ]);
     }
 

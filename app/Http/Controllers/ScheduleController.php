@@ -20,15 +20,11 @@ class ScheduleController extends Controller
             ->paginate(20);
 
         $rooms = Room::where('status', 'available')->get();
-        $faculty = UserAccount::where('user_type', 'faculty')->get();
-        $requesters = UserAccount::whereIn('user_type', ['faculty', 'staff'])->get();
         $terms = Term::where('status', 'active')->get();
 
         return Inertia::render('Schedule', [
             'schedules' => $schedules,
             'rooms' => $rooms,
-            'faculty' => $faculty,
-            'requesters' => $requesters,
             'terms' => $terms,
             // 'stats' => $this->getScheduleStats(),
         ]);

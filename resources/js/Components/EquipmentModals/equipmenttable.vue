@@ -300,7 +300,8 @@ watch(searchTerm, () => {
         <!-- Error State -->
         <div v-else-if="error" class="bg-red-50 border border-red-200 rounded-lg p-4">
             <p class="text-red-600 font-semibold">Error: {{ error }}</p>
-            <button @click="initializeData" class="mt-2 px-4 py-2 bg-[#7A0C23] text-white rounded-lg hover:bg-[#5a091a] transition-colors">
+            <button @click="initializeData"
+                class="mt-2 px-4 py-2 bg-[#7A0C23] text-white rounded-lg hover:bg-[#5a091a] transition-colors">
                 Retry
             </button>
         </div>
@@ -316,11 +317,13 @@ watch(searchTerm, () => {
 
                     <div class="flex flex-wrap items-center gap-4">
                         <div class="flex gap-2">
-                            <div class="flex items-center px-4 py-2 bg-yellow-400 border rounded-lg text-sm font-semibold text-white">
-                            📄  {{ currentDate }}
+                            <div
+                                class="flex items-center px-4 py-2 bg-yellow-400 border rounded-lg text-sm font-semibold text-white">
+                                📄 {{ currentDate }}
                             </div>
-                            <div class="flex items-center px-4 py-2 bg-green-400 border rounded-lg text-sm font-semibold text-white">
-                              ⏱  {{ currentTime }}
+                            <div
+                                class="flex items-center px-4 py-2 bg-green-400 border rounded-lg text-sm font-semibold text-white">
+                                ⏱ {{ currentTime }}
                             </div>
                         </div>
 
@@ -329,22 +332,13 @@ watch(searchTerm, () => {
 
                 <div class=" grid grid-cols-2 md:grid-cols-4 gap-3 mt-6">
 
- <div class="mr-10 mt-6 relative w-full lg:w-72">
-                            <input
-                                type="text"
-                                v-model="searchTerm"
-                                placeholder="Search by name, room..."
-                                class="w-200 pl-10 pr-4 py-2 border border-yellow-500 rounded-lg focus:ring-2 focus:ring-[#7A0C23] focus:border-transparent outline-none transition-all"
-                            />
-                            <div class=" absolute left-3 top-2.5 text-gray-400">
-                                <IconButton
-                                    icon="search"
-                                    size="sm"
-                                    color="gray"
-                                    class="pointer-events-none"
-                                />
-                            </div>
+                    <div class="mr-10 mt-6 relative w-full lg:w-72">
+                        <input type="text" v-model="searchTerm" placeholder="Search by name, room..."
+                            class="w-200 pl-10 pr-4 py-2 border border-yellow-500 rounded-lg focus:ring-2 focus:ring-[#7A0C23] focus:border-transparent outline-none transition-all" />
+                        <div class=" absolute left-3 top-2.5 text-gray-400">
+                            <IconButton icon="search" size="sm" color="gray" class="pointer-events-none" />
                         </div>
+                    </div>
 
                     <div class="p-3 bg-[#7A0C23] rounded-lg border border-red-100">
                         <p class="text-xs text-white font-bold uppercase">Total Items</p>
@@ -379,11 +373,13 @@ watch(searchTerm, () => {
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-yellow-400">
-                            <tr v-for="item in paginatedUsageList" :key="item.id" class="hover:bg-gray-300 transition-colors">
+                            <tr v-for="item in paginatedUsageList" :key="item.id"
+                                class="hover:bg-gray-300 transition-colors">
 
                                 <td class="px-6 py-4">
                                     <div class="flex items-center gap-2">
-                                        <span class="w-8 h-8 flex items-center justify-center bg-green-100 text-green-700 rounded-full font-bold text-xs">
+                                        <span
+                                            class="w-8 h-8 flex items-center justify-center bg-green-100 text-green-700 rounded-full font-bold text-xs">
                                             {{ item.equipmentUsed.length }}
                                         </span>
                                         <span class="text-xs text-gray-500 font-medium">Equipments</span>
@@ -401,21 +397,14 @@ watch(searchTerm, () => {
                                     </span>
                                 </td>
 
-                                 <td class="px-6 py-4">
+                                <td class="px-6 py-4">
                                     <div class="font-bold text-gray-900">{{ item.name }}</div>
                                 </td>
 
 
                                 <td class="px-6 py-4 text-center">
-                                    <IconButton
-                                        @click="handleViewDetails(item)"
-                                        icon="eye"
-                                        title="View Details"
-                                        size="sm"
-                                        color="black"
-                                        outlined
-                                        class="hover:scale-105  bg-green-500 "
-                                    >
+                                    <IconButton @click="handleViewDetails(item)" icon="eye" title="View Details"
+                                        size="sm" color="black" outlined class="hover:scale-105  bg-green-500 ">
                                         View Details
                                     </IconButton>
                                 </td>
@@ -435,16 +424,15 @@ watch(searchTerm, () => {
                     <div class="flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
                         <!-- Showing range -->
                         <div class="text-sm text-gray-600">
-                            Showing {{ showingRange.start }} to {{ showingRange.end }} of {{ showingRange.total }} entries
+                            Showing {{ showingRange.start }} to {{ showingRange.end }} of {{ showingRange.total }}
+                            entries
                         </div>
 
                         <!-- Items per page selector -->
                         <div class="flex items-center space-x-2">
                             <span class="text-sm text-gray-600">Show:</span>
-                            <select
-                                v-model="itemsPerPage"
-                                class="text-sm border border-gray-300 rounded px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-[#7A0C23] focus:border-transparent"
-                            >
+                            <select v-model="itemsPerPage"
+                                class="text-sm border border-gray-300 rounded px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-[#7A0C23] focus:border-transparent">
                                 <option value="3">3</option>
                                 <option value="5">5</option>
                                 <option value="10">10</option>
@@ -457,57 +445,36 @@ watch(searchTerm, () => {
                         <!-- Page navigation -->
                         <div class="flex items-center space-x-2">
                             <!-- Previous button -->
-                            <IconButton
-                                @click="prevPage"
-                                :disabled="currentPage === 1"
-                                icon="chevronLeft"
-                                title="Previous Page"
-                                size="sm"
-                                color="gray"
-                                outlined
-                                :class="[
+                            <IconButton @click="prevPage" :disabled="currentPage === 1" icon="chevronLeft"
+                                title="Previous Page" size="sm" color="gray" outlined :class="[
                                     'px-3 py-1.5 rounded text-sm font-medium transition-colors duration-150',
                                     currentPage === 1
                                         ? 'bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed'
                                         : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
-                                ]"
-                            >
+                                ]">
                                 Previous
                             </IconButton>
 
                             <!-- Page numbers -->
                             <div class="flex items-center space-x-1">
-                                <button
-                                    v-for="page in totalPages"
-                                    :key="page"
-                                    @click="goToPage(page)"
-                                    :class="[
-                                        'px-3 py-1.5 rounded border text-sm font-medium min-w-[36px] transition-colors duration-150',
-                                        currentPage === page
-                                            ? 'bg-[#7A0C23] text-white border-[#7A0C23]'
-                                            : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                                    ]"
-                                >
+                                <button v-for="page in totalPages" :key="page" @click="goToPage(page)" :class="[
+                                    'px-3 py-1.5 rounded border text-sm font-medium min-w-[36px] transition-colors duration-150',
+                                    currentPage === page
+                                        ? 'bg-[#7A0C23] text-white border-[#7A0C23]'
+                                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                                ]">
                                     {{ page }}
                                 </button>
                             </div>
 
                             <!-- Next button -->
-                            <IconButton
-                                @click="nextPage"
-                                :disabled="currentPage === totalPages"
-                                icon="chevronRight"
-                                title="Next Page"
-                                size="sm"
-                                color="gray"
-                                outlined
-                                :class="[
+                            <IconButton @click="nextPage" :disabled="currentPage === totalPages" icon="chevronRight"
+                                title="Next Page" size="sm" color="gray" outlined :class="[
                                     'px-3 py-1.5 rounded text-sm font-medium transition-colors duration-150',
                                     currentPage === totalPages
                                         ? 'bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed'
                                         : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
-                                ]"
-                            >
+                                ]">
                                 Next
                             </IconButton>
                         </div>
@@ -521,7 +488,8 @@ watch(searchTerm, () => {
                     <!-- Results summary -->
                     <div class="mt-4 pt-3 border-t border-gray-300 text-center">
                         <p class="text-sm text-gray-500">
-                            Filtered Results: <span class="font-semibold text-[#7A0C23]">{{ filteredUsageList.length }}</span>
+                            Filtered Results: <span class="font-semibold text-[#7A0C23]">{{ filteredUsageList.length
+                                }}</span>
                             | Total Records: <span class="font-semibold text-[#7A0C23]">{{ usageList.length }}</span>
                         </p>
                     </div>
@@ -534,11 +502,8 @@ watch(searchTerm, () => {
                 </div>
             </div>
 
-            <EquipmentModal
-                :is-visible="isDetailsModalVisible"
-                :selected-usage="selectedUserUsage"
-                @close="closeDetailsModal"
-            />
+            <EquipmentModal :is-visible="isDetailsModalVisible" :selected-usage="selectedUserUsage"
+                @close="closeDetailsModal" />
         </div>
     </div>
 </template>
@@ -557,11 +522,11 @@ button:not(:disabled):hover {
 }
 
 /* Ensure pagination controls are properly spaced */
-.space-x-1 > * + * {
+.space-x-1>*+* {
     margin-left: 0.25rem;
 }
 
-.space-x-2 > * + * {
+.space-x-2>*+* {
     margin-left: 0.5rem;
 }
 

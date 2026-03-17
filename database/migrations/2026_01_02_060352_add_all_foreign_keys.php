@@ -19,6 +19,7 @@ return new class extends Migration
 
             $table->foreign('college_id')->references('id')->on('colleges')->onDelete('set null');
             $table->foreign('department_id')->references('id')->on('departments')->onDelete('set null');
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
 
         // 2. Add foreign keys to colleges

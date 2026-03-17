@@ -22,9 +22,8 @@ class ScheduleFactory extends Factory
 
         // Get real data if available
         $room = Room::inRandomOrder()->first();
-        $faculty = UserAccount::where('user_type', 'faculty')->inRandomOrder()->first();
-        $requester = UserAccount::whereIn('user_type', ['faculty', 'staff'])->inRandomOrder()->first();
         $term = Term::inRandomOrder()->first();
+        $user = UserAccount::inRandomOrder()->first();
 
         return [
             'room_id' => $room?->id ?? Room::factory(),
@@ -33,15 +32,19 @@ class ScheduleFactory extends Factory
             'course_code' => strtoupper($this->faker->bothify('??###')),
             'course_name' => $this->faker->words(3, true),
             'section' => $this->faker->randomElement(['A', 'B', 'C', 'D']),
-            'faculty_name' => $faculty?->first_name . ' ' . $faculty?->last_name ?? $this->faker->name,
-            'faculty_id' => $faculty?->id,
+            'faculty_id' => $user?->id,
+            'faculty_name' => $user
+                ? $user->first_name . ' ' . $user->last_name
+                : $this->faker->name,
             'date' => $date,
             'start_time' => $startTime,
             'end_time' => $endTime,
             'day_of_week' => $dayOfWeek,
             'number_of_participants' => $this->faker->numberBetween(10, 100),
-            'requester_id' => $requester?->id,
-            'requester_name' => $requester?->first_name . ' ' . $requester?->last_name ?? $this->faker->name,
+            'requester_id' => $user?->id,
+            'requester_name' => $user
+                ? $user->first_name . ' ' . $user->last_name
+                : $this->faker->name,
             'description' => $this->faker->paragraph,
             'agenda' => $this->faker->sentence(),
             'organizer' => $this->faker->company,

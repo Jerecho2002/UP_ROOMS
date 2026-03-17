@@ -25,8 +25,7 @@ class EquipmentController extends Controller
         $buildings = Building::select('id', 'building_name')->get();
         $colleges = College::select('id', 'college_name')->get();
         $departments = Department::select('id', 'department_name', 'college_id')->get();
-        $users = UserAccount::whereIn('user_type', ['faculty', 'staff', 'admin'])
-            ->select('id', 'first_name', 'last_name', 'username', 'user_type')
+        $users = UserAccount::select('id', 'first_name', 'last_name')
             ->get();
 
         return Inertia::render('equipment', [
@@ -64,13 +63,13 @@ class EquipmentController extends Controller
 
             // Apply filters
             if (!empty($search)) {
-                $query->where(function($q) use ($search) {
+                $query->where(function ($q) use ($search) {
                     $q->where('equipment_name', 'like', "%{$search}%")
-                      ->orWhere('inventory_id', 'like', "%{$search}%")
-                      ->orWhere('property_id', 'like', "%{$search}%")
-                      ->orWhere('brand', 'like', "%{$search}%")
-                      ->orWhere('model', 'like', "%{$search}%")
-                      ->orWhere('serial_number', 'like', "%{$search}%");
+                        ->orWhere('inventory_id', 'like', "%{$search}%")
+                        ->orWhere('property_id', 'like', "%{$search}%")
+                        ->orWhere('brand', 'like', "%{$search}%")
+                        ->orWhere('model', 'like', "%{$search}%")
+                        ->orWhere('serial_number', 'like', "%{$search}%");
                 });
             }
 
@@ -136,7 +135,7 @@ class EquipmentController extends Controller
             $statusStats = Equipment::select('status', DB::raw('COUNT(*) as count'))
                 ->groupBy('status')
                 ->get()
-                ->map(function($item) {
+                ->map(function ($item) {
                     return [
                         'status' => ucfirst(str_replace('_', ' ', $item->status)),
                         'count' => $item->count
@@ -149,7 +148,7 @@ class EquipmentController extends Controller
                 ->with(['assignedUser:id,first_name,last_name'])
                 ->groupBy('assigned_user_id')
                 ->get()
-                ->map(function($item) {
+                ->map(function ($item) {
                     return [
                         'name' => $item->assignedUser ?
                             $item->assignedUser->first_name . ' ' . $item->assignedUser->last_name :
@@ -164,7 +163,7 @@ class EquipmentController extends Controller
                 ->with(['building:id,building_name'])
                 ->groupBy('building_id')
                 ->get()
-                ->map(function($item) {
+                ->map(function ($item) {
                     return [
                         'building' => $item->building ? $item->building->building_name : 'Unknown Building',
                         'equipmentCount' => $item->equipment_count
@@ -177,7 +176,7 @@ class EquipmentController extends Controller
                 ->with(['college:id,college_name'])
                 ->groupBy('college_id')
                 ->get()
-                ->map(function($item) {
+                ->map(function ($item) {
                     return [
                         'college' => $item->college ? $item->college->college_name : 'Unknown College',
                         'equipmentCount' => $item->equipment_count
@@ -189,7 +188,7 @@ class EquipmentController extends Controller
                 ->orderBy('updated_at', 'desc')
                 ->limit(10)
                 ->get()
-                ->map(function($item) {
+                ->map(function ($item) {
                     return [
                         'id' => $item->id,
                         'equipment_name' => $item->equipment_name,
@@ -373,7 +372,10 @@ class EquipmentController extends Controller
             }
 
             $equipment->update($request->only([
-                'assigned_user_id', 'room_id', 'building_id', 'status'
+                'assigned_user_id',
+                'room_id',
+                'building_id',
+                'status'
             ]));
 
             return response()->json([
@@ -404,35 +406,35 @@ class EquipmentController extends Controller
                 'college:id,college_name',
                 'assignedUser:id,first_name,last_name,middle_name,username'
             ])
-            ->whereNotNull('assigned_user_id');
+                ->whereNotNull('assigned_user_id');
 
             // Apply search filter if provided
             if (!empty($search)) {
-                $query->where(function($q) use ($search) {
+                $query->where(function ($q) use ($search) {
                     $q->where('equipment_name', 'like', "%{$search}%")
-                      ->orWhere('inventory_id', 'like', "%{$search}%")
-                      ->orWhere('property_id', 'like', "%{$search}%")
-                      ->orWhereHas('assignedUser', function($q) use ($search) {
-                          $q->where('first_name', 'like', "%{$search}%")
-                            ->orWhere('last_name', 'like', "%{$search}%");
-                      })
-                      ->orWhereHas('room', function($q) use ($search) {
-                          $q->where('room_code', 'like', "%{$search}%")
-                            ->orWhere('room_name', 'like', "%{$search}%");
-                      })
-                      ->orWhereHas('building', function($q) use ($search) {
-                          $q->where('building_name', 'like', "%{$search}%");
-                      })
-                      ->orWhereHas('college', function($q) use ($search) {
-                          $q->where('college_name', 'like', "%{$search}%");
-                      });
+                        ->orWhere('inventory_id', 'like', "%{$search}%")
+                        ->orWhere('property_id', 'like', "%{$search}%")
+                        ->orWhereHas('assignedUser', function ($q) use ($search) {
+                            $q->where('first_name', 'like', "%{$search}%")
+                                ->orWhere('last_name', 'like', "%{$search}%");
+                        })
+                        ->orWhereHas('room', function ($q) use ($search) {
+                            $q->where('room_code', 'like', "%{$search}%")
+                                ->orWhere('room_name', 'like', "%{$search}%");
+                        })
+                        ->orWhereHas('building', function ($q) use ($search) {
+                            $q->where('building_name', 'like', "%{$search}%");
+                        })
+                        ->orWhereHas('college', function ($q) use ($search) {
+                            $q->where('college_name', 'like', "%{$search}%");
+                        });
                 });
             }
 
             // Group by assigned user to get aggregated view
             $equipmentByUser = $query->get()
                 ->groupBy('assigned_user_id')
-                ->map(function($equipments, $userId) {
+                ->map(function ($equipments, $userId) {
                     $user = $equipments->first()->assignedUser;
                     $room = $equipments->first()->room;
                     $building = $equipments->first()->building;
@@ -444,7 +446,7 @@ class EquipmentController extends Controller
                         'room' => $room ? $room->room_code : 'N/A',
                         'building' => $building ? $building->building_name : 'N/A',
                         'college' => $college ? $college->college_name : 'N/A',
-                        'equipmentUsed' => $equipments->map(function($eq) {
+                        'equipmentUsed' => $equipments->map(function ($eq) {
                             return [
                                 'inventory_id' => $eq->inventory_id,
                                 'property_id' => $eq->property_id,
@@ -462,7 +464,7 @@ class EquipmentController extends Controller
                 'success' => true,
                 'usage_list' => $equipmentByUser,
                 'total_users' => $equipmentByUser->count(),
-                'total_equipment' => $equipmentByUser->sum(function($user) {
+                'total_equipment' => $equipmentByUser->sum(function ($user) {
                     return count($user['equipmentUsed']);
                 })
             ]);
