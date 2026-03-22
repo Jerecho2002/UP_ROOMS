@@ -31,18 +31,18 @@ class MainDashboardController extends Controller
         $rooms = Room::with([
             'college',
             'building',
-            'schedules' => function($query) use ($today) {
+            'schedules' => function ($query) use ($today) {
                 $query->where('date', $today)
-                      ->orderBy('start_time')
-                      ->with('faculty');
+                    ->orderBy('start_time')
+                    ->with('faculty');
             },
             'assignedUser'
         ])
-        ->orderBy('room_name')
-        ->paginate(10);
+            ->orderBy('room_name')
+            ->paginate(10);
 
         // Process rooms data for frontend
-        $processedRooms = $rooms->getCollection()->map(function($room) use ($today) {
+        $processedRooms = $rooms->getCollection()->map(function ($room) use ($today) {
             // Get today's schedule for this room
             $todaysSchedule = $room->schedules->first();
 
@@ -56,7 +56,7 @@ class MainDashboardController extends Controller
                 'assigned_user' => $room->assignedUser,
                 'status' => $room->status,
                 'capacity' => $room->capacity,
-                'schedules' => $room->schedules->map(function($schedule) {
+                'schedules' => $room->schedules->map(function ($schedule) {
                     return [
                         'id' => $schedule->id,
                         'cfic_id' => $schedule->cfic_id,
@@ -74,8 +74,7 @@ class MainDashboardController extends Controller
                     ];
                 }),
                 // For frontend display in table columns
-                'today_faculty' => $todaysSchedule ? ($todaysSchedule->faculty_name ?:
-                    ($todaysSchedule->faculty ? $todaysSchedule->faculty->full_name : 'N/A')) : 'N/A',
+                'today_faculty' => $todaysSchedule ? ($todaysSchedule->faculty_name ?: ($todaysSchedule->faculty ? $todaysSchedule->faculty->full_name : 'N/A')) : 'N/A',
                 'today_course' => $todaysSchedule ? ($todaysSchedule->course_name ?: $todaysSchedule->event_title) : 'No Schedule',
                 'today_time' => $todaysSchedule ?
                     $todaysSchedule->start_time->format('H:i') . ' - ' . $todaysSchedule->end_time->format('H:i') : 'N/A',
@@ -104,13 +103,6 @@ class MainDashboardController extends Controller
             'with_parking' => Building::where('has_parking', true)->count(),
         ];
 
-        // Get user statistics by type
-        $userStats = UserAccount::select('user_type', \DB::raw('COUNT(*) as count'))
-            ->groupBy('user_type')
-            ->get()
-            ->pluck('count', 'user_type')
-            ->toArray();
-
         return inertia('MainDashboard', [
             'totalAccounts' => $totalAccounts,
             'totalDepartments' => $totalDepartments,
@@ -123,7 +115,6 @@ class MainDashboardController extends Controller
             'rooms' => $rooms->setCollection($processedRooms),
             'equipmentStats' => $equipmentStats,
             'buildingStats' => $buildingStats,
-            'userStats' => $userStats,
             'todayDate' => $today,
             'recentActivities' => $this->getRecentActivities(),
             'chartData' => $this->getChartData(),
@@ -170,26 +161,8 @@ class MainDashboardController extends Controller
             ];
         }
 
-        // Get recent user logins
-        $recentLogins = UserAccount::whereNotNull('last_login_at')
-            ->orderBy('last_login_at', 'desc')
-            ->limit(5)
-            ->get();
-
-        foreach ($recentLogins as $user) {
-            $activities[] = [
-                'type' => 'user',
-                'action' => 'logged_in',
-                'title' => "{$user->full_name} logged in",
-                'description' => "User accessed the system",
-                'time' => $user->last_login_at->diffForHumans(),
-                'color' => 'purple',
-                'icon' => 'user',
-            ];
-        }
-
         // Sort by time
-        usort($activities, function($a, $b) {
+        usort($activities, function ($a, $b) {
             return strtotime($b['time']) - strtotime($a['time']);
         });
 
@@ -250,34 +223,34 @@ class MainDashboardController extends Controller
         $rooms = Room::with([
             'college',
             'building',
-            'schedules' => function($query) use ($today) {
+            'schedules' => function ($query) use ($today) {
                 $query->where('date', $today)
-                      ->orderBy('start_time')
-                      ->with('faculty');
+                    ->orderBy('start_time')
+                    ->with('faculty');
             },
             'assignedUser'
         ])
-        ->where(function($query) use ($search) {
-            $query->where('room_name', 'like', "%{$search}%")
-                  ->orWhere('room_code', 'like', "%{$search}%")
-                  ->orWhere('location', 'like', "%{$search}%")
-                  ->orWhereHas('college', function($q) use ($search) {
-                      $q->where('college_name', 'like', "%{$search}%");
-                  })
-                  ->orWhereHas('building', function($q) use ($search) {
-                      $q->where('building_name', 'like', "%{$search}%");
-                  })
-                  ->orWhereHas('schedules', function($q) use ($search) {
-                      $q->where('event_title', 'like', "%{$search}%")
-                        ->orWhere('course_name', 'like', "%{$search}%")
-                        ->orWhere('faculty_name', 'like', "%{$search}%")
-                        ->orWhere('course_code', 'like', "%{$search}%");
-                  });
-        })
-        ->orderBy('room_name')
-        ->paginate(10);
+            ->where(function ($query) use ($search) {
+                $query->where('room_name', 'like', "%{$search}%")
+                    ->orWhere('room_code', 'like', "%{$search}%")
+                    ->orWhere('location', 'like', "%{$search}%")
+                    ->orWhereHas('college', function ($q) use ($search) {
+                        $q->where('college_name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('building', function ($q) use ($search) {
+                        $q->where('building_name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('schedules', function ($q) use ($search) {
+                        $q->where('event_title', 'like', "%{$search}%")
+                            ->orWhere('course_name', 'like', "%{$search}%")
+                            ->orWhere('faculty_name', 'like', "%{$search}%")
+                            ->orWhere('course_code', 'like', "%{$search}%");
+                    });
+            })
+            ->orderBy('room_name')
+            ->paginate(10);
 
-        $processedRooms = $rooms->getCollection()->map(function($room) use ($today) {
+        $processedRooms = $rooms->getCollection()->map(function ($room) use ($today) {
             $todaysSchedule = $room->schedules->first();
 
             return [
@@ -290,7 +263,7 @@ class MainDashboardController extends Controller
                 'assigned_user' => $room->assignedUser,
                 'status' => $room->status,
                 'capacity' => $room->capacity,
-                'schedules' => $room->schedules->map(function($schedule) {
+                'schedules' => $room->schedules->map(function ($schedule) {
                     return [
                         'id' => $schedule->id,
                         'cfic_id' => $schedule->cfic_id,
@@ -307,8 +280,7 @@ class MainDashboardController extends Controller
                         'number_of_participants' => $schedule->number_of_participants,
                     ];
                 }),
-                'today_faculty' => $todaysSchedule ? ($todaysSchedule->faculty_name ?:
-                    ($todaysSchedule->faculty ? $todaysSchedule->faculty->full_name : 'N/A')) : 'N/A',
+                'today_faculty' => $todaysSchedule ? ($todaysSchedule->faculty_name ?: ($todaysSchedule->faculty ? $todaysSchedule->faculty->full_name : 'N/A')) : 'N/A',
                 'today_course' => $todaysSchedule ? ($todaysSchedule->course_name ?: $todaysSchedule->event_title) : 'No Schedule',
                 'today_time' => $todaysSchedule ?
                     $todaysSchedule->start_time->format('H:i') . ' - ' . $todaysSchedule->end_time->format('H:i') : 'N/A',

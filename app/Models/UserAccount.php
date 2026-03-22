@@ -49,7 +49,7 @@ class UserAccount extends Authenticatable
 
     public function deanCollege()
     {
-        return $this->hasOne(College::class, 'dean_id');
+        return $this->hasOne(College::class, 'user_id');
     }
 
     public function headDepartment()

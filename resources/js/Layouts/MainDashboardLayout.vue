@@ -302,32 +302,20 @@ const clearSearch = () => {
 <template>
     <div class="relative min-h-screen">
         <!-- Message Function Toasts -->
-        <MessageFunction
-            :show-create-success="showCreateSuccess"
-            :show-edit-success="showEditSuccess"
-            :show-delete-success="showDeleteSuccess"
-            :show-error="showError"
-            :show-info="showInfo"
-            :deleted-room-name="deletedRoomName"
-            :error-message="errorMessage"
-            :info-message="infoMessage"
-            @close-create="showCreateSuccess = false"
-            @close-edit="showEditSuccess = false"
-            @close-delete="showDeleteSuccess = false"
-            @close-error="showError = false"
-            @close-info="showInfo = false"
-        />
+        <MessageFunction :show-create-success="showCreateSuccess" :show-edit-success="showEditSuccess"
+            :show-delete-success="showDeleteSuccess" :show-error="showError" :show-info="showInfo"
+            :deleted-room-name="deletedRoomName" :error-message="errorMessage" :info-message="infoMessage"
+            @close-create="showCreateSuccess = false" @close-edit="showEditSuccess = false"
+            @close-delete="showDeleteSuccess = false" @close-error="showError = false" @close-info="showInfo = false" />
 
         <Navbar @toggleSidebar="toggleSidebar" :is-mobile-open="sidebarOpen" :is-desktop-open="sidebarForcedOpen"
             :is-desktop="isDesktop" />
 
-        <Sidebar
-            :class="['fixed top-14 left-0 h-[calc(100vh-3.5rem)] z-20 transition-all duration-300 bg-white shadow-lg',
-                // Desktop Sidebar positioning
-                isDesktop ? (sidebarForcedOpen ? 'w-64' : 'w-0 overflow-hidden') :
+        <Sidebar :class="['fixed top-14 left-0 h-[calc(100vh-3.5rem)] z-20 transition-all duration-300 bg-white shadow-lg',
+            // Desktop Sidebar positioning
+            isDesktop ? (sidebarForcedOpen ? 'w-64' : 'w-0 overflow-hidden') :
                 // Mobile Sidebar positioning
-                (sidebarOpen ? 'w-64 translate-x-0' : '-translate-x-full w-64')]"
-            :sidebar-open="sidebarForcedOpen" />
+                (sidebarOpen ? 'w-64 translate-x-0' : '-translate-x-full w-64')]" :sidebar-open="sidebarForcedOpen" />
 
         <transition name="fade">
             <div v-if="sidebarOpen && !isDesktop" class="fixed inset-0 bg-black bg-opacity-50 z-30"
@@ -346,13 +334,13 @@ const clearSearch = () => {
                             <h1 class="text-[#7A0C23] font-bold text-2xl">Dashboard</h1>
 
                         </div>
- <span class="text-sm text-gray-600 px-3 py-1 rounded-md border ">
-                                    UPCEBU &gt; Dashboard
-                                </span>
+                        <span class="text-sm text-gray-600 px-3 py-1 rounded-md border ">
+                            UPCEBU &gt; Dashboard
+                        </span>
 
                     </div>
 
-                   <div class="grid grid-cols-1 gap-6 mb-8 md:grid-cols-2 lg:grid-cols-4">
+                    <div class="grid grid-cols-1 gap-6 mb-8 md:grid-cols-2 lg:grid-cols-4">
                         <div class="rounded-xl text-center shadow-lg overflow-hidden">
                             <div class="bg-yellow-500 text-white p-3 font-semibold">Total Accounts</div>
                             <div class="bg-white p-3">
@@ -383,40 +371,26 @@ const clearSearch = () => {
                     </div>
 
 
-                      <div class=" mb-4 flex flex-col sm:flex-row gap-3">
-                            <!-- Search Bar with Clear Button -->
-                            <div class="relative flex-1">
-                                <input
-                                    v-model="searchQuery"
-                                    type="text"
-                                    placeholder="Search by room name, college, location, faculty, etc..."
-                                    class="pl-10 pr-10 py-2 border border-yellow-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7A0C23] focus:border-transparent w-500"
-                                    @keyup.enter="handleSearch"
-                                />
-                                <!-- Search Icon -->
-                                <IconButton
-                                    icon="search"
-                                    size="sm"
-                                    color="gray"
-                                    class="absolute left-2 top-1/2 transform -translate-y-1/2"
-                                    @click="handleSearch"
-                                    title="Search"
-                                />
-                                <!-- Clear Icon (only shows when there's text) -->
-                                <IconButton
-                                    v-if="searchQuery"
-                                    icon="times"
-                                    size="sm"
-                                    color="gray"
-                                    class="absolute right-2 top-1/2 transform -translate-y-1/2 hover:bg-gray-100 rounded-full p-1"
-                                    @click="clearSearch"
-                                    title="Clear search"
-                                />
-                            </div>
-
-                            <!-- Search Button -->
-
+                    <div class=" mb-4 flex flex-col sm:flex-row gap-3">
+                        <!-- Search Bar with Clear Button -->
+                        <div class="relative flex-1">
+                            <input v-model="searchQuery" type="text"
+                                placeholder="Search by room name, college, location, faculty, etc..."
+                                class="pl-10 pr-10 py-2 border border-yellow-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7A0C23] focus:border-transparent w-500"
+                                @keyup.enter="handleSearch" />
+                            <!-- Search Icon -->
+                            <IconButton icon="search" size="sm" color="gray"
+                                class="absolute left-2 top-1/2 transform -translate-y-1/2" @click="handleSearch"
+                                title="Search" />
+                            <!-- Clear Icon (only shows when there's text) -->
+                            <IconButton v-if="searchQuery" icon="times" size="sm" color="gray"
+                                class="absolute right-2 top-1/2 transform -translate-y-1/2 hover:bg-gray-100 rounded-full p-1"
+                                @click="clearSearch" title="Clear search" />
                         </div>
+
+                        <!-- Search Button -->
+
+                    </div>
 
                     <!-- Rooms Table -->
                     <div class="overflow-x-auto bg-white rounded-lg shadow-xl mb-6">
@@ -424,27 +398,17 @@ const clearSearch = () => {
                         <div v-if="searchQuery" class="px-4 py-2 bg-blue-50 border-b border-blue-100">
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center">
-                                    <IconButton
-                                        icon="search"
-                                        size="sm"
-                                        color="blue"
-                                        class="mr-2"
-                                    />
+                                    <IconButton icon="search" size="sm" color="blue" class="mr-2" />
                                     <span class="text-sm font-medium text-blue-800">
                                         Search results for: "<span class="font-bold">{{ searchQuery }}</span>"
                                     </span>
                                     <span class="ml-3 text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full">
-                                        {{ filteredRooms.length }} {{ filteredRooms.length === 1 ? 'result' : 'results' }}
+                                        {{ filteredRooms.length }} {{ filteredRooms.length === 1 ? 'result' : 'results'
+                                        }}
                                     </span>
                                 </div>
-                                <IconButton
-                                    v-if="filteredRooms.length === 0"
-                                    icon="info"
-                                    size="xs"
-                                    color="blue"
-                                    outlined
-                                    title="No results found. Try different keywords."
-                                />
+                                <IconButton v-if="filteredRooms.length === 0" icon="info" size="xs" color="blue"
+                                    outlined title="No results found. Try different keywords." />
                             </div>
                         </div>
 
@@ -466,13 +430,7 @@ const clearSearch = () => {
                                 <tr v-if="filteredRooms.length === 0">
                                     <td colspan="8" class="px-4 py-8 text-center text-gray-500 italic">
                                         <div class="flex flex-col items-center justify-center">
-                                            <IconButton
-                                                icon="search"
-                                                size="lg"
-                                                color="gray"
-                                                disabled
-                                                class="mb-2"
-                                            />
+                                            <IconButton icon="search" size="lg" color="gray" disabled class="mb-2" />
                                             <p v-if="searchQuery">No room records found matching "{{ searchQuery }}"</p>
                                             <p v-else>No room records found.</p>
                                             <p class="text-sm mt-1" v-if="searchQuery">
@@ -488,8 +446,10 @@ const clearSearch = () => {
                                 <tr v-for="room in filteredRooms" :key="room.id"
                                     class="odd:bg-white even:bg-gray-50 hover:bg-gray-100 transition-colors">
                                     <td class="px-4 py-3 text-left font-medium">{{ room.room_name || 'N/A' }}</td>
-                                    <td class="px-4 py-3 text-left hidden sm:table-cell">{{ room.college?.college_name || 'N/A' }}</td>
-                                    <td class="px-4 py-3 hidden md:table-cell">{{ room.user_account?.username || 'N/A' }}</td>
+                                    <td class="px-4 py-3 text-left hidden sm:table-cell">{{ room.college?.college_name
+                                        || 'N/A' }}</td>
+                                    <td class="px-4 py-3 hidden md:table-cell">{{ room.user_account?.username || 'N/A'
+                                    }}</td>
                                     <td class="px-4 py-3 hidden md:table-cell">{{ room.location ?? "N/A" }}</td>
                                     <td class="px-4 py-3 hidden md:table-cell">Faculty Data</td>
                                     <td class="px-4 py-3 hidden md:table-cell">{{ room.room_name || 'N/A' }}</td>
@@ -498,34 +458,19 @@ const clearSearch = () => {
                                     <td class="px-4 py-3 whitespace-nowrap">
                                         <div class="flex items-center justify-center space-x-2">
                                             <!-- View Button -->
-                                            <IconButton
-                                                icon="eye"
-                                                size="sm"
-                                                color="blue"
-                                                title="View Details"
+                                            <IconButton icon="eye" size="sm" color="blue" title="View Details"
                                                 @click="handleViewDetails(room)"
-                                                class="hover:scale-110 transition-transform"
-                                            />
+                                                class="hover:scale-110 transition-transform" />
 
                                             <!-- Edit Button -->
-                                            <IconButton
-                                                icon="edit"
-                                                size="sm"
-                                                color="green"
-                                                title="Edit Room"
+                                            <IconButton icon="edit" size="sm" color="green" title="Edit Room"
                                                 @click="handleEditRoom(room)"
-                                                class="hover:scale-110 transition-transform"
-                                            />
+                                                class="hover:scale-110 transition-transform" />
 
                                             <!-- Delete Button -->
-                                            <IconButton
-                                                icon="delete"
-                                                size="sm"
-                                                color="red"
-                                                title="Delete Room"
+                                            <IconButton icon="delete" size="sm" color="red" title="Delete Room"
                                                 @click="handleDeleteRoom(room)"
-                                                class="hover:scale-110 transition-transform"
-                                            />
+                                                class="hover:scale-110 transition-transform" />
                                         </div>
                                     </td>
                                 </tr>
@@ -542,30 +487,17 @@ const clearSearch = () => {
                             </p>
                             <div class="flex space-x-1">
                                 <span v-for="link in rooms.links" :key="link.label">
-                                    <button
-                                        v-if="link.url"
-                                        @click="goToPage(link.url)"
-                                        class="p-1 text-xs sm:text-sm rounded transition"
-                                        :class="{
+                                    <button v-if="link.url" @click="goToPage(link.url)"
+                                        class="p-1 text-xs sm:text-sm rounded transition" :class="{
                                             'text-gray-600 hover:bg-gray-200': link.url && !link.active,
                                             'bg-blue-600 text-white font-bold hover:bg-blue-700': link.active,
                                             'text-gray-400 cursor-not-allowed': !link.url
                                         }">
                                         <template v-if="link.label.includes('Previous')">
-                                            <IconButton
-                                                icon="chevronLeft"
-                                                size="xs"
-                                                color="gray"
-                                                disabled
-                                            />
+                                            <IconButton icon="chevronLeft" size="xs" color="gray" disabled />
                                         </template>
                                         <template v-else-if="link.label.includes('Next')">
-                                            <IconButton
-                                                icon="chevronRight"
-                                                size="xs"
-                                                color="gray"
-                                                disabled
-                                            />
+                                            <IconButton icon="chevronRight" size="xs" color="gray" disabled />
                                         </template>
                                         <span class="px-1" v-else v-html="link.label"></span>
                                     </button>
@@ -584,13 +516,7 @@ const clearSearch = () => {
                 <div class="bg-white rounded-lg shadow-2xl w-full max-w-lg p-6 relative">
                     <div class="flex justify-between items-center mb-4 pb-3 border-b">
                         <h3 class="text-xl font-bold text-[#800020]">Room/Schedule Details</h3>
-                        <IconButton
-                            icon="times"
-                            size="sm"
-                            color="gray"
-                            title="Close"
-                            @click="closeDetailsModal"
-                        />
+                        <IconButton icon="times" size="sm" color="gray" title="Close" @click="closeDetailsModal" />
                     </div>
 
                     <div v-if="currentViewedDetails" class="space-y-4">
@@ -605,7 +531,8 @@ const clearSearch = () => {
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-500">College:</label>
-                                <p class="text-gray-900">{{ currentViewedDetails.college?.college_name || currentViewedDetails.college || 'N/A' }}</p>
+                                <p class="text-gray-900">{{ currentViewedDetails.college?.college_name ||
+                                    currentViewedDetails.college || 'N/A' }}</p>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-500">User Account:</label>
@@ -615,24 +542,13 @@ const clearSearch = () => {
 
                         <div class="pt-3 border-t">
                             <div class="flex items-center mb-3">
-                                <IconButton
-                                    icon="list"
-                                    size="sm"
-                                    color="gray"
-                                    class="mr-2"
-                                />
+                                <IconButton icon="list" size="sm" color="gray" class="mr-2" />
                                 <h4 class="font-medium text-gray-900">Schedules:</h4>
                             </div>
 
                             <div v-if="(currentViewedDetails.schedules || []).length === 0"
-                                 class="text-center py-4 text-gray-500 italic bg-gray-50 rounded">
-                                <IconButton
-                                    icon="warning"
-                                    size="sm"
-                                    color="gray"
-                                    disabled
-                                    class="mb-2"
-                                />
+                                class="text-center py-4 text-gray-500 italic bg-gray-50 rounded">
+                                <IconButton icon="warning" size="sm" color="gray" disabled class="mb-2" />
                                 <p>No schedules found for this room</p>
                             </div>
 
@@ -654,7 +570,9 @@ const clearSearch = () => {
                                         </div>
                                         <div>
                                             <label class="text-xs text-gray-500">Time:</label>
-                                            <p class="text-sm">{{ sched.start_time || 'N/A' }} — {{ sched.end_time || 'N/A' }}</p>
+                                            <p class="text-sm">{{ sched.start_time || 'N/A' }} — {{ sched.end_time ||
+                                                'N/A' }}
+                                            </p>
                                         </div>
                                     </div>
                                 </div>
@@ -663,24 +581,12 @@ const clearSearch = () => {
                     </div>
 
                     <div class="mt-6 pt-4 border-t flex justify-end space-x-3">
-                        <IconButton
-                            icon="edit"
-                            outlined
-                            color="green"
-                            title="Edit Room"
-                            @click="handleEditRoom(currentViewedDetails)"
-                            v-if="currentViewedDetails"
-                        >
+                        <IconButton icon="edit" outlined color="green" title="Edit Room"
+                            @click="handleEditRoom(currentViewedDetails)" v-if="currentViewedDetails">
                             Edit Room
                         </IconButton>
 
-                        <IconButton
-                            icon="times"
-                            outlined
-                            color="gray"
-                            title="Close"
-                            @click="closeDetailsModal"
-                        >
+                        <IconButton icon="times" outlined color="gray" title="Close" @click="closeDetailsModal">
                             Close
                         </IconButton>
                     </div>

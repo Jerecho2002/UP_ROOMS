@@ -17,7 +17,7 @@ const colleges = computed(() =>
 )
 
 const users = computed(() =>
-  page.props.users.map(u => ({ label: u.username, value: u.id }))
+  page.props.users.map(u => ({ label: `${u.first_name} ${u.last_name}`, value: u.id }))
 )
 
 const form = useForm({
@@ -73,7 +73,7 @@ const handleSubmit = (data) => {
       { label: 'Department Name', field: 'department_name' },
       { label: 'Department Code', field: 'department_code' },
       { label: 'College Name', field: 'college_id', render: (item) => item.college?.college_name ?? 'N/A' },
-      { label: 'Department Head', field: 'department_head_id', render: (item) => item.head?.username ?? 'N/A' },
+      { label: 'Department Head', field: 'department_head_id', render: (item) => item.head ? `${item.head.first_name} ${item.head.last_name}` : 'N/A' },
       { label: 'Office', field: 'office_location' },
       { label: 'Phone Number', field: 'contact_phone' },
     ]" />

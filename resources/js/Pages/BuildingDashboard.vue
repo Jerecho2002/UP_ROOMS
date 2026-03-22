@@ -11,9 +11,7 @@ const modalData = ref(null)
 const page = usePage()
 const buildings = computed(() => page.props.buildings ?? {})
 const filters = computed(() => page.props.filters ?? {})
-const colleges = computed(() =>
-    page.props.colleges.map(c => ({ label: c.college_name, value: c.id }))
-)
+const colleges = computed(() => page.props.colleges ?? [])
 
 const form = useForm({
     building_name: '',
@@ -25,7 +23,7 @@ const form = useForm({
     has_parking: 0,
     restroom_count: '',
     ramp_count: '',
-    college_id: '',
+    college_ids: []
 })
 
 const openModal = (type, row = null) => {
@@ -72,21 +70,30 @@ const handleSubmit = (data) => {
         @view="(row) => openModal('view', row)" :columns="[
             { label: 'Building Name', field: 'building_name' },
             { label: 'Address', field: 'address' },
-            { label: 'College', field: 'college', render: (item) => item.college?.college_name ?? 'N/A' },
             { label: 'Floors', field: 'total_floors' },
             { label: 'Rooms', field: 'total_rooms' },
         ]" />
 
-    <DynamicModal v-if="isModalVisible" :type="modalType" :data="modalData" title="Building" :fields="[
-        { label: 'Building Name', field: 'building_name' },
-        { label: 'Address', field: 'address' },
-        { label: 'Description', field: 'description', type: 'textarea' },
-        { label: 'Floors', field: 'total_floors', type: 'number' },
-        { label: 'CR', field: 'restroom_count', type: 'number' },
-        { label: 'Ramps', field: 'ramp_count', type: 'number' },
-        { label: 'Rooms', field: 'total_rooms', type: 'number' },
-        { label: 'Has Elevator', field: 'has_elevator', type: 'select', options: [{ label: 'Yes', value: 1 }, { label: 'No', value: 0 }] },
-        { label: 'Has Parking', field: 'has_parking', type: 'select', options: [{ label: 'Yes', value: 1 }, { label: 'No', value: 0 }] },
-        { label: 'College', field: 'college_id', type: 'select', options: colleges },
-    ]" @close="closeModal" @submit="handleSubmit" />
+    <DynamicModal v-if="isModalVisible" :type="modalType" :data="modalData || {}"
+        :key="modalType + (modalData?.id || 'new')" title="Building" :fields="[
+            { label: 'Building Name', field: 'building_name' },
+            { label: 'Address', field: 'address' },
+            { label: 'Description', field: 'description', type: 'textarea' },
+            {
+                label: 'Colleges',
+                field: 'college_ids',
+                type: modalType === 'view' ? 'display-badges' : 'multiselect',
+                options: colleges.map(c => ({
+                    label: c.college_name,
+                    value: c.id
+                })),
+                render: (item) => (colleges.filter(c => (item.college_ids || []).includes(c.id))).map(c => c.college_name)
+            },
+            { label: 'Floors', field: 'total_floors', type: 'number' },
+            { label: 'CR', field: 'restroom_count', type: 'number' },
+            { label: 'Ramps', field: 'ramp_count', type: 'number' },
+            { label: 'Rooms', field: 'total_rooms', type: 'number' },
+            { label: 'Has Elevator', field: 'has_elevator', type: 'select', options: [{ label: 'Yes', value: 1 }, { label: 'No', value: 0 }] },
+            { label: 'Has Parking', field: 'has_parking', type: 'select', options: [{ label: 'Yes', value: 1 }, { label: 'No', value: 0 }] },
+        ]" @close="closeModal" @submit="handleSubmit" />
 </template>

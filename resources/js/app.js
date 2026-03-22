@@ -10,6 +10,7 @@ import { library } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faPlus, faTrash, faPen, faEye } from '@fortawesome/free-solid-svg-icons'
 import { faCheck, faTimes, faExclamation, faInfo } from '@fortawesome/free-solid-svg-icons'
+import '@vueform/multiselect/themes/default.css'
 
 library.add(faCheck, faTimes, faExclamation, faInfo)
 library.add(faPlus, faTrash, faPen, faEye)

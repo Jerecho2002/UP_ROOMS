@@ -27,13 +27,10 @@ Route::middleware(['auth'])->group(function () {
 
     Route::middleware(['role:admin'])->group(function () {
         // Main Dashboard
-        Route::get('/', [MainDashboardController::class, 'index'])->name('dashboard');
-        Route::get('/MainDashboard', [MainDashboardController::class, 'index'])->name('main.dashboard');
 
-        // API endpoints for frontend
-        Route::get('/api/dashboard/stats', [DashboardController::class, 'getStats']);
-        Route::get('/api/dashboard/rooms', [DashboardController::class, 'getRooms']);
-        Route::get('/api/dashboard/search', [DashboardController::class, 'search']);
+        Route::resource('MainDashboard', MainDashboardController::class)
+            ->except(['create', 'edit', 'show'])
+            ->parameters(['MainDashboard' => 'mainDashboard']);
 
         // Building Management
         Route::resource('BuildingDashboard', BuildingController::class)

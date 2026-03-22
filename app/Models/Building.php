@@ -19,7 +19,6 @@ class Building extends Model
         'has_parking',
         'restroom_count',
         'ramp_count',
-        'college_id',
     ];
 
     protected $casts = [
@@ -28,9 +27,9 @@ class Building extends Model
     ];
 
     // Relationships
-    public function college()
+    public function colleges()
     {
-        return $this->belongsTo(College::class, 'college_id');
+        return $this->belongsToMany(College::class, 'building_college');
     }
 
     public function rooms()

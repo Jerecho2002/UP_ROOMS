@@ -11,8 +11,9 @@ const modalData = ref(null)
 const page = usePage()
 const colleges = computed(() => page.props.colleges ?? {})
 const filters = computed(() => page.props.filters ?? {})
+const buildings = computed(() => page.props.buildings ?? [])
 const deans = computed(() =>
-    page.props.deans.map(d => ({ label: d.username, value: d.id }))
+    page.props.deans.map(d => ({ label: `${d.first_name} ${d.last_name}`, value: d.id }))
 )
 
 const form = useForm({
@@ -22,6 +23,7 @@ const form = useForm({
     dean_id: '',
     contact_email: '',
     contact_phone: '',
+    building_ids: []
 })
 
 const openModal = (type, row = null) => {
@@ -65,17 +67,34 @@ const handleSubmit = (data) => {
         @delete="(row) => openModal('delete', row)" @view="(row) => openModal('view', row)" :columns="[
             { label: 'College Name', field: 'college_name' },
             { label: 'Code', field: 'college_code' },
-            { label: 'Dean', field: 'dean', render: (item) => item.dean?.username ?? 'N/A' },
+            { label: 'Dean', field: 'dean', render: (item) => item.dean ? `${item.dean.first_name} ${item.dean.last_name}` : 'N/A' },
             { label: 'Email', field: 'contact_email' },
             { label: 'Phone Number', field: 'contact_phone' },
         ]" />
 
-    <DynamicModal v-if="isModalVisible" :type="modalType" :data="modalData" title="College" :fields="[
-        { label: 'College Name', field: 'college_name' },
-        { label: 'College Code', field: 'college_code' },
-        { label: 'Description', field: 'description', type: 'textarea' },
-        { label: 'Dean', field: 'dean_id', type: 'select', options: deans },
-        { label: 'Contact Email', field: 'contact_email', type: 'email' },
-        { label: 'Contact Phone', field: 'contact_phone' },
-    ]" @close="closeModal" @submit="handleSubmit" />
+    <DynamicModal v-if="isModalVisible" :type="modalType" :data="modalData || {}"
+        :key="modalType + (modalData?.id || 'new')" title="College" :fields="[
+            { label: 'College Name', field: 'college_name' },
+            { label: 'College Code', field: 'college_code' },
+            { label: 'Description', field: 'description', type: 'textarea' },
+            {
+                label: 'Buildings',
+                field: 'building_ids',
+                type: 'multiselect',
+                options: buildings.map(b => ({
+                    label: b.building_name,
+                    value: b.id
+                }))
+            },
+            { label: 'Dean', field: 'dean_id', type: 'select', options: deans },
+            { label: 'Contact Email', field: 'contact_email', type: 'email' },
+            { label: 'Contact Phone', field: 'contact_phone' },
+            {
+                label: 'Departments',
+                field: 'departments',
+                type: 'display-badges',
+                render: (item) => item.departments ?? [],
+                hideOnEdit: true
+            }
+        ]" @close="closeModal" @submit="handleSubmit" />
 </template>

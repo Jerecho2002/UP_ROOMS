@@ -1,37 +1,39 @@
 <script setup>
 import { reactive, watch } from 'vue'
 import DynamicButton from '@/Components/DynamicButton.vue'
+import Multiselect from '@vueform/multiselect'
 
 const props = defineProps({
-    type: {
-        type: String, // 'add' | 'edit' | 'view' | 'delete'
-        required: true
-    },
-    title: {
-        type: String,
-        required: true
-    },
-    data: {
-        type: Object,
-        default: () => ({})
-    },
-    fields: {
-        type: Array,
-        default: () => []
-    }
+    type: { type: String, required: true },
+    title: { type: String, required: true },
+    data: { type: Object, default: () => ({}) },
+    fields: { type: Array, default: () => [] }
 })
 
 const emit = defineEmits(['close', 'submit'])
 
-// Internal form state
+// Main form state
 const form = reactive({})
 
-// Populate form when data changes (edit/view)
+const dynamicMultiselects = reactive({})
+
 watch(() => props.data, (val) => {
     props.fields.forEach(f => {
-        const raw = val?.[f.field] ?? ''
+        if (f.type === 'multiselect') {
+            const initial = Array.isArray(val[f.field]) ? val[f.field] : []
+            dynamicMultiselects[f.field] = initial.length ? [...initial] : []
+        }
 
-        if (f.type === 'select') {
+        const keys = f.field.split('.')
+        let raw = val
+        for (const key of keys) {
+            raw = raw?.[key] ?? ''
+            if (raw === '') break
+        }
+
+        if (f.type === 'multiselect') {
+            form[f.field] = Array.isArray(raw) ? raw : []
+        } else if (f.type === 'select') {
             if (f.options && f.options.length && typeof f.options[0].value === 'number') {
                 form[f.field] = Number(raw)
             } else {
@@ -43,8 +45,24 @@ watch(() => props.data, (val) => {
     })
 }, { immediate: true })
 
+const addOption = (field) => dynamicMultiselects[field].push(null)
+const removeOption = (field, index) => dynamicMultiselects[field].splice(index, 1)
+
 const handleSubmit = () => {
+    Object.keys(dynamicMultiselects).forEach(field => {
+        form[field] = dynamicMultiselects[field].filter(v => v !== null && v !== '')
+    })
     emit('submit', { ...form })
+}
+
+const resolveField = (obj, path) => {
+    const value = path.split('.').reduce((o, key) => o?.[key], obj)
+
+    if (Array.isArray(value)) {
+        return value.length ? value.join(', ') : 'N/A'
+    }
+
+    return value ?? 'N/A'
 }
 </script>
 
@@ -67,7 +85,6 @@ const handleSubmit = () => {
             <!-- Body -->
             <div class="px-6 py-4 space-y-4 max-h-[60vh] overflow-y-auto">
 
-                <!-- Delete confirmation -->
                 <div v-if="type === 'delete'" class="text-gray-700">
                     Are you sure you want to delete this record? This action cannot be undone.
                 </div>
@@ -75,25 +92,77 @@ const handleSubmit = () => {
                 <!-- Dynamic fields -->
                 <template v-else>
                     <div v-for="f in fields" :key="f.field">
-                        <label class="text-sm text-gray-600">{{ f.label }}</label>
+                        <!-- Skip Departments only in add/edit -->
+                        <template v-if="!(f.hideOnEdit && (type === 'add' || type === 'edit'))">
+                            <label class="text-sm text-gray-600">{{ f.label }}</label>
 
-                        <!-- Textarea -->
-                        <textarea v-if="f.type === 'textarea'" v-model="form[f.field]" :disabled="type === 'view'"
-                            class="w-full border border-yellow-300 rounded-md px-3 py-2 text-sm mt-1 resize-none"
-                            rows="3" />
+                            <!-- VIEW MODE -->
+                            <div v-if="type === 'view'" class="mt-1">
+                                <!-- Display badges -->
+                                <div v-if="f.type === 'display-badges'" class="flex flex-wrap gap-2">
+                                    <template v-if="(f.render ? f.render(data) : []).length">
+                                        <span v-for="(val, i) in (f.render ? f.render(data) : [])" :key="i"
+                                            class="px-3 py-1 text-xs rounded-full bg-[#7A0C23] text-white font-medium">
+                                            {{ val }}
+                                        </span>
+                                    </template>
+                                    <span v-else class="text-sm text-gray-500">N/A</span>
+                                </div>
 
-                        <!-- Select -->
-                        <select v-else-if="f.type === 'select'" v-model="form[f.field]" :disabled="type === 'view'"
-                            class="w-full border border-yellow-300 rounded-md px-3 py-2 text-sm mt-1">
-                            <option value="" disabled>Select {{ f.label }}</option>
-                            <option v-for="opt in f.options" :key="opt.value" :value="opt.value">
-                                {{ opt.label }}
-                            </option>
-                        </select>
+                                <!-- Multiselect -->
+                                <div v-else-if="f.type === 'multiselect'"
+                                    class="text-sm text-gray-800 bg-gray-100 px-3 py-2 rounded-md">
+                                    {{
+                                        (f.options || []).filter(opt => (data[f.field] || []).includes(opt.value)).map(o =>
+                                    o.label).join(', ') || 'N/A'
+                                    }}
+                                </div>
 
-                        <!-- Text / Number / Email -->
-                        <input v-else v-model="form[f.field]" :type="f.type ?? 'text'" :disabled="type === 'view'"
-                            class="w-full border border-yellow-300 rounded-md px-3 py-2 text-sm mt-1" />
+                                <!-- Select -->
+                                <div v-else-if="f.type === 'select'"
+                                    class="text-sm text-gray-800 bg-gray-100 px-3 py-2 rounded-md">
+                                    {{
+                                        (f.options || []).find(opt => opt.value === data[f.field])?.label || 'N/A'
+                                    }}
+                                </div>
+
+                                <!-- Input / Text / Email / Number / Default -->
+                                <div v-else class="text-sm text-gray-800 bg-gray-100 px-3 py-2 rounded-md">
+                                    {{ f.render ? f.render(data) : resolveField(data, f.field) }}
+                                </div>
+                            </div>
+
+                            <!-- EDIT / ADD MODE -->
+                            <template v-else>
+                                <div v-if="f.type === 'multiselect'" class="space-y-2">
+                                    <div v-for="(value, idx) in dynamicMultiselects[f.field]" :key="idx"
+                                        class="flex gap-2 items-center">
+                                        <Multiselect v-model="dynamicMultiselects[f.field][idx]" :options="f.options"
+                                            :value-prop="'value'" label="label" :searchable="true"
+                                            :placeholder="`Select ${f.label}`" class="w-full ms-yellow" />
+                                        <button type="button" class="text-red-500 font-bold px-2"
+                                            @click="removeOption(f.field, idx)">
+                                            &times;
+                                        </button>
+                                    </div>
+                                    <button type="button" class="text-green-600 font-semibold mt-1"
+                                        @click="addOption(f.field)">
+                                        + Add {{ f.label }}
+                                    </button>
+                                </div>
+
+                                <textarea v-else-if="f.type === 'textarea'" v-model="form[f.field]"
+                                    class="w-full border border-yellow-300 rounded-md px-3 py-2 text-sm mt-1 resize-none"
+                                    rows="3" />
+
+                                <Multiselect v-else-if="f.type === 'select'" v-model="form[f.field]"
+                                    :options="f.options" :value-prop="'value'" label="label" :can-clear="false"
+                                    :searchable="true" :placeholder="`Select ${f.label}`" class="mt-1 ms-yellow" />
+
+                                <input v-else v-model="form[f.field]" :type="f.type ?? 'text'"
+                                    class="w-full border border-yellow-300 rounded-md px-3 py-2 text-sm mt-1" />
+                            </template>
+                        </template>
                     </div>
                 </template>
 
@@ -109,3 +178,14 @@ const handleSubmit = () => {
         </div>
     </div>
 </template>
+<style>
+.ms-yellow {
+    --ms-border-color: #fde047;
+    --ms-border-color-active: #fde047;
+    --ms-ring-color: transparent;
+    --ms-radius: 0.375rem;
+    --ms-font-size: 0.875rem;
+    --ms-option-bg-selected: #7A0C23;
+    --ms-option-bg-selected-pointed: #9b0f2d;
+}
+</style>

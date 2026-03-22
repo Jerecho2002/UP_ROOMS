@@ -16,6 +16,10 @@ const buildings = computed(() =>
   page.props.buildings.map(b => ({ label: b.building_name, value: b.id }))
 )
 
+const departments = computed(() =>
+  page.props.departments.map(d => ({ label: d.department_name, value: d.id }))
+)
+
 const colleges = computed(() =>
   page.props.colleges.map(c => ({ label: c.college_name, value: c.id }))
 )
@@ -25,7 +29,7 @@ const room_types = computed(() =>
 )
 
 const users = computed(() =>
-  page.props.users.map(u => ({ label: u.username, value: u.id }))
+  page.props.users.map(u => ({ label: `${u.first_name} ${u.last_name}`, value: u.id }))
 )
 
 const form = useForm({
@@ -88,7 +92,7 @@ const handleSubmit = (data) => {
       { label: 'College Name', field: 'college_id', render: (item) => item.college?.college_name ?? 'N/A' },
       { label: 'Department Name', field: 'department_id', render: (item) => item.department?.department_name ?? 'N/A' },
       { label: 'Room Type', field: 'room_type_id', render: (item) => item.room_type?.room_type_name ?? 'N/A' },
-      { label: 'Assigned User', field: 'assigned_user_id', render: (item) => item.assigned_user?.username ?? 'N/A' },
+      { label: 'Assigned User', field: 'assigned_user_id', render: (item) => item.assigned_user ? `${item.assigned_user.first_name} ${item.assigned_user.last_name}` : 'N/A' },
       { label: 'Capacity', field: 'capacity' },
       // { label: 'Location', field: 'location' },
       // { label: 'Equipment', field: 'facilities' },
@@ -99,6 +103,7 @@ const handleSubmit = (data) => {
     { label: 'Room Code', field: 'room_code' },
     { label: 'Buildings', field: 'building_id', type: 'select', options: buildings },
     { label: 'Colleges', field: 'college_id', type: 'select', options: colleges },
+    { label: 'Departments', field: 'department_id', type: 'select', options: departments },
     { label: 'Room Types', field: 'room_type_id', type: 'select', options: room_types },
     { label: 'Assigned User', field: 'assigned_user_id', type: 'select', options: users },
     { label: 'Floor Number', field: 'floor_number', type: 'number' },

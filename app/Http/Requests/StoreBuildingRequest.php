@@ -31,7 +31,8 @@ class StoreBuildingRequest extends FormRequest
             'has_parking'     => 'required|in:0,1',
             'restroom_count'  => 'required|integer|min:0',
             'ramp_count'      => 'required|integer|min:0',
-            'college_id'      => 'required|exists:colleges,id',
+            'college_ids'     => 'nullable|array',
+            'college_ids.*'   => 'exists:colleges,id',
         ];
     }
 }

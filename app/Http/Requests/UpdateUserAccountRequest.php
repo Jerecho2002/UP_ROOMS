@@ -17,19 +17,13 @@ class UpdateUserAccountRequest extends FormRequest
         $userId = $this->route('userAccount');
 
         return [
-            'username' => [
-                'required',
-                'string',
-                'max:50',
-                Rule::unique('user_accounts', 'username')->ignore($userId),
-            ],
             'email' => [
                 'required',
                 'email',
                 'max:100',
-                Rule::unique('user_accounts', 'email')->ignore($userId),
+                Rule::unique('users', 'email')->ignore($this->userAccount->user_id),
             ],
-            'password' => 'nullable|string|min:8|confirmed', // optional on update
+            'password' => 'nullable|string|min:8|confirmed',
             'first_name' => 'required|string|max:50',
             'last_name' => 'required|string|max:50',
             'middle_name' => 'nullable|string|max:50',

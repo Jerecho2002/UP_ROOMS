@@ -28,6 +28,8 @@ class StoreCollegeRequest extends FormRequest
             'dean_id'        => 'nullable|exists:user_accounts,id',
             'contact_email' => 'required|email|max:255',
             'contact_phone' => 'nullable|string|max:50',
+            'building_ids'     => 'nullable|array',
+            'building_ids.*'   => 'exists:buildings,id',
         ];
     }
 }

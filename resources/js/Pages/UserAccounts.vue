@@ -21,7 +21,6 @@ const departments = computed(() =>
 )
 
 const form = useForm({
-    username: '',
     email: '',
     password: '',
     first_name: '',
@@ -46,7 +45,8 @@ const closeModal = () => {
 }
 
 const handleSubmit = (data) => {
-    Object.assign(form, data)
+    const { 'user.email': email, ...rest } = data
+    Object.assign(form, { ...rest, email })
 
     const options = {
         onSuccess: closeModal,
@@ -74,19 +74,17 @@ const handleSubmit = (data) => {
     <DynamicLayout :items="users" :filters="filters" :route-name="'UserAccounts'" :title="'User Account Management'"
         :buttonName="'User Account'" @add="openModal('add')" @edit="(row) => openModal('edit', row)"
         @delete="(row) => openModal('delete', row)" @view="(row) => openModal('view', row)" :columns="[
-            { label: 'Username', field: 'username' },
             { label: 'Employee Number', field: 'employee_number' },
             { label: 'Gender', field: 'gender' },
             { label: 'College Name', field: 'college_id', render: (item) => item.college?.college_name ?? 'N/A' },
             { label: 'Department Name', field: 'department_id', render: (item) => item.department?.department_name ?? 'N/A' },
             { label: 'Contact Number', field: 'contact_number' },
-            { label: 'Contact Email', field: 'email' },
+            { label: 'Contact Email', field: 'email', render: (item) => item.user?.email ?? 'N/A' },
             { label: 'Status', field: 'status' },
         ]" />
 
-    <DynamicModal v-if="isModalVisible" :type="modalType" :data="modalData" title="User Account" :fields="[
-        { label: 'Username', field: 'username' },
-        { label: 'Email', field: 'email' },
+    <DynamicModal v-if="isModalVisible" :type="modalType" :data="modalData || {}" title="User Account" :fields="[
+        { label: 'Email', field: 'user.email' },
         { label: 'Password', field: 'password', type: 'password' },
         { label: 'First Name', field: 'first_name' },
         { label: 'Middle Name', field: 'middle_name' },

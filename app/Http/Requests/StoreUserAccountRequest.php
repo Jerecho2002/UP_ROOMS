@@ -22,8 +22,7 @@ class StoreUserAccountRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'username' => 'required|string|max:50|unique:user_accounts,username',
-            'email' => 'required|email|max:100|unique:user_accounts,email',
+            'email' => 'required|email|max:100|unique:users,email',
             'password' => 'required|string|min:8',
             'first_name' => 'required|string|max:50',
             'last_name' => 'required|string|max:50',

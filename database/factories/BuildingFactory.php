@@ -22,7 +22,6 @@ class BuildingFactory extends Factory
             'has_parking' => $this->faker->boolean(80),
             'restroom_count' => $this->faker->numberBetween(1, 20),
             'ramp_count' => $this->faker->numberBetween(0, 5),
-            'college_id' => College::factory(),
         ];
     }
 }

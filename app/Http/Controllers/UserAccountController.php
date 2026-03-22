@@ -6,6 +6,7 @@ use App\Http\Requests\StoreUserAccountRequest;
 use App\Http\Requests\UpdateUserAccountRequest;
 use App\Models\College;
 use App\Models\Department;
+use App\Models\User;
 use App\Models\UserAccount;
 use App\Services\UserAccountService;
 use Exception;
@@ -37,7 +38,15 @@ class UserAccountController extends Controller
     public function store(StoreUserAccountRequest $request)
     {
         try {
-            UserAccount::create($request->validated());
+            $validated = $request->validated();
+
+            $user = User::create([
+                'email' => $validated['email'],
+                'password' => bcrypt($validated['password']),
+            ]);
+
+            unset($validated['email'], $validated['password']);
+            $user->userAccount()->create($validated);
 
             return redirect()
                 ->back()
@@ -52,7 +61,16 @@ class UserAccountController extends Controller
     public function update(UpdateUserAccountRequest $request, UserAccount $userAccount)
     {
         try {
-            $userAccount->update($request->validated());
+            $validated = $request->validated();
+
+            $userFields = array_filter([
+                'email' => $validated['email'] ?? null,
+                'password' => isset($validated['password']) ? bcrypt($validated['password']) : null,
+            ]);
+            $userAccount->user()->update($userFields);
+
+            unset($validated['email'], $validated['password']);
+            $userAccount->update($validated);
 
             return redirect()
                 ->back()

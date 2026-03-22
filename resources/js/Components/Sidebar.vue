@@ -42,8 +42,7 @@
 
       <div v-show="isCollegeOpen" class="pl-4 space-y-1 transition-all duration-300 overflow-hidden">
         <a href="/CollegeDashboard"
-          class="block px-4 py-2 hover:bg-[#9c1b33] hover:text-white rounded transition duration-150">College
-          Dashboard</a>
+          class="block px-4 py-2 hover:bg-[#9c1b33] hover:text-white rounded transition duration-150">College</a>
         <a href="/Departments"
           class="block px-4 py-2 hover:bg-[#9c1b33] hover:text-white rounded transition duration-150">Departments</a>
       </div>

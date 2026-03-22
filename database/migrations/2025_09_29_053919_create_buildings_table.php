@@ -19,7 +19,6 @@ return new class extends Migration
             $table->boolean('has_parking')->default(false);
             $table->integer('restroom_count')->nullable();
             $table->integer('ramp_count')->nullable();
-            $table->unsignedBigInteger('college_id')->nullable(); // Will be foreign key later
             $table->timestamps();
             // NO FOREIGN KEY HERE - add later
         });

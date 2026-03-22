@@ -20,25 +20,34 @@ class BuildingController extends Controller
         $perPage = 10;
         $search = $request->input('search');
         $buildings = $this->buildingService->getBuildings($perPage, $search);
-        $colleges = College::all();
 
         return Inertia::render('BuildingDashboard', [
             'buildings' => $buildings,
-            'colleges' => $colleges,
             'filters'   => $request->only('search'),
+            'colleges' => College::select('id', 'college_name')->get(),
         ]);
     }
 
     public function store(StoreBuildingRequest $request)
     {
-        Building::create($request->validated());
+        $validated = $request->validated();
+
+        $building = Building::create($validated);
+
+        if (isset($validated['college_ids'])) {
+            $building->colleges()->sync($validated['college_ids']);
+        }
 
         return redirect()->back()->with('success', 'Building created successfully.');
     }
 
     public function update(UpdateBuildingRequest $request, Building $building)
     {
-        $building->update($request->validated());
+        $validated = $request->validated();
+
+        $building->update($validated);
+
+        $building->colleges()->sync($validated['college_ids'] ?? []);
 
         return redirect()->back()->with('success', 'Building updated successfully.');
     }

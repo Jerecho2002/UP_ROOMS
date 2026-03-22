@@ -31,7 +31,7 @@ class College extends Model
 
     public function buildings()
     {
-        return $this->hasMany(Building::class, 'college_id');
+        return $this->belongsToMany(Building::class, 'building_college');
     }
 
     public function rooms()

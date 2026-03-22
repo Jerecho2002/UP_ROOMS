@@ -43,14 +43,6 @@ return new class extends Migration
             $table->foreign('department_head_id')->references('id')->on('user_accounts')->onDelete('set null');
         });
 
-        // 4. Add foreign keys to buildings
-        Schema::table('buildings', function (Blueprint $table) {
-            if (!Schema::hasColumn('buildings', 'college_id')) {
-                $table->unsignedBigInteger('college_id')->nullable()->after('id');
-            }
-            $table->foreign('college_id')->references('id')->on('colleges')->onDelete('set null');
-        });
-
         // 5. Add foreign keys to rooms
         Schema::table('rooms', function (Blueprint $table) {
             if (!Schema::hasColumn('rooms', 'building_id')) {
