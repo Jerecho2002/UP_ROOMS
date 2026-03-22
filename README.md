@@ -1,61 +1,99 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+**Project Name:** UPCEBU-ROOM SYSTEM
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+# 👨‍💻 CONTRIBUTORS
 
-## About Laravel
+## ⭐ RUSSELL EVAN O. LOQUINARIO
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+### Frontend Developer – UI/UX Designer
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+---
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## ⭐ JERECHO E. LATOSA
 
-## Learning Laravel
+### Backend Developer – Full Stack Developer
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+---
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+# 📜 COPYRIGHT LAW AND PENALTIES (PHILIPPINES)
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+This project is protected under **Republic Act No. 8293**, also known as the **Intellectual Property Code of the Philippines (IP Code)**.
 
-## Laravel Sponsors
+Under this law, copyright protection is **automatic upon creation**. Any unauthorized reproduction, distribution, uploading, or communication of this website and its contents to the public is strictly prohibited.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+---
 
-### Premium Partners
+## 1️⃣ Legal Basis for Website Infringement
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+- **Automatic Protection** – Copyright exists the moment a work is created and fixed in digital format. Registration is not required but is recommended for documentation.
+- **Economic Rights Violation** includes:
+    - Reproduction of the work
+    - First public distribution
+    - Communication to the public (e.g., uploading to a website)
+- **Internet Applicability** – The Philippines adheres to the WIPO Internet Treaties, ensuring protection of works distributed online.
 
-## Contributing
+---
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## 2️⃣ What Constitutes Website Distribution Infringement
 
-## Code of Conduct
+- Unauthorized uploading or streaming of copyrighted content (videos, music, books, software).
+- Content scraping or copying from this website without permission.
+- Operating or facilitating access to pirated content.
+- Aiding or abetting copyright infringement.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+---
 
-## Security Vulnerabilities
+## 3️⃣ Enforcement and Remedies
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+- Administrative site blocking through IPOPHL.
+- Notice-and-takedown procedures via the IP Rights Enforcement Office (IEO).
+- Civil lawsuits for injunctions, damages, and destruction of infringing materials.
 
-## License
+---
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## 4️⃣ Criminal and Civil Penalties
+
+(Section 217, Republic Act No. 8293)
+
+### 🔴 First Offense
+
+- Imprisonment: 1 to 3 years
+- Fine: PHP 50,000 – PHP 150,000
+
+### 🔴 Second Offense
+
+- Imprisonment: 3 years and 1 day to 6 years
+- Fine: PHP 150,000 – PHP 500,000
+
+### 🔴 Third and Subsequent Offenses
+
+- Imprisonment: 6 years and 1 day to 9 years
+- Fine: PHP 500,000 – PHP 1,500,000
+
+Additional penalties may include:
+
+- Subsidiary imprisonment in case of insolvency
+- Payment of actual damages or statutory damages (not less than PHP 50,000)
+
+---
+
+## 5️⃣ Fair Use Exception
+
+Limited use of copyrighted materials may be allowed under **Fair Use**, including:
+
+- Criticism
+- Comment
+- News reporting
+- Teaching
+- Research
+
+Fair use depends on the purpose, nature, amount used, and whether the use is commercial or non-profit.
+
+---
+
+# ⚠️ NOTICE
+
+Any unauthorized reproduction, duplication, or distribution of this project, in whole or in part, without explicit permission from the developers is strictly prohibited and punishable under Philippine law.
+
+---
+
+© 2025–2026 UPCEBU-ROOM WEBSITE. All Rights Reserved.
