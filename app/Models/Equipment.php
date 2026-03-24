@@ -38,9 +38,9 @@ class Equipment extends Model
     ];
 
     // Relationships
-    public function room()
+    public function rooms()
     {
-        return $this->belongsTo(Room::class);
+        return $this->belongsToMany(Room::class, 'room_equipment');
     }
 
     public function building()
@@ -92,7 +92,7 @@ class Equipment extends Model
     // Add this method to get equipment with user relationships
     public function scopeWithAssignedUser($query)
     {
-        return $query->with(['assignedUser' => function($q) {
+        return $query->with(['assignedUser' => function ($q) {
             $q->select('id', 'first_name', 'last_name', 'username', 'email');
         }]);
     }

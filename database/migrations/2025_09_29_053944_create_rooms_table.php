@@ -20,10 +20,8 @@ return new class extends Migration
             $table->integer('floor_number')->nullable();
             $table->string('location', 255)->nullable();
             $table->integer('capacity')->default(30);
-            $table->integer('area_sqm')->nullable();
             $table->json('facilities')->nullable();
-            $table->json('equipments')->nullable(); // Add equipments field
-            $table->text('description')->nullable(); // Add description field
+            $table->text('description')->nullable();
             $table->enum('status', ['available', 'occupied', 'maintenance', 'closed'])->default('available');
             $table->text('notes')->nullable();
             $table->timestamps();

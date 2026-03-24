@@ -14,7 +14,6 @@ return new class extends Migration
             $table->string('slug', 120)->unique();
             $table->text('description')->nullable();
             $table->integer('default_capacity')->default(30);
-            $table->json('features')->nullable();
             $table->timestamps();
         });
     }

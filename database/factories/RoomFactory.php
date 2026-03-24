@@ -27,7 +27,6 @@ class RoomFactory extends Factory
             'floor_number' => $this->faker->numberBetween(1, 5),
             'location' => $this->faker->optional()->words(3, true),
             'capacity' => $this->faker->numberBetween(20, 100),
-            'area_sqm' => $this->faker->numberBetween(50, 200),
             'facilities' => json_encode([
                 'tables' => $this->faker->numberBetween(10, 50),
                 'chairs' => $this->faker->numberBetween(20, 100),

@@ -14,11 +14,6 @@ class RoomType extends Model
         'slug',
         'description',
         'default_capacity',
-        'features',
-    ];
-
-    protected $casts = [
-        'features' => 'json',
     ];
 
     // Relationships

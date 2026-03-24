@@ -39,13 +39,26 @@ watch(() => props.data, (val) => {
             } else {
                 form[f.field] = raw
             }
+        }
+        else if (f.type === 'equipment-qty') {
+            const initial = Array.isArray(val[f.field]) ? val[f.field] : []
+            dynamicMultiselects[f.field] = initial.length
+                ? initial.map(e => ({ id: e.id, qty: e.qty ?? 0 }))
+                : []
         } else {
             form[f.field] = raw
         }
     })
 }, { immediate: true })
 
-const addOption = (field) => dynamicMultiselects[field].push(null)
+const addOption = (field, options = []) => {
+    const isEquipmentQty = field in dynamicMultiselects && options.length > 0
+    if (isEquipmentQty) {
+        dynamicMultiselects[field].push({ id: options[0].id, qty: 0 })
+    } else {
+        dynamicMultiselects[field].push(null)
+    }
+}
 const removeOption = (field, index) => dynamicMultiselects[field].splice(index, 1)
 
 const handleSubmit = () => {
@@ -64,11 +77,15 @@ const resolveField = (obj, path) => {
 
     return value ?? 'N/A'
 }
+
+const getFieldValue = (obj, path) => {
+    return path.split('.').reduce((o, key) => o?.[key], obj)
+}
 </script>
 
 <template>
     <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-        <div class="bg-white rounded-md shadow-xl w-full max-w-md mx-4 max-h-[90vh] flex flex-col">
+        <div class="bg-white rounded-md shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] flex flex-col">
 
             <!-- Header -->
             <div class="flex justify-between items-center px-6 py-4 bg-[#7A0C23] rounded-t-md">
@@ -93,7 +110,11 @@ const resolveField = (obj, path) => {
                 <template v-else>
                     <div v-for="f in fields" :key="f.field">
                         <!-- Skip Departments only in add/edit -->
-                        <template v-if="!(f.hideOnEdit && (type === 'add' || type === 'edit'))">
+                        <template v-if="!(
+                            (f.hideOnEdit && (type === 'add' || type === 'edit')) ||
+                            (f.hideOnView && type === 'view')
+                        )">
+
                             <label class="text-sm text-gray-600">{{ f.label }}</label>
 
                             <!-- VIEW MODE -->
@@ -114,7 +135,7 @@ const resolveField = (obj, path) => {
                                     class="text-sm text-gray-800 bg-gray-100 px-3 py-2 rounded-md">
                                     {{
                                         (f.options || []).filter(opt => (data[f.field] || []).includes(opt.value)).map(o =>
-                                    o.label).join(', ') || 'N/A'
+                                            o.label).join(', ') || 'N/A'
                                     }}
                                 </div>
 
@@ -124,6 +145,25 @@ const resolveField = (obj, path) => {
                                     {{
                                         (f.options || []).find(opt => opt.value === data[f.field])?.label || 'N/A'
                                     }}
+                                </div>
+
+                                <div v-else-if="f.type === 'equipment-qty'" class="space-y-2">
+                                    <template v-if="(getFieldValue(data, f.field) || []).length">
+                                        <div v-for="(eq, idx) in getFieldValue(data, f.field)" :key="idx"
+                                            class="flex justify-between items-center bg-gray-100 px-3 py-2 rounded-md text-sm">
+
+                                            <span class="font-medium">
+                                                {{f.options.find(o => o.id === eq.id)?.name || 'Unknown'}}
+                                            </span>
+
+                                            <span class="text-gray-600 text-xs">
+                                                Qty: {{ eq.qty }} |
+                                                Stock: {{f.options.find(o => o.id === eq.id)?.stock ?? 0}}
+                                            </span>
+                                        </div>
+                                    </template>
+
+                                    <span v-else class="text-sm text-gray-500">N/A</span>
                                 </div>
 
                                 <!-- Input / Text / Email / Number / Default -->
@@ -158,6 +198,29 @@ const resolveField = (obj, path) => {
                                 <Multiselect v-else-if="f.type === 'select'" v-model="form[f.field]"
                                     :options="f.options" :value-prop="'value'" label="label" :can-clear="false"
                                     :searchable="true" :placeholder="`Select ${f.label}`" class="mt-1 ms-yellow" />
+
+                                <div v-else-if="f.type === 'equipment-qty'" class="space-y-2">
+                                    <div v-for="(eq, idx) in dynamicMultiselects[f.field]" :key="idx"
+                                        class="flex gap-2 items-center">
+                                        <Multiselect v-model="dynamicMultiselects[f.field][idx].id" :options="f.options"
+                                            :value-prop="'id'" label="name" :searchable="true"
+                                            :placeholder="`Select ${f.label}`" class="w-full ms-yellow" />
+                                        <input type="number" v-model.number="dynamicMultiselects[f.field][idx].qty"
+                                            :max="f.options.find(o => o.id === eq.id)?.stock ?? 0" min="0"
+                                            class="w-1/3 border border-yellow-300 rounded-md px-2 py-1 text-sm" />
+                                        <span class="text-xs text-gray-600 w-24">
+                                            Stock: {{f.options.find(o => o.id === eq.id)?.stock ?? 0}}
+                                        </span>
+                                        <button type="button" class="text-red-500 font-bold px-2"
+                                            @click="removeOption(f.field, idx)">
+                                            &times;
+                                        </button>
+                                    </div>
+                                    <button type="button" class="text-green-600 font-semibold mt-1"
+                                        @click="addOption(f.field, f.options)">
+                                        + Add {{ f.label }}
+                                    </button>
+                                </div>
 
                                 <input v-else v-model="form[f.field]" :type="f.type ?? 'text'"
                                     class="w-full border border-yellow-300 rounded-md px-3 py-2 text-sm mt-1" />

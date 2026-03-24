@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Equipment;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreRoomRequest extends FormRequest
@@ -33,7 +34,40 @@ class StoreRoomRequest extends FormRequest
             'location'          => 'nullable|string|max:255',
             'capacity'          => 'required|integer|min:1',
             'description'       => 'nullable|string',
-            'equipments'        => 'nullable|string',
+            'equipment'           => 'nullable|array',
+            'equipment.*.id'      => 'required|exists:equipment,id',
+            'equipment.*.qty'     => 'required|integer|min:0',
         ];
+    }
+
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+
+            if (!$this->equipment) return;
+
+            foreach ($this->equipment as $item) {
+                $equipment = Equipment::find($item['id']);
+
+                if (!$equipment) continue;
+
+                $requestedQty = $item['qty'];
+
+                if (($equipment->quantity - $requestedQty) < 0) {
+                    $validator->errors()->add(
+                        'equipment',
+                        "{$equipment->equipment_name} does not have enough stock."
+                    );
+                }
+
+                // Optional: prevent reaching 0
+                if (($equipment->quantity - $requestedQty) === 0) {
+                    $validator->errors()->add(
+                        'equipment',
+                        "{$equipment->equipment_name} cannot reach zero stock."
+                    );
+                }
+            }
+        });
     }
 }

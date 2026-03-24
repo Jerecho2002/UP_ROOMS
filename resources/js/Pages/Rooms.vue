@@ -11,6 +11,7 @@ const modalData = ref(null)
 const page = usePage()
 const rooms = computed(() => page.props.rooms ?? {})
 const filters = computed(() => page.props.filters ?? {})
+const equipment = computed(() => page.props.equipment ?? [])
 
 const buildings = computed(() =>
   page.props.buildings.map(b => ({ label: b.building_name, value: b.id }))
@@ -44,7 +45,7 @@ const form = useForm({
   location: '',
   capacity: '',
   description: '',
-  equipments: '',
+  equipment: []
 })
 
 const openModal = (type, row = null) => {
@@ -59,7 +60,6 @@ const closeModal = () => {
 
 const handleSubmit = (data) => {
   Object.assign(form, data)
-
   const options = {
     onSuccess: closeModal,
     onError: (errors) => {
@@ -92,24 +92,34 @@ const handleSubmit = (data) => {
       { label: 'College Name', field: 'college_id', render: (item) => item.college?.college_name ?? 'N/A' },
       { label: 'Department Name', field: 'department_id', render: (item) => item.department?.department_name ?? 'N/A' },
       { label: 'Room Type', field: 'room_type_id', render: (item) => item.room_type?.room_type_name ?? 'N/A' },
-      { label: 'Assigned User', field: 'assigned_user_id', render: (item) => item.assigned_user ? `${item.assigned_user.first_name} ${item.assigned_user.last_name}` : 'N/A' },
+      { label: 'Assigned User', field: 'assigned_user_id', render: (item) => item.assigned_user || 'N/A' },
       { label: 'Capacity', field: 'capacity' },
-      // { label: 'Location', field: 'location' },
-      // { label: 'Equipment', field: 'facilities' },
+      { label: 'Location', field: 'location' },
     ]" />
 
-  <DynamicModal v-if="isModalVisible" :type="modalType" :data="modalData" title="Room" :fields="[
-    { label: 'Room Name', field: 'room_name' },
-    { label: 'Room Code', field: 'room_code' },
-    { label: 'Buildings', field: 'building_id', type: 'select', options: buildings },
-    { label: 'Colleges', field: 'college_id', type: 'select', options: colleges },
-    { label: 'Departments', field: 'department_id', type: 'select', options: departments },
-    { label: 'Room Types', field: 'room_type_id', type: 'select', options: room_types },
-    { label: 'Assigned User', field: 'assigned_user_id', type: 'select', options: users },
-    { label: 'Floor Number', field: 'floor_number', type: 'number' },
-    { label: 'Location', field: 'location' },
-    { label: 'Capacity', field: 'capacity', type: 'number' },
-    { label: 'Description', field: 'description', type: 'textarea' },
-    { label: 'Equipments', field: 'equipments', type: 'textarea' },
-  ]" @close="closeModal" @submit="handleSubmit" />
+  <DynamicModal v-if="isModalVisible" :type="modalType" :data="modalData || {}"
+    :key="modalType + (modalData?.id || 'new')" title="Room" :fields="[
+      { label: 'Room Name', field: 'room_name' },
+      { label: 'Room Code', field: 'room_code' },
+      { label: 'Building', field: 'building_id', type: 'select', options: buildings },
+      { label: 'College', field: 'college_id', type: 'select', options: colleges },
+      { label: 'Department', field: 'department_id', type: 'select', options: departments },
+      {
+        label: 'Equipment',
+        field: 'equipment',
+        type: 'equipment-qty',
+        options: equipment.map(e => ({
+          id: e.id,
+          name: e.equipment_name,
+          stock: e.quantity ?? 0
+        })),
+        render: (items) => items.map(i => `${i.name} (Qty: ${i.qty})`)
+      },
+      { label: 'Room Type', field: 'room_type_id', type: 'select', options: room_types },
+      { label: 'Assigned User', field: 'assigned_user_id', type: 'select', options: users },
+      { label: 'Floor Number', field: 'floor_number', type: 'number' },
+      { label: 'Location', field: 'location' },
+      { label: 'Capacity', field: 'capacity', type: 'number' },
+      { label: 'Description', field: 'description', type: 'textarea' },
+    ]" @close="closeModal" @submit="handleSubmit" />
 </template>

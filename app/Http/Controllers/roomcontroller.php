@@ -2,18 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Room;
-use App\Models\RoomType;
+use App\Http\Requests\StoreRoomRequest;
+use App\Http\Requests\UpdateRoomRequest;
 use App\Models\Building;
 use App\Models\College;
 use App\Models\Department;
+use App\Models\Equipment;
+use App\Models\Room;
+use App\Models\RoomType;
 use App\Models\UserAccount;
-use App\Http\Requests\StoreRoomRequest;
-use App\Http\Requests\UpdateRoomRequest;
 use App\Services\RoomService;
-use Illuminate\Http\Request;
-use Inertia\Inertia;
 use Exception;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
 
 class RoomController extends Controller
 {
@@ -30,6 +32,7 @@ class RoomController extends Controller
         $buildings = Building::all();
         $colleges = College::all();
         $roomTypes = RoomType::all();
+        $equipment = Equipment::all();
         $departments = Department::all();
         $users = UserAccount::all();
 
@@ -37,40 +40,26 @@ class RoomController extends Controller
             'rooms' => $rooms,
             'buildings' => $buildings,
             'colleges' => $colleges,
-            'departments' => $departments,
             'roomTypes' => $roomTypes,
+            'equipment' => $equipment,
+            'departments' => $departments,
             'users' => $users,
         ]);
     }
 
-    public function store(StoreRoomRequest $request)
+    public function store(StoreRoomRequest $request, RoomService $service)
     {
-        try {
-            Room::create($request->validated());
+        $service->create($request->validated());
 
-            return redirect()
-                ->back()
-                ->with('success', 'Room created successfully.');
-        } catch (Exception $e) {
-            return redirect()
-                ->back()
-                ->with('error', 'Failed to create room. Please try again.');
-        }
+        return redirect()->back()->with('success', 'Room created successfully.');
     }
 
-    public function update(UpdateRoomRequest $request, Room $room)
-    {
-        try {
-            $room->update($request->validated());
 
-            return redirect()
-                ->back()
-                ->with('success', 'Room updated successfully.');
-        } catch (Exception $e) {
-            return redirect()
-                ->back()
-                ->with('error', 'Failed to update room. Please try again.');
-        }
+    public function update(UpdateRoomRequest $request, Room $room, RoomService $service)
+    {
+        $service->update($room, $request->validated());
+
+        return redirect()->back()->with('success', 'Room updated successfully.');
     }
 
     public function destroy(Room $room)

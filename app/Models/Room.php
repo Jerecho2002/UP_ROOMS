@@ -20,23 +20,25 @@ class Room extends Model
         'floor_number',
         'location',
         'capacity',
-        'area_sqm',
         'facilities',
         'status',
         'notes',
         'description',
-        'equipments'
     ];
 
     protected $casts = [
         'facilities' => 'array',
-        'equipments' => 'array' // Add this cast
     ];
 
     // Relationships
     public function building()
     {
         return $this->belongsTo(Building::class);
+    }
+
+    public function equipment()
+    {
+        return $this->belongsToMany(Equipment::class, 'room_equipment')->withPivot('quantity');
     }
 
     public function college()

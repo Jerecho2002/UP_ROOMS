@@ -85,7 +85,7 @@ const handleSubmit = (data) => {
 
     <DynamicModal v-if="isModalVisible" :type="modalType" :data="modalData || {}" title="User Account" :fields="[
         { label: 'Email', field: 'user.email' },
-        { label: 'Password', field: 'password', type: 'password' },
+        { label: 'Password', field: 'password', type: 'password', hideOnView: true },
         { label: 'First Name', field: 'first_name' },
         { label: 'Middle Name', field: 'middle_name' },
         { label: 'Last Name', field: 'last_name' },

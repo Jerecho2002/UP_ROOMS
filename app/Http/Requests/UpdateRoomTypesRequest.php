@@ -14,7 +14,7 @@ class UpdateRoomTypesRequest extends FormRequest
 
     public function rules(): array
     {
-        $roomTypeId = $this->route('roomtype'); 
+        $roomTypeId = $this->route('roomtype');
 
         return [
             'room_type_name' => [
@@ -35,7 +35,6 @@ class UpdateRoomTypesRequest extends FormRequest
 
             'default_capacity' => 'required|integer|min:1',
 
-            'features' => 'nullable|string',
         ];
     }
 }

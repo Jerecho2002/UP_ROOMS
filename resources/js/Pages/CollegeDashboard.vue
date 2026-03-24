@@ -80,11 +80,12 @@ const handleSubmit = (data) => {
             {
                 label: 'Buildings',
                 field: 'building_ids',
-                type: 'multiselect',
+                type: modalType === 'view' ? 'display-badges' : 'multiselect',
                 options: buildings.map(b => ({
                     label: b.building_name,
                     value: b.id
-                }))
+                })),
+                render: (item) => (buildings.filter(b => (item.building_ids || []).includes(b.id))).map(b => b.building_name)
             },
             { label: 'Dean', field: 'dean_id', type: 'select', options: deans },
             { label: 'Contact Email', field: 'contact_email', type: 'email' },

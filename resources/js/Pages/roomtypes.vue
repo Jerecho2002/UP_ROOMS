@@ -17,7 +17,6 @@ const form = useForm({
     slug: '',
     description: '',
     default_capacity: '',
-    features: '',
 })
 
 const openModal = (type, row = null) => {
@@ -71,6 +70,5 @@ const handleSubmit = (data) => {
         { label: 'Slug', field: 'slug' },
         { label: 'description', field: 'description', type: 'textarea' },
         { label: 'Default Capacity', field: 'default_capacity', type: 'number' },
-        { label: 'Features', field: 'features', type: 'textarea' },
     ]" @close="closeModal" @submit="handleSubmit" />
 </template>

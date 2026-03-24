@@ -81,7 +81,7 @@ const handleSubmit = (data) => {
   <DynamicModal v-if="isModalVisible" :type="modalType" :data="modalData" title="College" :fields="[
     { label: 'Department Name', field: 'department_name' },
     { label: 'Department Code', field: 'department_code' },
-    { label: 'Colleges', field: 'college_id', type: 'select', options: colleges },
+    { label: 'College', field: 'college_id', type: 'select', options: colleges },
     { label: 'Department Head', field: 'department_head_id', type: 'select', options: users },
     { label: 'Description', field: 'description', type: 'textarea' },
     { label: 'Office', field: 'office_location' },

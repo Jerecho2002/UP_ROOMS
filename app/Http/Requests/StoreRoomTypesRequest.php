@@ -26,7 +26,6 @@ class StoreRoomTypesRequest extends FormRequest
             'slug' => 'required|string|max:50|unique:room_types,slug',
             'description' => 'nullable|string',
             'default_capacity' => 'required|integer|min:1',
-            'features' => 'nullable|string',
         ];
     }
 }

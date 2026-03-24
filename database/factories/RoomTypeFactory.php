@@ -22,13 +22,6 @@ class RoomTypeFactory extends Factory  // NOT DatabaseSeeder
             'slug' => $slug,
             'description' => $this->faker->sentence,
             'default_capacity' => $this->faker->numberBetween(20, 200),
-            'features' => json_encode([
-                'whiteboard' => $this->faker->boolean(80),
-                'projector' => $this->faker->boolean(70),
-                'aircon' => $this->faker->boolean(90),
-                'wifi' => $this->faker->boolean(95),
-                'sound_system' => $this->faker->boolean(50),
-            ]),
         ];
     }
 }
