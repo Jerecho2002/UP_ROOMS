@@ -4,13 +4,13 @@
 
 ## ⭐ RUSSELL EVAN O. LOQUINARIO
 
-### Frontend Developer – UI/UX Designer
+### UI/UX Designer
 
 ---
 
 ## ⭐ JERECHO E. LATOSA
 
-### Backend Developer – Full Stack Developer
+### Full Stack Developer
 
 ---
 
