@@ -14,76 +14,54 @@ use App\Http\Controllers\EquipmentController;
 use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\TermController;
 use App\Http\Controllers\UserAccountController;
-use App\Http\Controllers\DashboardController;
 
-// Login Routes
 Route::get('/login', [LoginController::class, 'showLogin'])
     ->name('login');
 Route::post('/login', [LoginController::class, 'login']);
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout')->middleware('auth');
 
-// Authenticated Routes
 Route::middleware(['auth'])->group(function () {
 
     Route::middleware(['role:admin'])->group(function () {
-        // Main Dashboard
 
         Route::resource('MainDashboard', MainDashboardController::class)
             ->except(['create', 'edit', 'show'])
             ->parameters(['MainDashboard' => 'mainDashboard']);
 
-        // Building Management
         Route::resource('BuildingDashboard', BuildingController::class)
             ->except(['create', 'edit', 'show'])
             ->parameters(['BuildingDashboard' => 'building']);
 
-        // College Management
         Route::resource('CollegeDashboard', CollegeController::class)
             ->except(['create', 'edit', 'show'])
             ->parameters(['CollegeDashboard' => 'college']);
 
-        // Department Management
         Route::resource('Departments', DepartmentController::class)
             ->except(['create', 'edit', 'show'])
             ->parameters(['Departments' => 'department']);
 
-        // Room Types
         Route::resource('RoomTypes', RoomTypeController::class)
             ->except(['create', 'edit', 'show'])
             ->parameters(['RoomTypes' => 'roomtype']);
 
-        // Rooms Management
         Route::resource('Rooms', RoomController::class)
             ->except(['create', 'edit', 'show'])
             ->parameters(['Rooms' => 'room']);
 
-        // User Account Management
         Route::resource('UserAccounts', UserAccountController::class)
             ->except(['create', 'edit', 'show'])
             ->parameters(['UserAccounts' => 'userAccount']);
 
-        // Term Management
         Route::resource('Terms', TermController::class)
             ->except(['create', 'edit', 'show'])
             ->parameters(['Terms' => 'term']);
 
-        // Equipment Management
-        Route::get('/equipment', [EquipmentController::class, 'index'])->name('equipment.index');
+        Route::resource('Equipment', EquipmentController::class)
+            ->except(['create', 'edit', 'show'])
+            ->parameters(['Equipment' => 'equipment']);
 
-        Route::prefix('/api/equipment')->group(function () {
-            Route::get('/', [EquipmentController::class, 'getAll']);
-            Route::get('/stats', [EquipmentController::class, 'getStats']);
-            Route::get('/usage', [EquipmentController::class, 'getEquipmentUsage']);
-            Route::post('/', [EquipmentController::class, 'store']);
-            Route::put('/{equipment}', [EquipmentController::class, 'update']);
-            Route::post('/{equipment}/transfer', [EquipmentController::class, 'transfer']);
-            Route::delete('/{equipment}', [EquipmentController::class, 'destroy']);
-        });
-
-        // Schedule Management
         Route::get('/Schedule', [ScheduleController::class, 'index'])->name('schedules.index');
 
-        // Report Generation
         Route::prefix('/api/reports')->group(function () {
             Route::get('/room-utilization', function (Request $request) {
                 return app(\App\Services\ReportService::class)->generateRoomUtilizationReport(

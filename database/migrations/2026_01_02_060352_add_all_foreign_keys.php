@@ -68,31 +68,6 @@ return new class extends Migration
             $table->foreign('assigned_user_id')->references('id')->on('user_accounts')->onDelete('set null');
         });
 
-        // 6. Add foreign keys to equipment
-        Schema::table('equipment', function (Blueprint $table) {
-            if (!Schema::hasColumn('equipment', 'room_id')) {
-                $table->unsignedBigInteger('room_id')->nullable()->after('id');
-            }
-            if (!Schema::hasColumn('equipment', 'building_id')) {
-                $table->unsignedBigInteger('building_id')->nullable()->after('room_id');
-            }
-            if (!Schema::hasColumn('equipment', 'college_id')) {
-                $table->unsignedBigInteger('college_id')->nullable()->after('building_id');
-            }
-            if (!Schema::hasColumn('equipment', 'department_id')) {
-                $table->unsignedBigInteger('department_id')->nullable()->after('college_id');
-            }
-            if (!Schema::hasColumn('equipment', 'assigned_user_id')) {
-                $table->unsignedBigInteger('assigned_user_id')->nullable()->after('department_id');
-            }
-
-            $table->foreign('room_id')->references('id')->on('rooms')->onDelete('set null');
-            $table->foreign('building_id')->references('id')->on('buildings')->onDelete('set null');
-            $table->foreign('college_id')->references('id')->on('colleges')->onDelete('set null');
-            $table->foreign('department_id')->references('id')->on('departments')->onDelete('set null');
-            $table->foreign('assigned_user_id')->references('id')->on('user_accounts')->onDelete('set null');
-        });
-
         // 7. Add foreign keys to schedules
         Schema::table('schedules', function (Blueprint $table) {
             if (!Schema::hasColumn('schedules', 'room_id')) {

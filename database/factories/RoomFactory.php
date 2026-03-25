@@ -25,7 +25,7 @@ class RoomFactory extends Factory
             'room_type_id' => RoomType::factory(),
             'assigned_user_id' => null,
             'floor_number' => $this->faker->numberBetween(1, 5),
-            'location' => $this->faker->optional()->words(3, true),
+            'location' => $this->faker->words(3, true),
             'capacity' => $this->faker->numberBetween(20, 100),
             'facilities' => json_encode([
                 'tables' => $this->faker->numberBetween(10, 50),
@@ -34,7 +34,7 @@ class RoomFactory extends Factory
                 'projectors' => $this->faker->numberBetween(0, 2),
             ]),
             'status' => $this->faker->randomElement(['available', 'occupied', 'maintenance', 'closed']),
-            'notes' => $this->faker->optional()->sentence,
+            'notes' => $this->faker->sentence,
         ];
     }
 }

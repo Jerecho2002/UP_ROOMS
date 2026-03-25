@@ -34,7 +34,7 @@ class TermFactory extends Factory
             'is_current' => $this->faker->boolean(30),
             'status' => $this->faker->randomElement($statuses),
             'academic_year' => $this->faker->numberBetween(2023, 2025),
-            'notes' => $this->faker->optional()->sentence,
+            'notes' => $this->faker->sentence,
         ];
     }
 }
