@@ -7,7 +7,6 @@ use App\Models\Building;
 use App\Models\College;
 use App\Models\Department;
 use App\Models\RoomType;
-use App\Models\UserAccount;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class RoomFactory extends Factory

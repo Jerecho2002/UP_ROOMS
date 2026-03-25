@@ -3,11 +3,6 @@
 namespace Database\Factories;
 
 use App\Models\Equipment;
-use App\Models\Room;
-use App\Models\Building;
-use App\Models\College;
-use App\Models\Department;
-use App\Models\UserAccount;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class EquipmentFactory extends Factory
