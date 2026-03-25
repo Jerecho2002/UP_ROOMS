@@ -75,21 +75,5 @@ const handleSubmit = (data) => {
             { label: 'Property ID', field: 'property_id' },
             { label: 'CFIC ID', field: 'cfic_id' },
             { label: 'Quantity', field: 'quantity', type: 'number' },
-            // {
-            //     label: 'Colleges',
-            //     field: 'college_ids',
-            //     type: modalType === 'view' ? 'display-badges' : 'multiselect',
-            //     options: colleges.map(c => ({
-            //         label: c.college_name,
-            //         value: c.id
-            //     })),
-            //     render: (item) => (colleges.filter(c => (item.college_ids || []).includes(c.id))).map(c => c.college_name)
-            // },
-            // { label: 'Floors', field: 'total_floors', type: 'number' },
-            // { label: 'CR', field: 'restroom_count', type: 'number' },
-            // { label: 'Ramps', field: 'ramp_count', type: 'number' },
-            // { label: 'Rooms', field: 'total_rooms', type: 'number' },
-            // { label: 'Has Elevator', field: 'has_elevator', type: 'select', options: [{ label: 'Yes', value: 1 }, { label: 'No', value: 0 }] },
-            // { label: 'Has Parking', field: 'has_parking', type: 'select', options: [{ label: 'Yes', value: 1 }, { label: 'No', value: 0 }] },
         ]" @close="closeModal" @submit="handleSubmit" />
 </template>
